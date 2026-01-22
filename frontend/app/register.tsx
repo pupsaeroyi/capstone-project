@@ -35,8 +35,8 @@ export default function Register() {
         
           <View style={styles.form}>
             <View style={styles.formCard}>
-              <Text style={styles.title}>Register</Text>
-              <Text style={styles.subtitle}>To the club</Text>
+              <Text style={styles.title}>Register{'\n'}To the club</Text>
+              
             </View>
           </View>
 
@@ -96,7 +96,6 @@ export default function Register() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 30,
   },
@@ -108,7 +107,6 @@ const styles = StyleSheet.create({
   },
 
   title: { fontSize: 32, fontWeight: "bold" },
-  subtitle: { fontSize: 32, fontWeight: "bold", marginTop: -6 },
 
   form: { width: "100%", alignItems: "center" },
   formCard: { width: "85%", marginBottom: 32 },

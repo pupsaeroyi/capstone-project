@@ -1,116 +1,139 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import Checkbox from 'expo-checkbox';
+import { View, Text, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import Checkbox from "expo-checkbox";
 
 export default function Login() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = () => {
-    console.log('Login clicked', { username, password, rememberMe });
+    console.log("Login clicked", { username, password, rememberMe });
     // note: connect to backend later
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <View style={styles.formCard}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          style={[styles.container, { flex: 1 }]}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.form}>
+            <View style={styles.formCard}>
+              <Text style={styles.title}>Let’s{"\n"}Go Golfing</Text>
+              <View style={{ height: 24 }} />
 
-          <Text style={styles.title}>Let’s{'\n'}Go Golfing</Text>
-          <View style={{ height: 24 }} />
-          <Input
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-          />
-
-          <Input
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          <View style={styles.options}>
-            <View style={styles.rememberRow}>
-              <Checkbox
-                value={rememberMe}
-                onValueChange={setRememberMe}
-                color={rememberMe ? '#000' : undefined}
-                style={styles.checkbox}
+              <Input
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize='none'
+                autoCorrect={false}
+                keyboardType="default"
+                returnKeyType="next"
               />
-              <Text style={styles.optionText}> Remember me</Text>
+
+              <Input
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                returnKeyType='done'
+                onSubmitEditing={handleLogin}
+              />
+
+              <View style={styles.options}>
+                <View style={styles.rememberRow}>
+                  <Checkbox
+                    value={rememberMe}
+                    onValueChange={setRememberMe}
+                    color={rememberMe ? "#000" : undefined}
+                    style={styles.checkbox}
+                  />
+                  <Text style={styles.optionText}> Remember me</Text>
+                </View>
+
+                <Text style={styles.forgotText}>Forgot Password</Text>
+              </View>
+
+              <View style={styles.buttonWrapper}>
+                <Button title="Login" onPress={handleLogin} />
+              </View>
+
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Don't have an account?</Text>
+                <Link href="/register" style={styles.signupLink}>
+                  Sign up here
+                </Link>
+              </View>
             </View>
-
-            <Text style={styles.forgotText}>Forgot Password</Text>
           </View>
-
-          <View style={styles.buttonWrapper}>
-            <Button title="Login" onPress={handleLogin} />
-          </View>
-
-        </View>
-
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Don't have an account?</Text>
-          <Link href="/register" style={styles.signupLink}>
-            Sign up here
-          </Link>
-        </View>
-      </View>
-    </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 30,
+  },
+
+  // important: makes it fill the screen but still scroll on small devices / with keyboard
+  content: {
+    flexGrow: 1,
     paddingTop: 120,
+    paddingBottom: 40,
   },
 
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     lineHeight: 36,
-    textAlign: 'left',
+    textAlign: "left",
   },
 
   form: {
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
 
   formCard: {
-    width: '85%',
+    width: "85%",
   },
 
   options: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
     marginTop: 6,
   },
 
   rememberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   optionText: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
   },
 
   forgotText: {
     fontSize: 13,
-    color: '#999',
+    color: "#999",
   },
 
   buttonWrapper: {
@@ -118,20 +141,20 @@ const styles = StyleSheet.create({
   },
 
   signupContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 22,
     gap: 6,
   },
 
   signupText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
 
   signupLink: {
     fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: "#007AFF",
+    fontWeight: "500",
   },
 
   checkbox: {
@@ -139,6 +162,6 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: "#000",
   },
 });
