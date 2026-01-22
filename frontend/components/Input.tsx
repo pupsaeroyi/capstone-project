@@ -1,21 +1,24 @@
-import { TextInput, StyleSheet } from 'react-native';
+import { TextInput, StyleSheet, TextInputProps } from 'react-native';
 
-interface InputProps {
+type InputProps = TextInputProps & {
   placeholder: string;
-  value?: string;
-  onChangeText?: (text: string) => void;
-  secureTextEntry?: boolean;
-}
+};
 
-export function Input({ placeholder, value, onChangeText, secureTextEntry }: InputProps) {
+export function Input({ placeholder, style, ...props }: InputProps) {
   return (
     <TextInput
-      style={styles.input}
+      style={[styles.input, style]}
       placeholder={placeholder}
       placeholderTextColor="#999"
-      value={value}
-      onChangeText={onChangeText}
-      secureTextEntry={secureTextEntry}
+
+      // ✅ Fix Android issue where keyboard doesn't appear
+      showSoftInputOnFocus={true}
+
+      // ✅ Good defaults for forms
+      autoCorrect={false}
+      autoCapitalize="none"
+
+      {...props}
     />
   );
 }
