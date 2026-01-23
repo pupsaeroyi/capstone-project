@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 
@@ -8,10 +9,10 @@ import { pool } from "./db.js";
 
 const app = express();
 
-app.use(cors());               // allow requests from your mobile app
-app.use(express.json());       // parse JSON bodies
+app.use(cors());
+app.use(express.json());
 
-// simple health check
+// Health check
 app.get("/health", async (req, res) => {
   try {
     const r = await pool.query("SELECT 1 AS ok");
@@ -21,17 +22,108 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// TEMP login endpoint (replace with your real logic)
-app.post("/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+// registration endpoint
+app.post("/auth/register", async (req, res) => {
+  const { username, email, password } = req.body;
 
-  // TODO: replace with real query + password hashing check
-  // This is just a placeholder so you can test end-to-end connectivity.
-  if (!email || !password) {
-    return res.status(400).json({ ok: false, message: "email and password required" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ 
+      ok: false, 
+      message: "username, email, and password required" 
+    });
   }
 
-  return res.json({ ok: true, message: "Login endpoint reached", email });
+  try {
+    // Check if user already exists
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE username = $1 OR email = $2",
+      [username, email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: "Username or email already exists" 
+      });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash(password, saltRounds);
+
+    // Insert new user
+    const result = await pool.query(
+      "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at",
+      [username, email, password_hash]
+    );
+
+    return res.json({ 
+      ok: true, 
+      message: "Registration successful",
+      user: result.rows[0]
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ 
+      ok: false, 
+      message: "Server error during registration" 
+    });
+  }
+});
+
+// login endpoint
+app.post("/auth/login", async (req, res) => {
+  const { identifier, password } = req.body;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ 
+      ok: false, 
+      message: "username and password required" 
+    });
+  }
+
+  try {
+    // Query user by username or email
+    const result = await pool.query(
+      "SELECT * FROM users WHERE username = $1 OR email = $1",
+      [identifier]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ 
+        ok: false, 
+        message: "Invalid credentials" 
+      });
+    }
+
+    const user = result.rows[0];
+    
+    // Check password
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!validPassword) {
+      return res.status(401).json({ 
+        ok: false, 
+        message: "Invalid credentials" 
+      });
+    }
+
+    return res.json({ 
+      ok: true, 
+      message: "Login successful",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ 
+      ok: false, 
+      message: "Server error" 
+    });
+  }
 });
 
 const port = process.env.PORT || 3000;

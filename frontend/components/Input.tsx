@@ -8,12 +8,14 @@ export function Input({ placeholder, style, ...props }: InputProps) {
   return (
     <TextInput
       style={[styles.input, style]}
+      autoComplete="off"
       placeholder={placeholder}
       placeholderTextColor="#999"
       autoCorrect={false}
       autoCapitalize="none"
       showSoftInputOnFocus
       {...props}
+      
     />
   );
 }

@@ -17,11 +17,21 @@ export default function Register() {
   });
 
   const handleRegister = async () => {
+    
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!.");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await res.json();
