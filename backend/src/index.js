@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-import { pool } from "./src/db.js";
+import { pool } from "./db.js";
 
 const app = express();
 

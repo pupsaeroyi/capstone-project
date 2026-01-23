@@ -3,6 +3,7 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { API_BASE } from "@/lib/api";
 
 export default function Register() {
   const router = useRouter();
@@ -15,8 +16,28 @@ export default function Register() {
     confirmPassword: "",
   });
 
-  const handleRegister = () => {
-    console.log("Register clicked", formData);
+  const handleRegister = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      console.log("REGISTER: ", data);
+
+      if (!res.ok || !data.ok) {
+        alert(data.message || "Registration failed. Please try again.");
+        return;
+      }
+
+      alert(`Registration successful! Welcome ${data.user.username}!`);
+      router.replace("/login");
+    } catch (err: any) {
+      console.log(err);
+      alert("Cannot connect to server. Is backend running?");
+    }
   };
 
   return (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import Checkbox from "expo-checkbox";
+import { API_BASE } from "@/lib/api";
 
 export default function Login() {
   const router = useRouter();
@@ -11,9 +12,32 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    console.log("Login clicked", { username, password, rememberMe });
-    // note: connect to backend later
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: username,
+          password: password,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("LOGIN: ", data);
+      
+      if (!res.ok || !data.ok) {
+        alert(data.message || "Login failed. Please try again.");
+        return;
+      }
+
+      alert(`Welcome ${data.user.username}!`);
+      // router.replace("/(some-home-page)"); later
+    } catch (err: any) {
+      console.log(err);
+      alert("Cannot connect to server. Is backend running?");
+    }
+
   };
 
   return (
@@ -91,7 +115,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
 
-  // important: makes it fill the screen but still scroll on small devices / with keyboard
   content: {
     flexGrow: 1,
     paddingTop: 120,
