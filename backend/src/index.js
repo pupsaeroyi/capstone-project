@@ -24,12 +24,12 @@ app.get("/health", async (req, res) => {
 
 // registration endpoint
 app.post("/auth/register", async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, fullName } = req.body;
 
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !fullName) {
     return res.status(400).json({ 
       ok: false, 
-      message: "username, email, and password required" 
+      message: "username, email, fullName, and password required" 
     });
   }
 
@@ -53,8 +53,8 @@ app.post("/auth/register", async (req, res) => {
 
     // Insert new user
     const result = await pool.query(
-      "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at",
-      [username, email, password_hash]
+      "INSERT INTO users (username, email, password_hash, full_name) VALUES ($1, $2, $3, $4) RETURNING id, username, email, full_name, created_at",
+      [username, email, password_hash, fullName]
     );
 
     return res.json({ 
@@ -114,7 +114,8 @@ app.post("/auth/login", async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        fullName: user.full_name,
       }
     });
   } catch (err) {
