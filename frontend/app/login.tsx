@@ -8,18 +8,25 @@ import { API_BASE } from "@/lib/api";
 
 export default function Login() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!identifier || !password) {
+      alert("Please enter username/email and password.");
+      return;
+    }
+
     try {
+      setLoading(true);
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identifier: username,
-          password: password,
+          identifier,
+          password,
         }),
       });
 
@@ -32,12 +39,14 @@ export default function Login() {
       }
 
       alert(`Welcome ${data.user.username}!`);
-      // router.replace("/(some-home-page)"); later
+      // reroute to home page later
+      // router.replace("/home");
     } catch (err: any) {
       console.log(err);
-      alert("Cannot connect to server. Is backend running?");
+      alert("Cannot connect to server");
+    } finally {
+      setLoading(false);
     }
-
   };
 
   return (
@@ -59,9 +68,9 @@ export default function Login() {
               <View style={{ height: 24 }} />
 
               <Input
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
+                placeholder="Username or Email"
+                value={identifier}
+                onChangeText={setIdentifier}
                 autoCapitalize='none'
                 autoCorrect={false}
                 keyboardType="default"
@@ -88,11 +97,19 @@ export default function Login() {
                   <Text style={styles.optionText}> Remember me</Text>
                 </View>
 
-                <Text style={styles.forgotText}>Forgot Password</Text>
+                <Text 
+                  style={styles.forgotText}
+                  onPress={() => router.push("/forgot-password")}
+                  >
+                  Forgot Password</Text>
               </View>
 
               <View style={styles.buttonWrapper}>
-                <Button title="Login" onPress={handleLogin} />
+                <Button 
+                  title={loading ? "Logging in..." : "Login"}
+                  onPress={handleLogin} 
+                  disabled={loading}
+                />
               </View>
 
               <View style={styles.signupContainer}>
@@ -140,7 +157,7 @@ const styles = StyleSheet.create({
   options: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
+    marginBottom: 24, 
     marginTop: 6,
   },
 
