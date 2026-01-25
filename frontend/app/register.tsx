@@ -5,6 +5,9 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { API_BASE } from "@/lib/api";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
+import LoadingIcon from "@/components/LoadingIcon";
+import { AntDesign } from "@expo/vector-icons";
+
 
 export default function Register() {
   const router = useRouter();
@@ -128,16 +131,14 @@ export default function Register() {
                 />
 
                 <View style={styles.iconWrapper}>
-                  {usernameStatus === "checking" && (
-                    <Ionicons name="reload" size={18} color="#999" />
-                  )}
+                  {usernameStatus === "checking" && <LoadingIcon />}
 
                   {usernameStatus === "available" && (
-                    <Ionicons name="checkmark-circle" size={18} color="green" />
+                    <AntDesign name="check-circle" size={22} color="green" />
                   )}
 
                   {usernameStatus === "taken" && (
-                    <Ionicons name="close-circle" size={18} color="red" />
+                    <Ionicons name="close-circle" size={24} color="red" />
                   )}
                 </View>
               </View>
