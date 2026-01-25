@@ -89,14 +89,7 @@ export default function Register() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Ionicons 
-              name="chevron-back"
-              size={28}
-              color="#000"
-              onPress={() => router.back()}>
-            </Ionicons>
-          </View>
+
         
           <View style={styles.form}>
             <View style={styles.formCard}>
