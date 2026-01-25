@@ -18,7 +18,7 @@ export default function Login() {
       alert("Please enter username/email and password.");
       return;
     }
-
+          
     try {
       setLoading(true);
       const res = await fetch(`${API_BASE}/auth/login`, {

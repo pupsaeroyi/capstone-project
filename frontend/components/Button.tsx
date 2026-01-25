@@ -11,7 +11,8 @@ export function Button({ title, onPress, disabled = false }: ButtonProps) {
         <TouchableOpacity 
             style={[styles.button, disabled && styles.disabled]} 
             onPress={onPress}
-            disabled={disabled}>
+            disabled={disabled}
+            delayPressIn={100}>
             <Text style={styles.text}>{title}</Text>
         </TouchableOpacity>
     );

@@ -21,22 +21,44 @@ export default function ForgotPassword() {
         try {
             setLoading(true);
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
             const res = await fetch(`${API_BASE}/auth/forgot-password`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: identifier }),
+                body: JSON.stringify({ identifier: identifier }),
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+
+            console.log("Response status:", res.status);
+            console.log("Response ok:", res.ok);
 
             const data = await res.json();
+            console.log("Response data:", data);
             alert(
                 data.message || "If the account exists, a password reset link has been sent."
             );
         
         router.back();
         } catch (err) {
-            console.log(err);
-            alert("Cannot connect to server");
+            console.log("ERROR:", err);
+            
+            const error = err as Error;
+
+            if (error.name === 'AbortError') {
+                alert("Request timeout - cannot connect to server");
+            } else {
+                alert(`Error: ${error.message || 'Cannot connect to server'}`);
+            }
+
         } finally {
+            console.log("Setting loading to false");
             setLoading(false);
         }
     };

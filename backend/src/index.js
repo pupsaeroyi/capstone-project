@@ -2,15 +2,25 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import { pool } from "./db.js";
 
 dotenv.config();
-
-import { pool } from "./db.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Email transporter
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -126,6 +136,112 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 });
+
+// Forgot password
+app.post("/auth/forgot-password", async (req, res) => {
+  const { identifier } = req.body;
+
+  if (!identifier) {
+    return res.status(400).json({ ok: false, message: "Email or username required" });
+  }
+
+  try {
+    // Check if user exists
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1 OR username = $1",
+      [identifier]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.json({ ok: true, message: "If that account is registered, a reset link has been sent." });
+    }
+
+    const user = userResult.rows[0];
+    const userId = user.id;
+    const userEmail = user.email;
+    
+
+    // Generate reset token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min from now
+
+    await pool.query(
+      "INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
+      [userId, tokenHash, expiresAt]
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+
+    await transporter.sendMail({
+      from: `"Matchmaking App" <${process.env.EMAIL_USER}>`, // replace with actual app name later
+      to: userEmail,
+      subject: "Reset your password",
+      html: `
+        <p>Hi ${user.full_name || user.username},</p>
+        <p>You requested a password reset.</p>
+        <p>Click the link below:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 30 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `,
+    });
+
+    res.json({ ok: true, message: "If that account is registered, a reset link has been sent." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Reset password
+app.post("/auth/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res
+      .status(400)
+      .json({ ok: false, message: "Token and new password required" });
+  }
+
+  try {
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const resetResult = await pool.query(
+      `SELECT * FROM password_resets
+       WHERE token_hash = $1 AND expires_at > NOW()`,
+      [tokenHash]
+    );
+
+    if (resetResult.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Invalid or expired token" });
+    }
+
+    const reset = resetResult.rows[0];
+    const password_hash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      "UPDATE users SET password_hash = $1 WHERE id = $2",
+      [password_hash, reset.user_id]
+    );
+
+    await pool.query("DELETE FROM password_resets WHERE user_id = $1", [
+      reset.user_id,
+    ]);
+
+    res.json({ ok: true, message: "Password reset successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, "0.0.0.0", () => {
