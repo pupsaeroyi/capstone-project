@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { API_BASE } from "@/lib/api";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 export default function Register() {
   const router = useRouter();
@@ -15,6 +16,27 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
+
+  const [usernameStatus, setUsernameStatus] = useState("idle");
+
+  const handleUsernameChange = async (text: string) => {
+    setFormData({ ...formData, username: text });
+
+    if (text.length < 3) {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    setUsernameStatus("checking");
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/check-username?username=${text}`);
+      const data = await res.json();
+      setUsernameStatus(data.available ? "available" : "taken");
+    } catch  {
+      setUsernameStatus("idle");
+    }
+  };
 
   const handleRegister = async () => {
     
@@ -64,6 +86,14 @@ export default function Register() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.header}>
+            <Ionicons 
+              name="chevron-back"
+              size={28}
+              color="#000"
+              onPress={() => router.back()}>
+            </Ionicons>
+          </View>
         
           <View style={styles.form}>
             <View style={styles.formCard}>
@@ -71,7 +101,7 @@ export default function Register() {
               
             </View>
           </View>
-
+          
           <View style={styles.form}>
             <View style={styles.formCard}>
               <Input
@@ -86,11 +116,32 @@ export default function Register() {
                 onChangeText={(text) => setFormData({ ...formData, email: text })}
               />
 
-              <Input
-                placeholder="Username"
-                value={formData.username}
-                onChangeText={(text) => setFormData({ ...formData, username: text })}
-              />
+              <View style={styles.usernameWrapper}>
+                <Input
+                  placeholder="Username"
+                  value={formData.username}
+                  onChangeText={handleUsernameChange}
+                  style={[
+                    styles.usernameInput,
+                    usernameStatus === "taken" && styles.inputError,
+                  ]}
+                />
+
+                <View style={styles.iconWrapper}>
+                  {usernameStatus === "checking" && (
+                    <Ionicons name="reload" size={18} color="#999" />
+                  )}
+
+                  {usernameStatus === "available" && (
+                    <Ionicons name="checkmark-circle" size={18} color="green" />
+                  )}
+
+                  {usernameStatus === "taken" && (
+                    <Ionicons name="close-circle" size={18} color="red" />
+                  )}
+                </View>
+              </View>
+
 
               <Input
                 placeholder="Password"
@@ -138,14 +189,68 @@ const styles = StyleSheet.create({
     paddingBottom: 40, 
   },
 
-  title: { fontSize: 32, fontWeight: "bold" },
+  header: {
+    width: "100%",
+    marginBottom: 24,
+    left: 15,
+  },
 
-  form: { width: "100%", alignItems: "center" },
-  formCard: { width: "85%", marginBottom: 32 },
+  title: { 
+    fontSize: 32, 
+    fontWeight: "bold",
+  },
 
-  buttonWrapper: { marginTop: 12 },
+  form: { 
+    width: "100%", 
+    alignItems: "center",
+  },
 
-  loginContainer: { alignItems: "center", marginTop: 20, gap: 5 },
-  loginText: { fontSize: 14, color: "#666" },
-  loginLink: { fontSize: 14, color: "#007AFF", fontWeight: "500" },
+  formCard: { 
+    width: "85%", 
+    marginBottom: 32,
+  },
+
+  buttonWrapper: { 
+    marginTop: 12,
+  },
+
+  loginContainer: { 
+    alignItems: "center", 
+    marginTop: 20, gap: 5,
+  },
+
+  loginText: { 
+    fontSize: 14, 
+    color: "#666",
+  },
+
+  loginLink: { 
+    fontSize: 14, 
+    color: "#007AFF", 
+    fontWeight: "500",
+  },
+
+usernameWrapper: {
+  position: "relative",
+  
+},
+
+usernameInput: {
+  paddingRight: 44,
+},
+
+inputError: {
+  borderColor: "red",
+},
+
+iconWrapper: {
+  position: "absolute",
+  right: 14,
+  top: 0,
+  bottom: 12,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+
 });

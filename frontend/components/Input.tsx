@@ -22,13 +22,15 @@ export function Input({ placeholder, style, ...props }: InputProps) {
 
 const styles = StyleSheet.create({
   input: {
+    height: 52,
     backgroundColor: "#f0f0f0",
-    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 8,
     fontSize: 15,
-    marginBottom: 12,
     borderWidth: 1,
+    marginBottom: 12,
     borderColor: "#d0d0d0",
+    textAlignVertical: "center",
+    
   },
 });

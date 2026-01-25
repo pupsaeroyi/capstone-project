@@ -39,7 +39,7 @@ app.post("/auth/register", async (req, res) => {
   if (!username || !email || !password || !fullName) {
     return res.status(400).json({ 
       ok: false, 
-      message: "username, email, fullName, and password required" 
+      message: "username, email, full name, and password required" 
     });
   }
 
@@ -80,6 +80,33 @@ app.post("/auth/register", async (req, res) => {
     });
   }
 });
+
+
+// Check username availability 
+app.get("/auth/check-username", async (req, res) => {
+  const { username } = req.query;
+
+  // Guard: empty or too short usernames
+  if (!username || username.length < 3) {
+    return res.json({ ok: true, available: false });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM users WHERE username = $1",
+      [username]
+    );
+
+    res.json({
+      ok: true,
+      available: result.rows.length === 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false });
+  }
+});
+
 
 // login endpoint
 app.post("/auth/login", async (req, res) => {
