@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { pool } from "./db.js";
 
 dotenv.config();
@@ -13,14 +13,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -81,7 +75,6 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-
 // Check username availability 
 app.get("/auth/check-username", async (req, res) => {
   const { username } = req.query;
@@ -106,7 +99,6 @@ app.get("/auth/check-username", async (req, res) => {
     res.status(500).json({ ok: false });
   }
 });
-
 
 // login endpoint
 app.post("/auth/login", async (req, res) => {
@@ -186,7 +178,6 @@ app.post("/auth/forgot-password", async (req, res) => {
     const user = userResult.rows[0];
     const userId = user.id;
     const userEmail = user.email;
-    
 
     // Generate reset token
     const rawToken = crypto.randomBytes(32).toString("hex");
@@ -200,23 +191,38 @@ app.post("/auth/forgot-password", async (req, res) => {
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
-    await transporter.sendMail({
-      from: `"Matchmaking App" <${process.env.EMAIL_USER}>`, // replace with actual app name later
+    // Send email with Resend
+    await resend.emails.send({
+      from: 'Matchmaking App <onboarding@resend.dev>',
       to: userEmail,
-      subject: "Reset your password",
+      subject: 'Reset your password',
       html: `
-        <p>Hi ${user.full_name || user.username},</p>
-        <p>You requested a password reset.</p>
-        <p>Click the link below:</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>This link expires in 30 minutes.</p>
-        <p>If you didn't request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Password Reset Request</h2>
+          <p>Hi ${user.full_name || user.username},</p>
+          <p>You requested a password reset for your account.</p>
+          <p>Click the button below to reset your password:</p>
+          <div style="margin: 30px 0;">
+            <a href="${resetLink}" 
+               style="background-color: #007bff; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block;">
+              Reset Password
+            </a>
+          </div>
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="color: #666; font-size: 14px; word-break: break-all;">${resetLink}</p>
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            This link expires in 30 minutes.<br>
+            If you didn't request this, please ignore this email.
+          </p>
+        </div>
       `,
     });
 
+    console.log("Password reset email sent to:", userEmail);
     res.json({ ok: true, message: "If that account is registered, a reset link has been sent." });
   } catch (err) {
-    console.error(err);
+    console.error("Forgot password error:", err);
     res.status(500).json({ ok: false, message: "Server error" });
   }
 });
@@ -267,8 +273,6 @@ app.post("/auth/reset-password", async (req, res) => {
     res.status(500).json({ ok: false, message: "Server error" });
   }
 });
-
-
 
 const port = process.env.PORT || 3000;
 app.listen(port, "0.0.0.0", () => {
