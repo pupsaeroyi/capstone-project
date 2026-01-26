@@ -97,7 +97,7 @@ export default function ForgotPassword() {
                                 autoCorrect={false}
                                 keyboardType="email-address"
                                 returnKeyType="done"
-                                onSubmitEditing={handleContinue}        
+                                      
                             />
                             <View style={styles.buttonWrapper}>
                                 <Button 
