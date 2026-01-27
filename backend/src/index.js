@@ -44,6 +44,13 @@ app.post("/auth/register", async (req, res) => {
     });
   }
 
+  if (password.length < 8) {
+    return res.status(400).json({
+      ok: false,
+      message: "Password must be at least 8 characters."
+    });
+  }
+
   try {
     // Check if user already exists
     const existingUser = await pool.query(

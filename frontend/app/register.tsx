@@ -48,6 +48,11 @@ export default function Register() {
   };
 
   const handleRegister = async () => {
+
+    if (formData.password.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
     
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!.");
