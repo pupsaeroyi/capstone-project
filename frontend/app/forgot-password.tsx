@@ -153,6 +153,6 @@ const styles = StyleSheet.create({
   },
 
   buttonWrapper: {
-    marginTop: 18,
+    marginTop: 8,
   },
 });

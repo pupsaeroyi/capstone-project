@@ -91,7 +91,7 @@ export default function Register() {
     <KeyboardAvoidingView 
       style={{ flex: 1, backgroundColor: "#fff" }}
       behavior={Platform.OS === "ios" ? "padding" : "padding"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+      keyboardVerticalOffset={0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <ScrollView
