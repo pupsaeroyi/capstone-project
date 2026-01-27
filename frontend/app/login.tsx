@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import Checkbox from "expo-checkbox";
 import { API_BASE } from "@/lib/api";
+import * as SecureStore from "expo-secure-store";
+import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 
 export default function Login() {
   const router = useRouter();
@@ -12,6 +14,25 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getSavedToken();
+        if (!token) return;
+
+        const { res, data } = await fetchMe(token);
+        if (res.ok && data.ok) {
+          console.log("Auto-login success:", data.user.username);
+          // router.replace("/home"); (will be routed to home once home screen is ready)
+        } else {
+          await clearSavedToken();
+        }
+      } catch (err) {
+        await clearSavedToken();
+      }
+    })();
+  }, [router]);
 
   const handleLogin = async () => {
     if (!identifier || !password) {
@@ -36,6 +57,14 @@ export default function Login() {
       if (!res.ok || !data.ok) {
         alert(data.message || "Login failed. Please try again.");
         return;
+      }
+
+      const token = data.accessToken;
+      
+      if (rememberMe) {
+        await SecureStore.setItemAsync("accessToken", token);
+      } else {
+        await clearSavedToken();
       }
 
       alert(`Welcome ${data.user.username}!`);

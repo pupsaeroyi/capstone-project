@@ -5,8 +5,15 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Resend } from "resend";
 import { pool } from "./db.js";
+import jwt from "jsonwebtoken";
+import { requireAuth } from "./auth.js";
 
 dotenv.config();
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is missing in environment variables");
+}
+
 
 const app = express();
 
@@ -40,7 +47,7 @@ app.post("/auth/register", async (req, res) => {
   try {
     // Check if user already exists
     const existingUser = await pool.query(
-      "SELECT * FROM users WHERE username = $1 OR email = $2",
+      "SELECT 1 FROM users WHERE username = $1 OR email = $2",
       [username, email]
     );
 
@@ -114,7 +121,7 @@ app.post("/auth/login", async (req, res) => {
   try {
     // Query user by username or email
     const result = await pool.query(
-      "SELECT * FROM users WHERE username = $1 OR email = $1",
+      "SELECT id, username, email, full_name, password_hash FROM users WHERE username = $1 OR email = $1",
       [identifier]
     );
 
@@ -137,9 +144,18 @@ app.post("/auth/login", async (req, res) => {
       });
     }
 
+    // Generate JWT 
+    const accessToken = jwt.sign(
+      { sub: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "15m" }
+    );
+
+    // Return token and user info
     return res.json({ 
       ok: true, 
       message: "Login successful",
+      accessToken,
       user: {
         id: user.id,
         username: user.username,
@@ -147,11 +163,40 @@ app.post("/auth/login", async (req, res) => {
         fullName: user.full_name,
       }
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ 
       ok: false, 
       message: "Server error" 
+    });
+  }
+});
+
+
+app.get("/me", requireAuth, async (req, res) => {
+  try {
+    const r = await pool.query(
+      "SELECT id, username, email, full_name, created_at FROM users WHERE id = $1",
+      [req.userId]
+    );
+
+    if (r.rows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      user: r.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
     });
   }
 });
@@ -167,7 +212,7 @@ app.post("/auth/forgot-password", async (req, res) => {
   try {
     // Check if user exists
     const userResult = await pool.query(
-      "SELECT * FROM users WHERE email = $1 OR username = $1",
+      "SELECT id, email, username, full_name FROM users WHERE email = $1 OR username = $1",
       [identifier]
     );
 
@@ -184,6 +229,13 @@ app.post("/auth/forgot-password", async (req, res) => {
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min from now
 
+    // Only one active reset token per user (delete existing)
+    await pool.query(
+      "DELETE FROM password_resets WHERE user_id = $1",
+      [userId]
+    );
+
+    // Store new reset token
     await pool.query(
       "INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
       [userId, tokenHash, expiresAt]
