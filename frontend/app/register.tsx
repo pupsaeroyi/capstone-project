@@ -23,10 +23,16 @@ export default function Register() {
   const [usernameStatus, setUsernameStatus] = useState("idle");
 
   const handleUsernameChange = async (text: string) => {
-    setFormData({ ...formData, username: text });
+    const trimmed = text.trim();
+    setFormData({ ...formData, username: trimmed });
 
-    if (text.length < 3) {
+    if (trimmed.length === 0) {
       setUsernameStatus("idle");
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      setUsernameStatus("tooShort");
       return;
     }
 
@@ -119,7 +125,7 @@ export default function Register() {
                   onChangeText={handleUsernameChange}
                   style={[
                     styles.usernameInput,
-                    usernameStatus === "taken" && styles.inputError,
+                    (usernameStatus === "taken" || usernameStatus === "tooShort") && styles.inputError,
                   ]}
                 />
 
@@ -130,7 +136,7 @@ export default function Register() {
                     <AntDesign name="check-circle" size={22} color="green" />
                   )}
 
-                  {usernameStatus === "taken" && (
+                  {(usernameStatus === "taken" || usernameStatus === "tooShort") && (
                     <Ionicons name="close-circle" size={24} color="red" />
                   )}
                 </View>
