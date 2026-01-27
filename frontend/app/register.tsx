@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
 
   loginContainer: { 
     alignItems: "center", 
-    marginTop: 20, gap: 5,
+    gap: 5,
   },
 
   loginText: { 

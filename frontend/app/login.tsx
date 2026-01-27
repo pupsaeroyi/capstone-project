@@ -93,7 +93,7 @@ export default function Login() {
         >
           <View style={styles.form}>
             <View style={styles.formCard}>
-              <Text style={styles.title}>Let’s{"\n"}Go Golfing</Text>
+              <Text style={styles.title}>Let’s{"\n"}Sign you in</Text>
               <View style={{ height: 24 }} />
 
               <Input
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
   options: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24, 
     marginTop: 6,
   },
