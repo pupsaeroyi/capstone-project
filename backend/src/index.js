@@ -296,6 +296,13 @@ app.post("/auth/reset-password", async (req, res) => {
       .json({ ok: false, message: "Token and new password required" });
   }
 
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      ok: false,
+      message: "Password must be at least 8 characters."
+    });
+  }
+
   try {
     const tokenHash = crypto
       .createHash("sha256")
