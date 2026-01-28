@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Button } from "@/components/Button";
@@ -6,9 +6,10 @@ import { Input } from "@/components/Input";
 import { API_BASE } from "@/lib/api";
 
 export default function ResetPassword() {
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width >= 768;
   const router = useRouter();
   const { token } = useLocalSearchParams<{ token?: string }>();
-
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,14 +78,14 @@ export default function ResetPassword() {
     >
       <ScrollView
         style={[styles.container, { flex: 1 }]}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isLargeScreen ? styles.contentLarge : null]}
         keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.form}>
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, isLargeScreen ? styles.formCardLarge : null]}>
             <Text style={styles.title}>
-              Create new{"\n"}password
+              {isLargeScreen ? "Create new password" : "Create new\npassword"}
             </Text>
 
             <Text style={styles.subtitle}>
@@ -133,18 +134,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 30
   },
+
   content: {
     flexGrow: 1,
     paddingTop: 90,
     paddingBottom: 40
   },
+
+  contentLarge: {
+    alignItems: "center"
+  },
+
   form: {
     width: "100%",
     alignItems: "center"
   },
+
   formCard: {
     width: "85%"
   },
+
+  formCardLarge: {
+    width: "100%",
+    maxWidth: 520
+  },
+
   title: {
     fontSize: 32,
     fontWeight: "bold",
