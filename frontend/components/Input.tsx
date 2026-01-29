@@ -1,4 +1,4 @@
-import { TextInput, StyleSheet, TextInputProps } from "react-native";
+import { TextInput, StyleSheet, TextInputProps, Platform } from "react-native";
 
 type InputProps = TextInputProps & {
   placeholder: string;
@@ -22,10 +22,10 @@ export function Input({ placeholder, style, ...props }: InputProps) {
 
 const styles = StyleSheet.create({
   input: {
-    height: 52,
+    height: Platform.select({ ios: 48, android: 52 }),
     backgroundColor: "#f0f0f0",
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     fontSize: 15,
     borderWidth: 1,
     marginBottom: 12,

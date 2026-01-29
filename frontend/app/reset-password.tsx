@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
 
   formCard: {
-    width: "85%"
+    width: "95%"
   },
 
   formCardLarge: {
