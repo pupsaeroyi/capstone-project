@@ -252,7 +252,7 @@ app.post("/auth/forgot-password", async (req, res) => {
 
     // Send email with Resend
     await resend.emails.send({
-      from: 'Matchmaking App <onboarding@resend.dev>',
+      from: 'Spike <onboarding@resend.dev>',
       to: userEmail,
       subject: 'Reset your password',
       html: `
