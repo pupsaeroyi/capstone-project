@@ -12,6 +12,7 @@ export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleReset = async () => {
     if (!token || typeof token !== "string") {
@@ -60,6 +61,7 @@ export default function ResetPassword() {
       }
 
       alert("Password reset successful! Please return to the app and log in with your new password.");
+      setSuccess(true);
       setNewPassword("");
       setConfirmPassword("");
 
@@ -101,6 +103,7 @@ export default function ResetPassword() {
               onChangeText={setNewPassword}
               secureTextEntry
               returnKeyType="next"
+              editable={!success}
             />
 
             <Input
@@ -110,13 +113,14 @@ export default function ResetPassword() {
               secureTextEntry
               returnKeyType="done"
               onSubmitEditing={handleReset}
+              editable={!success}
             />
 
             <View style={styles.buttonWrapper}>
               <Button
-                title={loading ? "Changing..." : "Change Password"}
+                title={success ? "Password Updated" : loading ? "Changing..." : "Change Password"}
                 onPress={handleReset}
-                disabled={loading}
+                disabled={loading || success}
               />
             </View>
 
