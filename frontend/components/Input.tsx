@@ -22,7 +22,7 @@ export function Input({ placeholder, style, ...props }: InputProps) {
 
 const styles = StyleSheet.create({
   input: {
-    height: Platform.select({ ios: 48, android: 52, web: 55 }),
+    height: Platform.select({ ios: 48, android: 52, web: 52 }),
     backgroundColor: "#f0f0f0",
     paddingHorizontal: 16,
     borderRadius: 12,
