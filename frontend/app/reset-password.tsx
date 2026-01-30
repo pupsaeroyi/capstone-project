@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -8,7 +8,6 @@ import { API_BASE } from "@/lib/api";
 export default function ResetPassword() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
-  const router = useRouter();
   const { token } = useLocalSearchParams<{ token?: string }>();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -60,8 +59,10 @@ export default function ResetPassword() {
         return;
       }
 
-      alert("Password reset successful! Please log in with your new password.");
-      router.replace("/login");
+      alert("Password reset successful! Please return to the app and log in with your new password.");
+      setNewPassword("");
+      setConfirmPassword("");
+
     } catch (err) {
       console.log(err);
       alert("Cannot connect to server");
