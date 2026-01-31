@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, use
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Input } from "@/components/Input";
 import { API_BASE } from "@/lib/api";
 
@@ -97,20 +98,18 @@ export default function ResetPassword() {
 
             <View style={{ height: 20 }} />
 
-            <Input
+            <PasswordInput
               placeholder="New Password"
               value={newPassword}
               onChangeText={setNewPassword}
-              secureTextEntry
               returnKeyType="next"
               editable={!success}
             />
 
-            <Input
+            <PasswordInput
               placeholder="Confirm New Password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secureTextEntry
               returnKeyType="done"
               onSubmitEditing={handleReset}
               editable={!success}
