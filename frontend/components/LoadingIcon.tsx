@@ -8,7 +8,7 @@ type LoadingIconProps = {
 };
 
 export default function LoadingIcon({
-  size = 22,
+  size = 18,
   color = "#999",
 }: LoadingIconProps) {
   const spinValue = useRef(new Animated.Value(0)).current;

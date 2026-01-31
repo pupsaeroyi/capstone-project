@@ -3,10 +3,12 @@ import { Link, useRouter } from "expo-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { PasswordInput } from "@/components/PasswordInput";
 import Checkbox from "expo-checkbox";
 import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
+
 
 export default function Login() {
   const router = useRouter();
@@ -106,11 +108,10 @@ export default function Login() {
                 returnKeyType="next"
               />
 
-              <Input
+              <PasswordInput
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
                 returnKeyType='done'
                 onSubmitEditing={handleLogin}
               />
@@ -130,7 +131,7 @@ export default function Login() {
                   style={styles.forgotText}
                   onPress={() => router.push("/forgot-password")}
                   >
-                  Forgot Password</Text>
+                  Forgot Password?</Text>
               </View>
 
               <View style={styles.buttonWrapper}>

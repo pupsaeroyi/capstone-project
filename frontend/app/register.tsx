@@ -3,6 +3,7 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { API_BASE } from "@/lib/api";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import LoadingIcon from "@/components/LoadingIcon";
@@ -138,30 +139,26 @@ export default function Register() {
                   {usernameStatus === "checking" && <LoadingIcon />}
 
                   {usernameStatus === "available" && (
-                    <AntDesign name="check-circle" size={22} color="green" />
+                    <AntDesign name="check-circle" size={18} color="green" />
                   )}
 
                   {(usernameStatus === "taken" || usernameStatus === "tooShort") && (
-                    <Ionicons name="close-circle" size={24} color="red" />
+                    <Ionicons name="close-circle" size={21} color="red" />
                   )}
                 </View>
               </View>
-
-
-              <Input
+                    
+              <PasswordInput
                 placeholder="Password"
                 value={formData.password}
                 onChangeText={(text) => setFormData({ ...formData, password: text })}
-                secureTextEntry
               />
 
-              <Input
+              <PasswordInput
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, confirmPassword: text })
+                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })
                 }
-                secureTextEntry
               />
 
               <View style={styles.buttonWrapper}>
