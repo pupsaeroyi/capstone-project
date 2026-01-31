@@ -88,7 +88,7 @@ export default function ResetPassword() {
         <View style={styles.form}>
           <View style={[styles.formCard, isLargeScreen ? styles.formCardLarge : null]}>
             <Text style={styles.title}>
-              {isLargeScreen ? "Create new password" : "Create new\npassword"}
+              {isLargeScreen ? "Create new password" : "Create new\nPassword"}
             </Text>
 
             <Text style={styles.subtitle}>
