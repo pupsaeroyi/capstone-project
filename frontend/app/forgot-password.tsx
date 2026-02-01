@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Input } from "@/components/Input";
@@ -63,54 +64,56 @@ export default function ForgotPassword() {
     }
   };
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#fff" }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          style={[styles.container, { flex: 1 }]}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Ionicons
-              name="chevron-back"
-              size={28}
-              color="#000"
-              onPress={() => router.back()}>
-            </Ionicons>
-          </View>
-          <View style={styles.form}>
-            <View style={styles.formCard}>
-              <Text style={styles.title}>Find your account</Text>
-              <Text style={styles.subtitle}>
-                Enter your username or email.
-              </Text>
-              <View style={{ height: 24 }} />
-              <Input
-                placeholder="Username or Email"
-                value={identifier}
-                onChangeText={setIdentifier}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                returnKeyType="done"
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            style={[styles.container, { flex: 1 }]}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Ionicons
+                name="chevron-back"
+                size={28}
+                color="#000"
+                onPress={() => router.back()}>
+              </Ionicons>
+            </View>
+            <View style={styles.form}>
+              <View style={styles.formCard}>
+                <Text style={styles.title}>Find your account</Text>
+                <Text style={styles.subtitle}>
+                  Enter your username or email.
+                </Text>
+                <View style={{ height: 24 }} />
+                <Input
+                  placeholder="Username or Email"
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  returnKeyType="done"
 
-              />
-              <View style={styles.buttonWrapper}>
-                <Button
-                  title={loading ? "Sending..." : "Continue"}
-                  onPress={handleContinue}
-                  disabled={loading}
                 />
+                <View style={styles.buttonWrapper}>
+                  <Button
+                    title={loading ? "Sending..." : "Continue"}
+                    onPress={handleContinue}
+                    disabled={loading}
+                  />
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -123,12 +126,12 @@ const styles = StyleSheet.create({
   header: {
     width: "100%",
     marginBottom: 24,
-    left: 15,
   },
+  
 
   content: {
     flexGrow: 1,
-    paddingTop: 72,
+    paddingTop: 28,
   },
 
   form: {
