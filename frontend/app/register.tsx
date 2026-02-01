@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard} from "react-native";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -22,10 +22,12 @@ export default function Register() {
   });
 
   const [usernameStatus, setUsernameStatus] = useState("idle");
+  const usernameReqId = useRef(0);
 
   const handleUsernameChange = async (text: string) => {
     const trimmed = text.trim();
-    setFormData({ ...formData, username: trimmed });
+    setFormData((prev) => ({ ...prev, username: trimmed }));
+    const reqId = ++usernameReqId.current;
 
     if (trimmed.length === 0) {
       setUsernameStatus("idle");
@@ -40,15 +42,26 @@ export default function Register() {
     setUsernameStatus("checking");
 
     try {
-      const res = await fetch(`${API_BASE}/auth/check-username?username=${text}`);
+      const res = await fetch(
+        `${API_BASE}/auth/check-username?username=${encodeURIComponent(trimmed)}`
+      );
       const data = await res.json();
+      // ignore if this response is for an older input
+      if (reqId !== usernameReqId.current) return;
       setUsernameStatus(data.available ? "available" : "taken");
-    } catch  {
+    } catch {
+      if (reqId !== usernameReqId.current) return;
       setUsernameStatus("idle");
     }
   };
 
+
   const handleRegister = async () => {
+
+    if (usernameStatus !== "available" ) {
+      alert("Please choose an available username.");
+      return;
+    }
 
     if (formData.password.length < 8) {
       alert("Password must be at least 8 characters.");
@@ -115,13 +128,13 @@ export default function Register() {
               <Input
                 placeholder="Full Name"
                 value={formData.fullName}
-                onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, fullName: text }))}
               />
 
               <Input
                 placeholder="Email"
                 value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, email: text }))}
               />
 
               <View style={styles.usernameWrapper}>
@@ -151,13 +164,13 @@ export default function Register() {
               <PasswordInput
                 placeholder="Password"
                 value={formData.password}
-                onChangeText={(text) => setFormData({ ...formData, password: text })}
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, password: text }))}
               />
 
               <PasswordInput
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
-                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })
+                onChangeText={(text) => setFormData((prev) => ({ ...prev, confirmPassword: text }))
                 }
               />
 
