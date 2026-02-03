@@ -58,10 +58,31 @@ export default function Register() {
 
   const handleRegister = async () => {
 
-    if (usernameStatus !== "available" ) {
-      alert("Please choose an available username.");
+    if (!formData.username.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
+      alert("Please fill in all fields")
       return;
     }
+
+    if (usernameStatus === "checking") {
+      alert("Checking username availability… please wait.");
+      return;
+    }
+
+    if (usernameStatus === "taken") {
+      alert("Username is already taken.");
+      return;
+    }
+
+    if (usernameStatus === "tooShort") {
+      alert("Username must be at least 3 characters.");
+      return;
+    }
+
+    if (!formData.email.includes("@")) {
+      alert("Please enter a valid email.")
+      return;
+    }
+
 
     if (formData.password.length < 8) {
       alert("Password must be at least 8 characters.");
