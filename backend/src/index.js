@@ -35,15 +35,29 @@ app.get("/health", async (req, res) => {
 
 // registration endpoint
 app.post("/auth/register", async (req, res) => {
-  const { username, email, password, fullName } = req.body;
+  let { username, email, password } = req.body;
+  username = typeof username === "string" ? username.trim() : "";
+  email = typeof email === "string" ? email.trim().toLowerCase() : "";
+  
 
-  if (!username || !email || !password || !fullName) {
+  if (!username || !email || !password) {
     return res.status(400).json({ 
       ok: false, 
-      message: "username, email, full name, and password required" 
+      message: "Username, email, and password required." 
     });
   }
 
+  if (username.length < 3) {
+    return res.status(400).json({ 
+      ok: false,
+      message: "Username must be at least 3 characters."
+    });
+  }
+  
+  if (!email.includes("@")) {
+    return res.status(400).json({ ok: false, message: "Please enter a valid email." });
+  }
+  
   if (password.length < 8) {
     return res.status(400).json({
       ok: false,
@@ -71,8 +85,8 @@ app.post("/auth/register", async (req, res) => {
 
     // Insert new user
     const result = await pool.query(
-      "INSERT INTO users (username, email, password_hash, full_name) VALUES ($1, $2, $3, $4) RETURNING id, username, email, full_name, created_at",
-      [username, email, password_hash, fullName]
+      "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at",
+      [username, email, password_hash]
     );
 
     return res.json({ 
@@ -91,7 +105,7 @@ app.post("/auth/register", async (req, res) => {
 
 // Check username availability 
 app.get("/auth/check-username", async (req, res) => {
-  const { username } = req.query;
+  const username = typeof req.query.username === "string" ? req.query.username.trim() : "";
 
   // Guard: empty or too short usernames
   if (!username || username.length < 3) {
@@ -116,7 +130,9 @@ app.get("/auth/check-username", async (req, res) => {
 
 // login endpoint
 app.post("/auth/login", async (req, res) => {
-  const { identifier, password } = req.body;
+  let { identifier, password } = req.body;
+  identifier = typeof identifier === "string" ? identifier.trim() : "";
+  if (identifier.includes("@")) identifier = identifier.toLowerCase();
 
   if (!identifier || !password) {
     return res.status(400).json({ 
@@ -128,7 +144,7 @@ app.post("/auth/login", async (req, res) => {
   try {
     // Query user by username or email
     const result = await pool.query(
-      "SELECT id, username, email, full_name, password_hash FROM users WHERE username = $1 OR email = $1",
+      "SELECT id, username, email, password_hash FROM users WHERE username = $1 OR email = $1",
       [identifier]
     );
 
@@ -167,7 +183,6 @@ app.post("/auth/login", async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        fullName: user.full_name,
       }
     });
 
@@ -184,7 +199,7 @@ app.post("/auth/login", async (req, res) => {
 app.get("/me", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(
-      "SELECT id, username, email, full_name, created_at FROM users WHERE id = $1",
+      "SELECT id, username, email, created_at FROM users WHERE id = $1",
       [req.userId]
     );
 
@@ -219,7 +234,7 @@ app.post("/auth/forgot-password", async (req, res) => {
   try {
     // Check if user exists
     const userResult = await pool.query(
-      "SELECT id, email, username, full_name FROM users WHERE email = $1 OR username = $1",
+      "SELECT id, email, username FROM users WHERE email = $1 OR username = $1",
       [identifier]
     );
 
@@ -258,7 +273,7 @@ app.post("/auth/forgot-password", async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password Reset Request</h2>
-          <p>Hi ${user.full_name || user.username},</p>
+          <p>Hi ${user.username},</p>
           <p>You requested a password reset for your account.</p>
           <p>Click the button below to reset your password:</p>
           <div style="margin: 30px 0;">
