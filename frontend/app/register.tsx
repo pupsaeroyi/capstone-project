@@ -14,7 +14,6 @@ export default function Register() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    fullName: "",
     email: "",
     username: "",
     password: "",
@@ -57,8 +56,10 @@ export default function Register() {
 
 
   const handleRegister = async () => {
+    const username = formData.username.trim();
+    const email = formData.email.trim().toLowerCase();
 
-    if (!formData.username.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
+    if (!username || !email || !formData.password || !formData.confirmPassword) {
       alert("Please fill in all fields")
       return;
     }
@@ -78,7 +79,12 @@ export default function Register() {
       return;
     }
 
-    if (!formData.email.includes("@")) {
+    if (username.length >= 3 && usernameStatus !== "available") {
+      alert("Please choose an available username.");
+      return;
+    }
+
+    if (!email.includes("@")) {
       alert("Please enter a valid email.")
       return;
     }
@@ -99,10 +105,9 @@ export default function Register() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
+          username,
+          email,
           password: formData.password,
-          fullName: formData.fullName,
         }),
       });
 
@@ -146,11 +151,6 @@ export default function Register() {
           
           <View style={styles.form}>
             <View style={styles.formCard}>
-              <Input
-                placeholder="Full Name"
-                value={formData.fullName}
-                onChangeText={(text) => setFormData((prev) => ({ ...prev, fullName: text }))}
-              />
 
               <Input
                 placeholder="Email"
