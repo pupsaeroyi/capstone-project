@@ -89,11 +89,44 @@ app.post("/auth/register", async (req, res) => {
       [username, email, password_hash]
     );
 
+    const newUser = result.rows[0];
+    const userId = newUser.id;
+    const userEmail = newUser.email;
+    // Email verification code for registration (new users only)
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
+    await pool.query(
+      "INSERT INTO email_verifications (user_id, code_hash, expires_at) VALUES ($1, $2, $3)",
+      [userId, codeHash, expiresAt]
+    );
+
+    await resend.emails.send({
+      from: 'Spike <onboarding@resend.dev>',
+      to: userEmail,
+      subject: 'Your verification code',
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <p>Hi ${newUser.username},</p>
+          <p>Your verification code is:</p>
+          <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
+            ${code}
+          </div>
+          <p style="color:#666;">This code expires in 10 minutes.</p>
+        </div>
+      `,
+    });
+
+
     return res.json({ 
       ok: true, 
       message: "Registration successful",
-      user: result.rows[0]
+      needsEmailVerification: true,
+      user: newUser,
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ 
@@ -127,6 +160,69 @@ app.get("/auth/check-username", async (req, res) => {
     res.status(500).json({ ok: false });
   }
 });
+
+
+// Verify email (code)
+app.post("/auth/verify-email", async (req, res) => {
+  let { email,code } = req.body;
+
+  email = typeof email === "string" ? email.trim().toLowerCase() : "";
+  code = typeof code === "string" ? code.trim() : "";
+
+  if (!email || !code) {
+    return res.status(400).json({ ok: false, message: "Email and code required" });
+  }
+
+  if (code.length !== 6) {
+    return res.status(400).json({ ok: false, message: "Code must be 6 digits" });
+  }
+
+  try {
+    // 1.Find user
+    const userResult = await pool.query(
+      "SELECT id, email_verified FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ ok: false, message: "Invalid code or expired" });
+    }
+
+    const user = userResult.rows[0];
+    
+    if (user.email_verified) {
+      return res.json({ ok: true, message: "Email already verified" });
+    }
+    // 2. Hash submitted code
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    // 3. Check code in email_verifications and expiry
+    const v = await pool.query(
+      `SELECT user_id FROM email_verifications
+       WHERE user_id = $1 AND code_hash = $2 AND expires_at > NOW()`,
+      [user.id, codeHash]
+    );
+
+    if (v.rows.length === 0) {
+      return res.status(400).json({ok: false, message: "Invalid code or expired" });
+    }
+
+    // 4. Mark verified
+    await pool.query (
+      "UPDATE users SET email_verified = true, email_verified_at = NOW() WHERE id = $1",
+      [user.id]
+    );
+
+    // 5. Delete the verification row since it is for one-time use
+    await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [user.id]);
+
+    return res.json({ ok: true, message: "Email verified successfully" });
+  } catch (err) {
+    console.error("Verify email error:", err);
+    return res.status(500).json({ok: false, message: "Server error"});
+  }
+});
+
 
 // login endpoint
 app.post("/auth/login", async (req, res) => {
@@ -225,7 +321,9 @@ app.get("/me", requireAuth, async (req, res) => {
 
 // Forgot password
 app.post("/auth/forgot-password", async (req, res) => {
-  const { identifier } = req.body;
+  let { identifier } = req.body;
+  identifier = typeof identifier === "string" ? identifier.trim() : "";
+  if (identifier.includes("@")) identifier = identifier.toLowerCase();
 
   if (!identifier) {
     return res.status(400).json({ ok: false, message: "Email or username required" });
