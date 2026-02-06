@@ -118,9 +118,11 @@ export default function Register() {
         alert(data.message || "Registration failed. Please try again.");
         return;
       }
-
-      alert(`Registration successful! Welcome ${data.user.username}!`);
-      router.replace("/login");
+      
+      router.replace({
+        pathname: "/verify-email",
+        params: { email },
+      });
     } catch (err: any) {
       console.log(err);
       alert("Cannot connect to server. Is backend running?");
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
 
   content: {
     flexGrow: 1,
-    paddingTop: 60,
+    paddingTop: 70,
     paddingBottom: 40, 
   },
 

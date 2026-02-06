@@ -138,7 +138,7 @@ export default function Login() {
                 <Button 
                   title={loading ? "Logging in..." : "Login"}
                   onPress={handleLogin} 
-                  disabled={loading}
+                  disabled={loading} 
                 />
               </View>
 
@@ -148,6 +148,19 @@ export default function Login() {
                   Sign up here
                 </Link>
               </View>
+
+              {/* DEV TOOL: Temporary button to access email verification page */}
+
+              {__DEV__ && (
+                <Text
+                  style={{ color: "green", textAlign: "center", marginTop: 10 }}
+                  onPress={() => router.push("/verify-email")}
+                  
+                >
+                  DEV: Verify Email
+                </Text>
+              )}
+
             </View>
           </View>
         </ScrollView>

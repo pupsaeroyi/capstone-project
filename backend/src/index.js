@@ -3,10 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { Resend } from "resend";
 import { pool } from "./db.js";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "./auth.js";
+import { sendEmail } from "./mailer.js";
+
 
 dotenv.config();
 
@@ -19,9 +20,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -102,22 +100,24 @@ app.post("/auth/register", async (req, res) => {
       "INSERT INTO email_verifications (user_id, code_hash, expires_at) VALUES ($1, $2, $3)",
       [userId, codeHash, expiresAt]
     );
-
-    await resend.emails.send({
-      from: 'Spike <onboarding@resend.dev>',
-      to: userEmail,
-      subject: 'Your verification code',
-      html: `
-        <div style="font-family: Arial, sans-serif;">
-          <p>Hi ${newUser.username},</p>
-          <p>Your verification code is:</p>
-          <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
-            ${code}
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject: 'Your verification code',
+        html: `
+          <div style="font-family: Arial, sans-serif;">
+            <p>Hi ${newUser.username},</p>
+            <p>Your verification code is:</p>
+            <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
+              ${code}
+            </div>
+            <p style="color:#666;">This code expires in 10 minutes.</p>
           </div>
-          <p style="color:#666;">This code expires in 10 minutes.</p>
-        </div>
-      `,
-    });
+        `,
+      });
+    } catch (err) {
+      console.error("Verification email failed:", err);
+    }
 
 
     return res.json({ 
@@ -220,6 +220,68 @@ app.post("/auth/verify-email", async (req, res) => {
   } catch (err) {
     console.error("Verify email error:", err);
     return res.status(500).json({ok: false, message: "Server error"});
+  }
+});
+
+
+// Resend verification code
+app.post("/auth/resend-verification", async (req, res) => {
+  let { email } = req.body;
+  email = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+  if (!email) {
+    return res.status(400).json({ ok: false, message: "Email required" });
+  }
+
+  try {
+    // Find user
+    const userResult = await pool.query(
+      "SELECT id, username, email, email_verified FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.json({ ok: true, message: "If that email is registered, a code has been sent." });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.email_verified) {
+      return res.json({ ok: true, message: "Email already verified" });
+    }
+
+    // Generate new code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Delete old code and insert new one
+    await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [user.id]);
+    await pool.query(
+      "INSERT INTO email_verifications (user_id, code_hash, expires_at) VALUES ($1, $2, $3)",
+      [user.id, codeHash, expiresAt]
+    );
+
+    // Send email
+    await sendEmail({
+      to: email,
+      subject: 'Your verification code',
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <p>Hi ${user.username},</p>
+          <p>Your verification code is:</p>
+          <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">
+            ${code}
+          </div>
+          <p style="color:#666;">This code expires in 10 minutes.</p>
+        </div>
+      `,
+    });
+
+    return res.json({ ok: true, message: "If that email is registered, a code has been sent." });
+  } catch (err) {
+    console.error("Resend verification error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
   }
 });
 
@@ -363,9 +425,8 @@ app.post("/auth/forgot-password", async (req, res) => {
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
-    // Send email with Resend
-    await resend.emails.send({
-      from: 'Spike <onboarding@resend.dev>',
+    // Send email with nodemailer for now (may scale later with other alternatives)
+    await sendEmail({
       to: userEmail,
       subject: 'Reset your password',
       html: `
