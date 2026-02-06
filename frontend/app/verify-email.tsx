@@ -13,7 +13,8 @@ export default function VerifyEmail() {
   const safeEmail = typeof email === "string" ? email : "";
 
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);  
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleVerify = async () => {
     if (!safeEmail) {
@@ -27,7 +28,7 @@ export default function VerifyEmail() {
     }
 
     try {
-      setLoading(true);
+      setVerifyLoading(true);
 
       const res = await fetch(`${API_BASE}/auth/verify-email`, {
         method: "POST",
@@ -48,7 +49,7 @@ export default function VerifyEmail() {
       console.log(err);
       alert("Cannot connect to server");
     } finally {
-      setLoading(false);
+      setVerifyLoading(false);
     }
   };
 
@@ -59,7 +60,7 @@ export default function VerifyEmail() {
     }
 
     try {
-      setLoading(true);
+      setResendLoading(true);
 
       const res = await fetch(`${API_BASE}/auth/resend-verification`, {
         method: "POST",
@@ -78,6 +79,8 @@ export default function VerifyEmail() {
     } catch (err) {
       console.log(err);
       alert("Cannot connect to server.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -117,24 +120,27 @@ export default function VerifyEmail() {
             <View style={{ height: 10 }} />
 
             <View style={{ width: "100%" }}>
-              <OtpInput onChange={setCode} disabled={loading} />
+              <OtpInput onChange={setCode} disabled={verifyLoading || resendLoading} />
             </View>
             
             <View style={{ height: 26 }} />
 
             <Button
-              title={loading ? "Verifying..." : "Confirm"}
+              title={verifyLoading ? "Verifying..." : "Confirm"}
               onPress={handleVerify}
-              disabled={loading}
+              disabled={verifyLoading || resendLoading}
             />
 
             <View style={styles.helperContainer}>
               <Text style={styles.helper}>Didn't receive the code?</Text>
               <Text 
-                style={styles.resendLink}
-                onPress={handleResend}
+                style={[
+                  styles.resendLink,
+                  resendLoading && { color: "#999" }  // ← Gray out when loading
+                ]}
+                onPress={resendLoading ? undefined : handleResend}  // ← Disable when loading
               >
-                Resend code
+                {resendLoading ? "Resending..." : "Resend code"}
               </Text>
             </View>
           </View>
