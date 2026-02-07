@@ -120,12 +120,13 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
-    paddingHorizontal: 30,
+    paddingHorizontal: "10%",
   },
 
   header: {
     width: "100%",
     marginBottom: 24,
+    marginLeft: -8,
   },
   
 
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
   },
 
   formCard: {
-    width: "95%",
+    width: "100%",
   },
 
   title: {

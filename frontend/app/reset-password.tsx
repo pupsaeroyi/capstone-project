@@ -136,7 +136,7 @@ export default function ResetPassword() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
-    paddingHorizontal: 30
+    paddingHorizontal: "10%",
   },
 
   content: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
 
   formCard: {
-    width: "95%"
+    width: "100%"
   },
 
   formCardLarge: {

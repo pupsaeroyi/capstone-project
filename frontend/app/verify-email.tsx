@@ -151,16 +151,18 @@ export default function VerifyEmail() {
 }
 
 const styles = StyleSheet.create({
+
+  container: {
+    backgroundColor: "#fff",
+    paddingHorizontal: "10%",
+  },
   
   header: {
     width: "100%",
     marginBottom: 24,
+    marginLeft: -8,
   },
-
-  container: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 30,
-  },
+  
   content: {
     flexGrow: 1,
     paddingTop: 90,
@@ -171,7 +173,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   formCard: {
-    width: "95%",
+    width: "100%",
   },
   title: {
     fontSize: 28,

@@ -6,7 +6,7 @@ type InputProps = TextInputProps & {
 
 export function Input({ placeholder, style, ...props }: InputProps) {
   const { width } = useWindowDimensions();
-  const height = width < 360 ? 44 : width < 420 ? 48 : 52;
+  const height = width < 360 ? 44 : width < 420 ? 50 : 52;
 
   return (
     <TextInput

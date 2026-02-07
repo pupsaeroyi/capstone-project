@@ -425,7 +425,7 @@ app.post("/auth/forgot-password", async (req, res) => {
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
 
-    // Send email with nodemailer for now (may scale later with other alternatives)
+    // Send reset email
     await sendEmail({
       to: userEmail,
       subject: 'Reset your password',

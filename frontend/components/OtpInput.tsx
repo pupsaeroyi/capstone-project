@@ -42,6 +42,7 @@ export function OtpInput({ onChange, disabled = false }: Props) {
           onKeyPress={(e) => handleKeyPress(e, index)}
           keyboardType="number-pad"
           maxLength={1}
+          editable={!disabled}
         />
       ))}
     </View>
@@ -53,17 +54,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 5,
+    gap: 8,
   },
   box: {
-    width: 36,
-    height: 40,
+    flex: 1,
+    aspectRatio: 0.85,
+    maxWidth: 48,
     backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
   },
 });
