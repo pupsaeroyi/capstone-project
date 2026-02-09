@@ -64,18 +64,32 @@ app.post("/auth/register", async (req, res) => {
   }
 
   try {
-    // Check if user already exists
-    const existingUser = await pool.query(
-      "SELECT 1 FROM users WHERE username = $1 OR email = $2",
-      [username, email]
+    // Check if username and email already exist
+    const existingUsername = await pool.query(
+      "SELECT 1 FROM users WHERE username = $1",
+      [username]
     );
 
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ 
+    const existingEmail = await pool.query(
+      "SELECT 1 FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUsername.rows.length > 0) {
+      return res.status(409).json({ 
         ok: false, 
-        message: "Username or email already exists" 
+        message: "Username already exists" 
       });
     }
+
+    if (existingEmail.rows.length > 0) {
+      return res.status(409).json({ 
+        ok: false, 
+        message: "Email already exists" 
+      });
+    }    
+
+
 
     // Hash password
     const saltRounds = 10;
@@ -128,6 +142,21 @@ app.post("/auth/register", async (req, res) => {
     });
 
   } catch (err) {
+    if (err.code === "23505") {
+      if (err.constraint === "users_username_unique") {
+        return res.status(409).json({ ok: false, message: "Username already exists" });
+      }
+
+      if (err.constraint === "users_email_unique") {
+        return res.status(409).json({ ok: false, message: "Email already exists" });
+      }
+
+      return res.status(409).json({ 
+        ok: false, 
+        message: "Username or email already exists" 
+      });
+    }
+
     console.error(err);
     return res.status(500).json({ 
       ok: false, 
