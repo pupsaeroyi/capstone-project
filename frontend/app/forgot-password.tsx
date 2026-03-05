@@ -93,6 +93,7 @@ export default function ForgotPassword() {
                 <View style={{ height: 24 }} />
                 <Input
                   placeholder="Username or Email"
+                  style={styles.field}
                   value={identifier}
                   onChangeText={setIdentifier}
                   autoCapitalize="none"
@@ -146,14 +147,19 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontFamily: "Lexend_700Bold",
     lineHeight: 34,
     marginBottom: 8,
+
+  },
+  field: {
+    marginBottom: 16,
   },
 
   subtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#737373",
+    fontFamily: "Lexend_500Medium",
   },
 
   buttonWrapper: {
