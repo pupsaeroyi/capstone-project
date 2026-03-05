@@ -34,8 +34,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6", 
     paddingHorizontal: 20,
     fontSize: 15,
-    borderWidth: 0, 
-    marginBottom: 16,
+    borderWidth: 1, 
+    borderColor: "transparent",
     fontFamily: "Lexend_400Regular",
   },
 });

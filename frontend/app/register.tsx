@@ -146,8 +146,13 @@ export default function Register() {
         
           <View style={styles.form}>
             <View style={styles.formCard}>
-              <Text style={styles.title}>Register{'\n'}To the club</Text>
-              
+              <Text style={styles.title}>
+                <Text style={styles.registerText}>Register</Text>
+                {"\n"}
+                <Text style={styles.courtText}>To the court</Text>
+              </Text> 
+
+              <Text style={styles.subtitle}>Join the local volleyball{"\n"}community.</Text>
             </View>
           </View>
           
@@ -156,6 +161,7 @@ export default function Register() {
 
               <Input
                 placeholder="Email"
+                style={styles.field}
                 value={formData.email}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, email: text }))}
               />
@@ -166,7 +172,7 @@ export default function Register() {
                   value={formData.username}
                   onChangeText={handleUsernameChange}
                   style={[
-                    styles.usernameInput,
+                    styles.usernameInput, styles.field,
                     (usernameStatus === "taken" || usernameStatus === "tooShort") && styles.inputError,
                   ]}
                 />
@@ -187,12 +193,14 @@ export default function Register() {
               <PasswordInput
                 placeholder="Password"
                 value={formData.password}
+                style={styles.field}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, password: text }))}
               />
 
               <PasswordInput
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
+                style={styles.field}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, confirmPassword: text }))
                 }
               />
@@ -235,7 +243,22 @@ const styles = StyleSheet.create({
 
   title: { 
     fontSize: 32, 
-    fontWeight: "bold",
+    fontFamily: "Lexend_700Bold",
+  },
+
+  registerText: {
+    color: "#0B36F4",
+  },
+
+  courtText: {
+    color: "#0F172A",
+  },
+
+  subtitle: {
+    fontSize: 16,
+    fontFamily: "Lexend_500Medium",
+    color: "#64748B",
+    marginTop: 8,
   },
 
   form: { 
@@ -259,36 +282,41 @@ const styles = StyleSheet.create({
 
   loginText: { 
     fontSize: 14, 
-    color: "#666",
+    color: "#737373",
+    fontFamily: "Lexend_400Regular",
   },
 
   loginLink: { 
     fontSize: 14, 
-    color: "#007AFF", 
-    fontWeight: "500",
+    color: "#0B36F4", 
+    fontFamily: "Lexend_400Regular",
   },
 
-usernameWrapper: {
-  position: "relative",
-  
-},
+  usernameWrapper: {
+    position: "relative",
+    
+  },
 
-usernameInput: {
-  paddingRight: 44,
-},
+  usernameInput: {
+    paddingRight: 44,
+  },
 
-inputError: {
-  borderColor: "red",
-},
+  inputError: {
+    borderColor: "red",
+  },
 
-iconWrapper: {
-  position: "absolute",
-  right: 14,
-  top: 0,
-  bottom: 12,
-  justifyContent: "center",
-  alignItems: "center",
-},
+  iconWrapper: {
+    position: "absolute",
+    right: 14,
+    top: 0,
+    bottom: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  field: {
+    marginBottom: 16,
+  },
 
 
 });

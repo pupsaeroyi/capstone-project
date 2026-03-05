@@ -84,9 +84,10 @@ export default function Login() {
   };
 
   return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#fff" }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      style={{ flex: 1}}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -109,6 +110,7 @@ export default function Login() {
                 placeholder="Username or Email"
                 value={identifier}
                 onChangeText={setIdentifier}
+                style={styles.field}
                 autoCapitalize='none'
                 autoCorrect={false}
                 keyboardType="default"
@@ -119,6 +121,7 @@ export default function Login() {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
+                style={styles.field}
                 returnKeyType='done'
                 onSubmitEditing={handleLogin}
               />
@@ -156,42 +159,54 @@ export default function Login() {
                 <Link href="/register" style={styles.signupLink}>
                   Sign up here
                 </Link>
+                {__DEV__ && (
+                  <Text
+                    style={{ marginTop: 8, fontSize: 12, color: "#999" }}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/verify-email",
+                        params: { email: "dev@test.com" },
+                      })
+                    }
+                  >
+                    Dev Tool
+                  </Text>
+                )}
               </View>
             </View>
           </View>
-
-          <View style={styles.bottomDecoration}>
-            <View
-              style={[
-                styles.circleLeft,
-                {
-                  width: circleSizeLeft,
-                  height: circleSizeLeft,
-                  borderRadius: circleSizeLeft / 2,
-                  left: -circleSizeLeft * 0.4,
-                  bottom: -circleSizeLeft * 0.65,
-                },
-              ]}
-            />
-
-            <View
-              style={[
-                styles.circleRight,
-                {
-                  width: circleSizeRight,
-                  height: circleSizeRight,
-                  borderRadius: circleSizeRight / 2,
-                  right: -circleSizeRight * 0.35,
-                  bottom: -circleSizeRight * 0.7,
-                },
-              ]}
-            />
-          </View>
-
-
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+
+    <View style={styles.bottomDecoration} pointerEvents="none">
+      <View
+        style={[
+          styles.circleLeft,
+            {
+              width: circleSizeLeft,
+              height: circleSizeLeft,
+              borderRadius: circleSizeLeft / 2,
+              left: -circleSizeLeft * 0.35,
+              bottom: -circleSizeLeft * 0.65,
+            },
+          ]}
+      />
+
+      <View
+       style={[
+          styles.circleRight,
+            {
+              width: circleSizeRight,
+              height: circleSizeRight,
+              borderRadius: circleSizeRight / 2,
+              right: -circleSizeRight * 0.3,
+              bottom: -circleSizeRight * 0.7,
+            },
+          ]}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -221,7 +236,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     fontSize: 16,
-    fontFamily: "Lexend_400Regular",
+    fontFamily: "Lexend_500Medium",
     textAlign: "center",
     color: "#64748B",
     marginTop: 14,
@@ -248,13 +263,13 @@ const styles = StyleSheet.create({
   },
 
   optionText: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#475569",
     fontFamily: "Lexend_500Medium",
   },
 
   forgotText: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#0B36F4",
     fontFamily: "Lexend_500Medium",
   },
@@ -270,12 +285,13 @@ const styles = StyleSheet.create({
 
   signupText: {
     fontSize: 14,
-    color: "#666",
+    color: "#737373",
+    fontFamily: "Lexend_400Regular",
   },
 
   signupLink: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#0B36F4",
     fontFamily: "Lexend_400Regular",
   },
 
@@ -299,6 +315,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === "ios" ? 60 : 140,
     left: 0,
     right: 0,
+    
    },
 
    circleLeft: {
@@ -309,5 +326,9 @@ const styles = StyleSheet.create({
   circleRight: {
     position: "absolute",
     backgroundColor: "#F1F5F9",
+  },
+
+  field: {
+    marginBottom: 16,
   },
 });
