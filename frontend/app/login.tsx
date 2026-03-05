@@ -8,7 +8,7 @@ import Checkbox from "expo-checkbox";
 import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
-
+import { useWindowDimensions } from "react-native";
 
 export default function Login() {
   const router = useRouter();
@@ -16,6 +16,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { width } = useWindowDimensions();
+  const circleSizeLeft = width * 0.9;
+  const circleSizeRight = width * 0.8;
 
   useEffect(() => {
     (async () => {
@@ -95,8 +98,12 @@ export default function Login() {
         >
           <View style={styles.form}>
             <View style={styles.formCard}>
-              <Text style={styles.title}>Let’s{"\n"}Sign you in</Text>
-              <View style={{ height: 24 }} />
+              <View style={styles.header}>
+                <Text style={styles.title}>Let’s Go Play{"\n"}Volleyball</Text>
+                <Text style={styles.subtitle}>
+                  Find your team, hit the court.
+                </Text>
+              </View>
 
               <Input
                 placeholder="Username or Email"
@@ -121,7 +128,7 @@ export default function Login() {
                   <Checkbox
                     value={rememberMe}
                     onValueChange={setRememberMe}
-                    color={rememberMe ? "#000" : undefined}
+                    color={rememberMe ? "#0B36F4" : undefined}
                     style={styles.checkbox}
                   />
                   <Text style={styles.optionText}> Remember me</Text>
@@ -142,27 +149,46 @@ export default function Login() {
                 />
               </View>
 
+              <View style={styles.divider} />
+
               <View style={styles.signupContainer}>
                 <Text style={styles.signupText}>Don't have an account?</Text>
                 <Link href="/register" style={styles.signupLink}>
                   Sign up here
                 </Link>
               </View>
-
-              {/* DEV TOOL: Temporary button to access email verification page */}
-
-              {__DEV__ && (
-                <Text
-                  style={{ color: "green", textAlign: "center", marginTop: 10 }}
-                  onPress={() => router.push("/verify-email")}
-                  
-                >
-                  DEV: Verify Email
-                </Text>
-              )}
-
             </View>
           </View>
+
+          <View style={styles.bottomDecoration}>
+            <View
+              style={[
+                styles.circleLeft,
+                {
+                  width: circleSizeLeft,
+                  height: circleSizeLeft,
+                  borderRadius: circleSizeLeft / 2,
+                  left: -circleSizeLeft * 0.4,
+                  bottom: -circleSizeLeft * 0.65,
+                },
+              ]}
+            />
+
+            <View
+              style={[
+                styles.circleRight,
+                {
+                  width: circleSizeRight,
+                  height: circleSizeRight,
+                  borderRadius: circleSizeRight / 2,
+                  right: -circleSizeRight * 0.35,
+                  bottom: -circleSizeRight * 0.7,
+                },
+              ]}
+            />
+          </View>
+
+
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -177,15 +203,28 @@ const styles = StyleSheet.create({
 
   content: {
     flexGrow: 1,
-    paddingTop: 120,
+    paddingTop: 80,
     paddingBottom: 40,
+  },
+  
+  header: {
+    alignItems: "center",
+    marginBottom: 40,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    lineHeight: 36,
-    textAlign: "left",
+    fontSize: 34,
+    fontFamily: "Lexend_700Bold",
+    textAlign: "center",
+    color: "#0F172A",
+  },
+
+  subtitle: {
+    fontSize: 16,
+    fontFamily: "Lexend_400Regular",
+    textAlign: "center",
+    color: "#64748B",
+    marginTop: 14,
   },
 
   form: {
@@ -201,8 +240,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24, 
-    marginTop: 6,
   },
 
   rememberRow: {
@@ -212,21 +249,22 @@ const styles = StyleSheet.create({
 
   optionText: {
     fontSize: 13,
-    color: "#666",
+    color: "#475569",
+    fontFamily: "Lexend_500Medium",
   },
 
   forgotText: {
     fontSize: 13,
-    color: "#999",
+    color: "#0B36F4",
+    fontFamily: "Lexend_500Medium",
   },
 
   buttonWrapper: {
-    marginTop: 6,
+    marginTop: 16,
   },
 
   signupContainer: {
     alignItems: "center",
-    marginTop: 22,
     gap: 6,
   },
 
@@ -238,14 +276,38 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     color: "#007AFF",
-    fontWeight: "500",
+    fontFamily: "Lexend_400Regular",
   },
 
   checkbox: {
     width: 18,
     height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#000",
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#CFCFCF",
+    marginVertical: 16,
+    width: "100%",
+   },
+
+   bottomDecoration: {
+    position: "absolute",
+    bottom: Platform.OS === "ios" ? 60 : 140,
+    left: 0,
+    right: 0,
+   },
+
+   circleLeft: {
+    position: "absolute",
+    backgroundColor: "#F8FAFC",
+  },
+
+  circleRight: {
+    position: "absolute",
+    backgroundColor: "#F1F5F9",
   },
 });

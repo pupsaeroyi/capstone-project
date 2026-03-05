@@ -6,33 +6,36 @@ type InputProps = TextInputProps & {
 
 export function Input({ placeholder, style, ...props }: InputProps) {
   const { width } = useWindowDimensions();
+
   const height = width < 360 ? 44 : width < 420 ? 50 : 52;
 
   return (
     <TextInput
-      style={[styles.input, {height}, style]}
+      style={[
+        styles.input,
+        {
+          height,
+          borderRadius: height / 2, 
+        },
+        style,
+      ]}
       autoComplete="off"
       placeholder={placeholder}
-      placeholderTextColor="#999"
+      placeholderTextColor="#878B94"
       autoCorrect={false}
       autoCapitalize="none"
-      showSoftInputOnFocus
       {...props}
-      
     />
   );
 }
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    backgroundColor: "#F3F4F6", 
+    paddingHorizontal: 20,
     fontSize: 15,
-    borderWidth: 1,
-    marginBottom: 12,
-    borderColor: "#d0d0d0",
-    textAlignVertical: "center",
-    
+    borderWidth: 0, 
+    marginBottom: 16,
+    fontFamily: "Lexend_400Regular",
   },
 });

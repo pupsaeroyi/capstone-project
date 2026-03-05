@@ -1,5 +1,5 @@
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-
+import { Feather } from "@expo/vector-icons";
 interface ButtonProps {
     title: string;
     onPress: () => void;
@@ -20,7 +20,7 @@ export function Button({ title, onPress, disabled = false }: ButtonProps) {
 
 const styles = StyleSheet.create({
     button: {
-        backgroundColor: '#000',
+        backgroundColor: '#0B36F4',
         paddingVertical: 16,
         paddingHorizontal: 40,
         borderRadius: 25,
@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     text: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: '600',
+        fontFamily: 'Lexend_500Medium',
     },
 });
