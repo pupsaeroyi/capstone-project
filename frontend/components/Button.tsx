@@ -21,7 +21,7 @@ export function Button({ title, onPress, disabled = false }: ButtonProps) {
 const styles = StyleSheet.create({
     button: {
         backgroundColor: '#0B36F4',
-        paddingVertical: 16,
+        paddingVertical: 15,
         paddingHorizontal: 40,
         borderRadius: 25,
         alignItems: 'center',
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     },
     text: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 18,
         fontFamily: 'Lexend_500Medium',
     },
 });

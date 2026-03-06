@@ -167,34 +167,42 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingTop: 90,
     paddingBottom: 40,
+
   },
   form: {
     width: "100%",
     alignItems: "center",
   },
+
   formCard: {
     width: "100%",
   },
+
   title: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontFamily: "Lexend_700Bold",
     lineHeight: 34,
+
   },
   subtitle: {
-    marginTop: 10,
-    fontSize: 14,
-    color: "#666",
+    marginTop: 12,
+    fontSize: 16,
+    fontFamily: "Lexend_500Medium",
+    color: "#64748B",
     lineHeight: 20,
   },
+
   label: {
     fontSize: 14,
-    fontWeight: "500",
+    fontFamily: "Lexend_500Medium",
     color: "#555",
   },
+
   helper: {
-    fontSize: 12,
-    color: "#999",
+    fontSize: 14,
+    color: "#737373",
     textAlign: "center",
+    fontFamily: "Lexend_400Regular",
   },
 
   helperContainer: {
@@ -204,9 +212,9 @@ const styles = StyleSheet.create({
   },
 
   resendLink: {
-  fontSize: 13,
-  color: "#007AFF",
-  fontWeight: "500",
+  fontSize: 15,
+  color: "#0B36F4",
+  fontFamily: "Lexend_400Regular",
   textAlign: "center",
   },
 
