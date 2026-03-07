@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { useRouter } from "expo-router";
 import { FilterButton } from "@/components/FilterButton";
-import { FontAwesome6, Feather } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
+import  MenuButton  from "@/components/MenuButton";
+import SideMenu from "@/components/SideMenu";
 
 const { width } = Dimensions.get("window");
 
@@ -98,6 +100,7 @@ export default function Home() {
   }
   const featuredMatch = getFeaturedMatch(matches);
   const featuredVenue = venues.find(v => v.venue_id === featuredMatch.venue_id);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function getGreeting() {
     const hour = new Date().getHours();
@@ -113,6 +116,7 @@ export default function Home() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -124,7 +128,7 @@ export default function Home() {
             <Text style={styles.greetingText}>{getGreeting()}</Text>
             <Text style={styles.greetingName}>Username</Text>
           </View>
-          <Feather name="menu" size={24} color="#0F172A" />
+            <MenuButton onPress={() => setMenuOpen(true)} />
         </View>
 
         <View style={styles.searchRow}>
@@ -184,9 +188,20 @@ export default function Home() {
       >
       Back to Login
       </Text>
-)}
+      )}
 
     </ScrollView>
+
+    <SideMenu
+      visible={menuOpen}
+      onClose={() => setMenuOpen(false)}
+    />
+
+  </View>
+    
+
+
+    
   );
 }
 
