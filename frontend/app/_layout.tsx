@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold } from "@expo-google-fonts/lexend";
+import { Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, Lexend_800ExtraBold } from "@expo-google-fonts/lexend";
 
 
 export default function RootLayout() {
@@ -9,6 +9,7 @@ export default function RootLayout() {
     Lexend_500Medium,
     Lexend_600SemiBold,
     Lexend_700Bold,
+    Lexend_800ExtraBold,
   });
 
   if (!fontsLoaded) {

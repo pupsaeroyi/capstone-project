@@ -73,8 +73,8 @@ export default function Login() {
       }
 
       alert(`Welcome ${data.user.username}!`);
-      // reroute to home page later
-      // router.replace("/home");
+      // reroute to home page
+      router.replace("/home");
     } catch (err: any) {
       console.log(err);
       alert("Cannot connect to server");
@@ -134,7 +134,7 @@ export default function Login() {
                     color={rememberMe ? "#0B36F4" : undefined}
                     style={styles.checkbox}
                   />
-                  <Text style={styles.optionText}> Remember me</Text>
+                  <Text style={styles.optionText}>  Remember me</Text>
                 </View>
 
                 <Text 
@@ -159,6 +159,8 @@ export default function Login() {
                 <Link href="/register" style={styles.signupLink}>
                   Sign up here
                 </Link>
+
+                
                 {__DEV__ && (
                   <Text
                     style={{ marginTop: 8, fontSize: 12, color: "#999" }}
@@ -169,9 +171,21 @@ export default function Login() {
                       })
                     }
                   >
-                    Dev Tool
+                    Verify Email Page
                   </Text>
                 )}
+
+                {__DEV__ && (
+                  <Text
+                    style={{ fontSize: 12, color: "#999" }}
+                    onPress={() =>router.replace("/home")
+                    }
+                  >
+                    Home Page
+                  </Text>
+                )}
+
+
               </View>
             </View>
           </View>
@@ -228,8 +242,8 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 34,
-    fontFamily: "Lexend_700Bold",
+    fontSize: 36,
+    fontFamily: "Lexend_800ExtraBold",
     textAlign: "center",
     color: "#0F172A",
   },

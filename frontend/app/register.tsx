@@ -307,8 +307,8 @@ const styles = StyleSheet.create({
 
   iconWrapper: {
     position: "absolute",
-    right: 14,
-    top: 0,
+    right: 20,
+    top: -4,
     bottom: 12,
     justifyContent: "center",
     alignItems: "center",
