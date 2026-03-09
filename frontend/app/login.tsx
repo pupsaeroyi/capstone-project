@@ -29,7 +29,7 @@ export default function Login() {
         const { res, data } = await fetchMe(token);
         if (res.ok && data.ok) {
           console.log("Auto-login success:", data.user.username);
-          // router.replace("/home"); (will be routed to home once home screen is ready)
+          router.replace("/home");
         } else {
           await clearSavedToken();
         }

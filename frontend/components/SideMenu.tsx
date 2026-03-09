@@ -1,32 +1,62 @@
-import { Modal, View, StyleSheet, TouchableOpacity, Animated, useWindowDimensions } from "react-native";
-import { useEffect, useRef } from "react";
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions, ActivityIndicator } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
+import { API_BASE } from "@/lib/api";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
 };
 
+// Placeholder skill level (to be replaced with real data later)
+const SKILL_LEVEL = "Intermediate";
+const SKILL_COLOR = "#F59E0B";
+
 export default function SideMenu({ visible, onClose }: Props) {
-
-
   const { width } = useWindowDimensions();
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const [user, setUser] = useState<{ username: string; email: string } | null>(null);
+  const [loadingUser, setLoadingUser] = useState(false);
+
+  // Fetch user when menu is opened
+  useEffect(() => {
+    if (!visible) return;
+
+    (async () => {
+      try {
+        setLoadingUser(true);
+        const token = await getSavedToken();
+        if (!token) return;
+        const { res, data } = await fetchMe(token);
+        if (res.ok && data.ok) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.log("SideMenu: failed to fetch user", err);
+      } finally {
+        setLoadingUser(false);
+      }
+    })();
+  }, [visible]);
+
+  // Slide-in animation
   useEffect(() => {
     if (visible) {
       slideAnim.setValue(width);
       Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 0,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      })
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 0,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [visible]);
@@ -42,21 +72,76 @@ export default function SideMenu({ visible, onClose }: Props) {
         toValue: 0,
         duration: 250,
         useNativeDriver: true,
-      })
+      }),
     ]).start(() => onClose());
   };
 
   return (
     <Modal transparent visible={visible} animationType="none">
-     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      {/* Dimmed backdrop */}
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <TouchableOpacity style={{ flex: 1 }} onPress={handleClose} />
       </Animated.View>
 
-      <Animated.View style={[styles.menu, { transform: [{ translateX: slideAnim }] }]}>
-        {/* Your menu UI goes here */}
-      </Animated.View>
+      {/* Side panel */}
+      <Animated.View
+        style={[styles.menu, { transform: [{ translateX: slideAnim }] }]}
+      >
 
+        <View style={styles.profileSection}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarCircle}>
+              <Ionicons name="person-sharp" size={36} color="#0B36F4" />
+            </View>
+            <View style={styles.onlineDot} />
+          </View>
+
+          {loadingUser ? (
+            <ActivityIndicator size="small" color="#0B36F4" style={{ marginTop: 12 }} />
+          ) : (
+            <>
+              <Text style={styles.username}>{user?.username ?? "—"}</Text>
+              <Text style={styles.email} numberOfLines={1}>{user?.email ?? ""}</Text>
+
+              <View style={[styles.skillBadge, { borderColor: SKILL_COLOR }]}>
+                <MaterialCommunityIcons name="volleyball" size={13} color={SKILL_COLOR} />
+                <Text style={[styles.skillText, { color: SKILL_COLOR }]}>{SKILL_LEVEL}</Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.menuItems}>
+          <MenuItem icon="calendar-outline" label="My Sessions" />
+          <MenuItem icon="people-outline" label="Friends" />
+          <MenuItem icon="stats-chart-outline" label="My Stats" />
+          <MenuItem icon="settings-outline" label="Settings" />
+        </View>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity style={styles.logoutRow}>
+          <View style={styles.logoutCircle}>
+            <MaterialIcons name="logout" size={20} color="#EF4444" />
+          </View>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </Modal>
+  );
+}
+
+function MenuItem({icon, label}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  label: string;
+}) {
+  return (
+    <TouchableOpacity style={styles.menuItem}>
+      <Ionicons name={icon} size={20} color="#475569" />
+      <Text style={styles.menuLabel}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -69,13 +154,129 @@ const styles = StyleSheet.create({
 
   menu: {
     position: "absolute",
-    right: 0,
-    top: 0,
+    right: 0, 
+    top: 0, 
     bottom: 0,
-    width: "75%",
+    width: "78%",
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 40,
-    borderBottomLeftRadius: 40,
-    padding: 20,
+    borderTopLeftRadius: 32,
+    borderBottomLeftRadius: 32,
+    paddingTop: 56,
+    paddingHorizontal: 24,
+    paddingBottom: 36,
+    shadowColor: "#000",
+    shadowOffset: { width: -4, height: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+
+  profileSection: {
+    alignItems: "center",
+    paddingBottom: 24,
+  },
+
+  avatarContainer: {
+    position: "relative",
+    marginBottom: 14,
+  },
+
+  avatarCircle: {
+    width: 80, 
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#EEF2FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  onlineDot: {
+    position: "absolute",
+    bottom: 4, right: 4,
+    width: 16, height: 16,
+    borderRadius: 9,
+    backgroundColor: "#22C55E",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+
+  username: {
+    fontSize: 20,
+    fontFamily: "Lexend_700Bold",
+    color: "#0F172A",
+    marginBottom: 3,
+  },
+
+  email: {
+    fontSize: 13,
+    fontFamily: "Lexend_400Regular",
+    color: "#94A3B8",
+    marginBottom: 12,
+    maxWidth: "90%",
+  },
+
+  skillBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    backgroundColor: "#FFFBEB",
+  },
+
+  skillText: {
+    fontSize: 12,
+    fontFamily: "Lexend_600SemiBold",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginVertical: 8,
+  },
+
+  menuItems: {
+    paddingVertical: 8,
+    gap: 2,
+  },
+
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+  },
+
+  menuLabel: {
+    fontSize: 15,
+    fontFamily: "Lexend_500Medium",
+    color: "#334155",
+  },
+
+  logoutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingTop: 16,
+    paddingHorizontal: 4,
+    
+  },
+
+  logoutCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 18,
+    backgroundColor: "#FEF2F2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  logoutText: {
+    fontSize: 18,
+    fontFamily: "Lexend_600SemiBold",
+    color: "#EF4444",
   },
 });
