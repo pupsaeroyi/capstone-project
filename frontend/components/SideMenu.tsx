@@ -22,6 +22,7 @@ export default function SideMenu({ visible, onClose }: Props) {
 
   const [user, setUser] = useState<{ username: string; email: string } | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   // Fetch user when menu is opened
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function SideMenu({ visible, onClose }: Props) {
   }
 
   return (
+    
     <Modal transparent visible={visible} animationType="none">
       {/* Dimmed backdrop */}
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
@@ -139,13 +141,46 @@ export default function SideMenu({ visible, onClose }: Props) {
 
         <View style={styles.divider} />
 
-        <TouchableOpacity style={styles.logoutRow} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutRow} onPress={() => setLogoutModalVisible(true)}>
           <View style={styles.logoutCircle}>
             <MaterialIcons name="logout" size={20} color="#EF4444" />
           </View>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </Animated.View>
+
+
+
+      <Modal transparent visible={logoutModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Log Out</Text>
+            <Text style={styles.modalText}>
+              Are you sure you want to log out?
+            </Text>
+
+            <TouchableOpacity
+              onPress={async () => {
+                setLogoutModalVisible(false);
+                await clearSavedToken();
+                setUser(null);
+                router.replace("/login");
+              }}
+              style={styles.logoutButton}
+            >
+              <Text style={styles.logoutButtonText}>Log Out</Text>
+            </TouchableOpacity>
+
+           
+            <TouchableOpacity
+              onPress={() => setLogoutModalVisible(false)}
+              style={styles.cancelButton}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -295,5 +330,67 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Lexend_600SemiBold",
     color: "#EF4444",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalCard: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: "Lexend_700Bold",
+    marginBottom: 10,
+  },
+
+  modalText: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    marginBottom: 22,
+  },
+
+  logoutButton: {
+    backgroundColor: "#EF4444",
+    width: "100%",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+  },
+
+  logoutButtonText: {
+    color: "#fff",
+    fontFamily: "Lexend_600SemiBold",
+  },
+
+  cancelButton: {
+    backgroundColor: "#F1F5F9",
+    width: "100%",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+  },
+
+  cancelText: {
+    color: "#64748B",
+    fontFamily: "Lexend_500Regular",
   },
 });
