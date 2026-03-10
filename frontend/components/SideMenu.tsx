@@ -25,21 +25,25 @@ export default function SideMenu({ visible, onClose }: Props) {
   useEffect(() => {
     if (!visible) return;
 
-    (async () => {
+    const loadUser = async () => {
       try {
         setLoadingUser(true);
         const token = await getSavedToken();
-        if (!token) return;
-        const { res, data } = await fetchMe(token);
-        if (res.ok && data.ok) {
-          setUser(data.user);
+
+        if (token) {
+          const { res, data } = await fetchMe(token);
+          if (res.ok && data.ok) {
+            setUser(data.user);
+          }
         }
+        
       } catch (err) {
         console.log("SideMenu: failed to fetch user", err);
       } finally {
         setLoadingUser(false);
       }
-    })();
+    };
+    loadUser();
   }, [visible]);
 
   // Slide-in animation

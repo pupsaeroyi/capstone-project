@@ -66,15 +66,14 @@ export default function Login() {
 
       const token = data.accessToken;
       
-      if (rememberMe) {
-        await SecureStore.setItemAsync("accessToken", token);
-      } else {
-        await clearSavedToken();
-      }
+      await SecureStore.setItemAsync("accessToken", token);
+      await SecureStore.setItemAsync("rememberMe", rememberMe ? "true" : "false");
 
       alert(`Welcome ${data.user.username}!`);
-      // reroute to home page
+      // set 50ms delay to give SecureStore time to finish writing
+      await new Promise(resolve => setTimeout(resolve, 50));
       router.replace("/home");
+      
     } catch (err: any) {
       console.log(err);
       alert("Cannot connect to server");
