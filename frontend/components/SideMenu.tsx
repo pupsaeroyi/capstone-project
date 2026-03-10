@@ -4,7 +4,7 @@ import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-ic
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
 import { useRouter, usePathname} from "expo-router";
-
+import { r } from "@/utils/responsive";
 
 type Props = {
   visible: boolean;
@@ -111,13 +111,13 @@ export default function SideMenu({ visible, onClose }: Props) {
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarCircle}>
-              <Ionicons name="person-sharp" size={36} color="#0B36F4" />
+              <Ionicons name="person-sharp" size={r(36)} color="#0B36F4" />
             </View>
             <View style={styles.onlineDot} />
           </View>
 
           {loadingUser ? (
-            <ActivityIndicator size="small" color="#0B36F4" style={{ marginTop: 12 }} />
+            <ActivityIndicator size="small" color="#0B36F4" style={{ marginTop: r(12) }} />
           ) : (
             <>
               <Text style={styles.username}>{user?.username ?? "—"}</Text>
@@ -214,11 +214,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: "78%",
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 32,
-    borderBottomLeftRadius: 32,
-    paddingTop: 56,
-    paddingHorizontal: 24,
-    paddingBottom: 36,
+    borderTopLeftRadius: r(32),
+    borderBottomLeftRadius: r(32),
+    paddingTop: r(56),
+    paddingHorizontal: r(24),
+    paddingBottom: r(36),
     shadowColor: "#000",
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.08,
@@ -228,18 +228,18 @@ const styles = StyleSheet.create({
 
   profileSection: {
     alignItems: "center",
-    paddingBottom: 24,
+    paddingBottom: r(24),
   },
 
   avatarContainer: {
     position: "relative",
-    marginBottom: 14,
+    marginBottom: r(14),
   },
 
   avatarCircle: {
-    width: 80, 
-    height: 80,
-    borderRadius: 40,
+    width: r(80),
+    height: r(80),
+    borderRadius: r(40),
     backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
@@ -247,23 +247,25 @@ const styles = StyleSheet.create({
 
   onlineDot: {
     position: "absolute",
-    bottom: 4, right: 4,
-    width: 16, height: 16,
-    borderRadius: 9,
+    bottom: r(4),
+    right: r(4),
+    width: r(16),
+    height: r(16),
+    borderRadius: r(8),
     backgroundColor: "#22C55E",
     borderWidth: 2,
     borderColor: "#FFFFFF",
   },
 
   username: {
-    fontSize: 24,
+    fontSize: r(24),
     fontFamily: "Lexend_700Bold",
     color: "#0F172A",
-    marginBottom: 3,
+    marginBottom: 4,
   },
 
   email: {
-    fontSize: 14,
+    fontSize: r(16),
     fontFamily: "Lexend_400Regular",
     color: "#94A3B8",
     marginBottom: 12,
@@ -295,14 +297,14 @@ const styles = StyleSheet.create({
   menuContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    marginLeft: 10,  
+    gap: r(14),
+    marginLeft: r(10),  
   },
 
   menuIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: r(40),
+    height: r(40),
+    borderRadius: r(20),
     backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
@@ -313,31 +315,30 @@ const styles = StyleSheet.create({
   },
 
   menuItems: {
-    paddingVertical: 8,
-    gap: 2,
+    gap: r(6),
   },
 
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 4,
+    gap: r(14),
+    paddingVertical: r(10),
+    paddingHorizontal: r(6),
   },
 
   menuItemActive: {
     backgroundColor: "#E7EBFE",
-    borderRadius: 14,
+    borderRadius: r(16),
   },
 
   menuLabel: {
-    fontSize: 18,
+    fontSize: r(18),
     fontFamily: "Lexend_500Medium",
     color: "#4B5563",
   },
 
   menuLabelActive: {
-    fontSize: 18,
+    fontSize: r(18),
     fontFamily: "Lexend_600SemiBold",
     color: "#0B36F4"
   },
@@ -345,23 +346,23 @@ const styles = StyleSheet.create({
   logoutRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingTop: 16,
+    gap: r(12),
+    paddingTop: r(16),
     paddingHorizontal: 4,
-    marginLeft: 10,
+    marginLeft: r(10),
   },
 
   logoutCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 18,
+    width: r(40),
+    height: r(40),
+    borderRadius: r(20),
     backgroundColor: "#FEF2F2",
     justifyContent: "center",
     alignItems: "center",
   },
 
   logoutText: {
-    fontSize: 18,
+    fontSize: r(18),
     fontFamily: "Lexend_600SemiBold",
     color: "#EF4444",
   },
@@ -376,8 +377,8 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "80%",
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: r(16),
+    padding: r(24),
     alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.3,
@@ -387,25 +388,25 @@ const styles = StyleSheet.create({
   },
 
   modalTitle: {
-    fontSize: 18,
+    fontSize: r(18),
     fontFamily: "Lexend_700Bold",
-    marginBottom: 10,
+    marginBottom: r(10),
   },
 
   modalText: {
-    fontSize: 14,
+    fontSize: r(14),
     color: "#64748B",
     textAlign: "center",
-    marginBottom: 22,
+    marginBottom: r(22),
   },
 
   logoutButton: {
     backgroundColor: "#EF4444",
     width: "100%",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 18,
+    paddingVertical: r(12),
+    paddingHorizontal: r(16),
+    borderRadius: r(18),
     marginBottom: 12,
   },
 
