@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
+import { useRouter } from "expo-router";
+
 
 type Props = {
   visible: boolean;
@@ -36,7 +38,7 @@ export default function SideMenu({ visible, onClose }: Props) {
             setUser(data.user);
           }
         }
-        
+
       } catch (err) {
         console.log("SideMenu: failed to fetch user", err);
       } finally {
@@ -79,6 +81,17 @@ export default function SideMenu({ visible, onClose }: Props) {
       }),
     ]).start(() => onClose());
   };
+  const router = useRouter();
+  
+  const handleLogout = async () => {
+    try {
+      await clearSavedToken();
+      setUser(null);
+      router.replace("/login")
+    } catch (err) {
+      console.log("Logout failed", err);
+    }
+  }
 
   return (
     <Modal transparent visible={visible} animationType="none">
@@ -126,7 +139,7 @@ export default function SideMenu({ visible, onClose }: Props) {
 
         <View style={styles.divider} />
 
-        <TouchableOpacity style={styles.logoutRow}>
+        <TouchableOpacity style={styles.logoutRow} onPress={handleLogout}>
           <View style={styles.logoutCircle}>
             <MaterialIcons name="logout" size={20} color="#EF4444" />
           </View>
