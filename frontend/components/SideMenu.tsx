@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
-import { useRouter } from "expo-router";
+import { useRouter, usePathname} from "expo-router";
 
 
 type Props = {
@@ -23,6 +23,7 @@ export default function SideMenu({ visible, onClose }: Props) {
   const [user, setUser] = useState<{ username: string; email: string } | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const pathname = usePathname();
 
   // Fetch user when menu is opened
   useEffect(() => {
@@ -133,10 +134,11 @@ export default function SideMenu({ visible, onClose }: Props) {
         <View style={styles.divider} />
 
         <View style={styles.menuItems}>
-          <MenuItem icon="calendar-outline" label="My Sessions" />
-          <MenuItem icon="people-outline" label="Friends" />
-          <MenuItem icon="stats-chart-outline" label="My Stats" />
-          <MenuItem icon="settings-outline" label="Settings" />
+          <MenuItem icon="home" label="Home" active={pathname === "/home"}/>
+          <MenuItem icon="person" label="Account" active={pathname === "/account"}/>
+          <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
+          <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
+          <MenuItem icon="info" label="About Us" active={pathname === "/aboutUs"}/>
         </View>
 
         <View style={styles.divider} />
@@ -180,14 +182,20 @@ export default function SideMenu({ visible, onClose }: Props) {
   );
 }
 
-function MenuItem({icon, label}: {
-  icon: React.ComponentProps<typeof Ionicons>["name"];
+function MenuItem({icon, label, active}: {
+  icon: React.ComponentProps<typeof MaterialIcons>["name"];
   label: string;
+  active?: boolean;
 }) {
   return (
-    <TouchableOpacity style={styles.menuItem}>
-      <Ionicons name={icon} size={20} color="#475569" />
-      <Text style={styles.menuLabel}>{label}</Text>
+    <TouchableOpacity style={[styles.menuItem, active && styles.menuItemActive]}>
+      <View style={styles.menuContent}>
+        <View style={[styles.menuIconCircle, active && styles.menuIconCircleActive]}>
+          <MaterialIcons name={icon} size={20} color={active ? "#FFFFFF" : "#0B36F4"} />
+        </View>
+
+        <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>{label}</Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -248,14 +256,14 @@ const styles = StyleSheet.create({
   },
 
   username: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Lexend_700Bold",
     color: "#0F172A",
     marginBottom: 3,
   },
 
   email: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Lexend_400Regular",
     color: "#94A3B8",
     marginBottom: 12,
@@ -284,6 +292,26 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
+  menuContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginLeft: 10,  
+  },
+
+  menuIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EEF2FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  menuIconCircleActive: {
+    backgroundColor: "#0B36F4"
+  },
+
   menuItems: {
     paddingVertical: 8,
     gap: 2,
@@ -297,10 +325,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
+  menuItemActive: {
+    backgroundColor: "#E7EBFE",
+    borderRadius: 14,
+  },
+
   menuLabel: {
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: "Lexend_500Medium",
-    color: "#334155",
+    color: "#4B5563",
+  },
+
+  menuLabelActive: {
+    fontSize: 18,
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0B36F4"
   },
 
   logoutRow: {
@@ -309,7 +348,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 16,
     paddingHorizontal: 4,
-    
+    marginLeft: 10,
   },
 
   logoutCircle: {
