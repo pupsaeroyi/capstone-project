@@ -160,12 +160,7 @@ export default function SideMenu({ visible, onClose }: Props) {
             </Text>
 
             <TouchableOpacity
-              onPress={async () => {
-                setLogoutModalVisible(false);
-                await clearSavedToken();
-                setUser(null);
-                router.replace("/login");
-              }}
+              onPress={handleLogout}
               style={styles.logoutButton}
             >
               <Text style={styles.logoutButtonText}>Log Out</Text>
