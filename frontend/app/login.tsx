@@ -9,9 +9,11 @@ import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
 import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 import { useWindowDimensions } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -29,6 +31,7 @@ export default function Login() {
         const { res, data } = await fetchMe(token);
         if (res.ok && data.ok) {
           console.log("Auto-login success:", data.user.username);
+          setUser(data.user);
           router.replace("/home");
         } else {
           await clearSavedToken();
@@ -69,9 +72,9 @@ export default function Login() {
       await SecureStore.setItemAsync("accessToken", token);
       await SecureStore.setItemAsync("rememberMe", rememberMe ? "true" : "false");
 
+      setUser(data.user);
+
       alert(`Welcome ${data.user.username}!`);
-      // set 50ms delay to give SecureStore time to finish writing
-      await new Promise(resolve => setTimeout(resolve, 50));
       router.replace("/home");
       
     } catch (err: any) {

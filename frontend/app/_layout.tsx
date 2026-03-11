@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, Lexend_800ExtraBold } from "@expo-google-fonts/lexend";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
+import { AuthProvider } from '@/context/AuthContext';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -31,5 +32,9 @@ export default function RootLayout() {
     return null;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+    return (
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthProvider>
+  );
 }

@@ -1,11 +1,11 @@
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions, ActivityIndicator } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
+import { clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
 import { useRouter, usePathname} from "expo-router";
 import { r } from "@/utils/responsive";
-import { User } from "@/types/user";
+import { useAuth } from "@/context/AuthContext";
 
 type Props = {
   visible: boolean;
@@ -20,37 +20,12 @@ export default function SideMenu({ visible, onClose }: Props) {
   const { width } = useWindowDimensions();
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { user, setUser } = useAuth();
 
-  // Fetch user when menu is opened
-  useEffect(() => {
-    if (!visible) return;
-
-    const loadUser = async () => {
-      try {
-        setLoadingUser(true);
-        const token = await getSavedToken();
-
-        if (token) {
-          const { res, data } = await fetchMe(token);
-          if (res.ok && data.ok) {
-            setUser(data.user);
-          }
-        }
-
-      } catch (err) {
-        console.log("SideMenu: failed to fetch user", err);
-      } finally {
-        setLoadingUser(false);
-      }
-    };
-    loadUser();
-  }, [visible]);
 
   // Slide-in animation
   useEffect(() => {
@@ -121,7 +96,7 @@ export default function SideMenu({ visible, onClose }: Props) {
             <ActivityIndicator size="small" color="#0B36F4" style={{ marginTop: r(12) }} />
           ) : (
             <>
-              <Text style={styles.username}>{user?.username ?? "—"}</Text>
+              <Text style={styles.username}>{user?.username ?? "Player"}</Text>
               <Text style={styles.email} numberOfLines={1}>{user?.email ?? ""}</Text>
 
               <View style={[styles.skillBadge, { borderColor: SKILL_COLOR }]}>
@@ -136,7 +111,7 @@ export default function SideMenu({ visible, onClose }: Props) {
 
         <View style={styles.menuItems}>
           <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => router.push("/home")}/>
-          <MenuItem icon="person" label="Account" active={pathname === "/account"}/>
+          <MenuItem icon="person" label="Account" active={pathname === "/account"} onPress={() => router.push("/account")}/>
           <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
           <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
           <MenuItem icon="info" label="About Us" active={pathname === "/aboutUs"}/>
@@ -189,9 +164,9 @@ function MenuItem({icon, label, active, onPress}: {
   active?: boolean;
   onPress?: () => void;
 }) {
-  
+
   return (
-    <TouchableOpacity style={[styles.menuItem, active && styles.menuItemActive]}>
+    <TouchableOpacity onPress={onPress} style={[styles.menuItem, active && styles.menuItemActive]}>
       <View style={styles.menuContent}>
         <View style={[styles.menuIconCircle, active && styles.menuIconCircleActive]}>
           <MaterialIcons name={icon} size={20} color={active ? "#FFFFFF" : "#0B36F4"} />
@@ -335,13 +310,13 @@ const styles = StyleSheet.create({
   },
 
   menuLabel: {
-    fontSize: r(18),
+    fontSize: r(16),
     fontFamily: "Lexend_500Medium",
     color: "#4B5563",
   },
 
   menuLabelActive: {
-    fontSize: r(18),
+    fontSize: r(16),
     fontFamily: "Lexend_600SemiBold",
     color: "#0B36F4"
   },

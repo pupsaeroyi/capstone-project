@@ -6,35 +6,13 @@ import { useRouter } from "expo-router";
 import { FilterButton } from "@/components/FilterButton";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
-import { getSavedToken, fetchMe } from "@/lib/auth";
-import { User } from "@/types/user";
+import { useAuth } from "@/context/AuthContext";
 
 const { width } = Dimensions.get("window");
 
 export default function Home() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const token = await getSavedToken();
-
-        if (token) {
-          const { res, data } = await fetchMe(token);
-
-          if (res.ok && data.ok) {
-            setUser(data.user);
-          }
-        }
-      } catch (err) {
-        console.log("Home: failed to fetch user", err);
-      }
-    };
-
-    loadUser();
-  }, []);
-
+  const { user } = useAuth();
 
   //Mock Data as placeholder until backend is ready
   const venues = [
