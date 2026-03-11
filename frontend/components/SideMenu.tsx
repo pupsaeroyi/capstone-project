@@ -5,6 +5,7 @@ import { getSavedToken, fetchMe, clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
 import { useRouter, usePathname} from "expo-router";
 import { r } from "@/utils/responsive";
+import { User } from "@/types/user";
 
 type Props = {
   visible: boolean;
@@ -20,10 +21,11 @@ export default function SideMenu({ visible, onClose }: Props) {
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [user, setUser] = useState<{ username: string; email: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   // Fetch user when menu is opened
   useEffect(() => {
@@ -83,7 +85,6 @@ export default function SideMenu({ visible, onClose }: Props) {
       }),
     ]).start(() => onClose());
   };
-  const router = useRouter();
   
   const handleLogout = async () => {
     try {
@@ -134,7 +135,7 @@ export default function SideMenu({ visible, onClose }: Props) {
         <View style={styles.divider} />
 
         <View style={styles.menuItems}>
-          <MenuItem icon="home" label="Home" active={pathname === "/home"}/>
+          <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => router.push("/home")}/>
           <MenuItem icon="person" label="Account" active={pathname === "/account"}/>
           <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
           <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
@@ -182,11 +183,13 @@ export default function SideMenu({ visible, onClose }: Props) {
   );
 }
 
-function MenuItem({icon, label, active}: {
+function MenuItem({icon, label, active, onPress}: {
   icon: React.ComponentProps<typeof MaterialIcons>["name"];
   label: string;
   active?: boolean;
+  onPress?: () => void;
 }) {
+  
   return (
     <TouchableOpacity style={[styles.menuItem, active && styles.menuItemActive]}>
       <View style={styles.menuContent}>

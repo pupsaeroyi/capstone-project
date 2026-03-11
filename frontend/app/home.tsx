@@ -4,14 +4,37 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { useRouter } from "expo-router";
 import { FilterButton } from "@/components/FilterButton";
-import { FontAwesome6 } from "@expo/vector-icons";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
+import { getSavedToken, fetchMe } from "@/lib/auth";
+import { User } from "@/types/user";
 
 const { width } = Dimensions.get("window");
 
 export default function Home() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = await getSavedToken();
+
+        if (token) {
+          const { res, data } = await fetchMe(token);
+
+          if (res.ok && data.ok) {
+            setUser(data.user);
+          }
+        }
+      } catch (err) {
+        console.log("Home: failed to fetch user", err);
+      }
+    };
+
+    loadUser();
+  }, []);
+
 
   //Mock Data as placeholder until backend is ready
   const venues = [
@@ -126,7 +149,9 @@ export default function Home() {
         <View style={styles.greetingRow}>
           <View>
             <Text style={styles.greetingText}>{getGreeting()}</Text>
-            <Text style={styles.greetingName}>Username</Text>
+            <Text style={styles.greetingName}>
+              {user?.username ?? "Player"}
+            </Text>
           </View>
             <MenuButton onPress={() => setMenuOpen(true)} />
         </View>
