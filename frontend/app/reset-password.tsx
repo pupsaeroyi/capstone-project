@@ -96,12 +96,11 @@ export default function ResetPassword() {
               Enter a new password for your account.
             </Text>
 
-            <View style={{ height: 20 }} />
-
             <PasswordInput
               placeholder="New Password"
               value={newPassword}
               onChangeText={setNewPassword}
+              style = {styles.field}
               returnKeyType="next"
               editable={!success}
             />
@@ -110,6 +109,7 @@ export default function ResetPassword() {
               placeholder="Confirm New Password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
+              style = {styles.field}
               returnKeyType="done"
               onSubmitEditing={handleReset}
               editable={!success}
@@ -165,21 +165,31 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontFamily: "Lexend_700Bold",
     lineHeight: 36
   },
+  
   subtitle: {
     marginTop: 8,
-    fontSize: 14,
-    color: "#666"
+    fontSize: 16,
+    fontFamily: "Lexend_500Medium",
+    marginBottom: 32,
+    color: "#64748B",
   },
+
+  field: {
+    marginBottom: 16,
+  },
+  
   buttonWrapper: {
-    marginTop: 16
+    marginTop: 16,
   },
+
   helper: {
+    fontSize: 14,
+    color: "#737373",
+    textAlign: "center",
+    fontFamily: "Lexend_400Regular",
     marginTop: 14,
-    fontSize: 12,
-    color: "#999",
-    textAlign: "center"
-  }
+  },
 });

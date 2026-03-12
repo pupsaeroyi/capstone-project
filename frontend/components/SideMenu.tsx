@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { clearSavedToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
-import { useRouter, usePathname} from "expo-router";
+import { useRouter, usePathname, Href} from "expo-router";
 import { r } from "@/utils/responsive";
 import { useAuth } from "@/context/AuthContext";
 
@@ -46,6 +46,7 @@ export default function SideMenu({ visible, onClose }: Props) {
     }
   }, [visible]);
 
+
   const handleClose = () => {
     Animated.parallel([
       Animated.timing(slideAnim, {
@@ -61,6 +62,13 @@ export default function SideMenu({ visible, onClose }: Props) {
     ]).start(() => onClose());
   };
   
+  const handleNavigate = (route: Href) => {
+    handleClose();
+    setTimeout(() => {
+      router.push(route);
+    }, 200);
+  };
+
   const handleLogout = async () => {
     try {
       await clearSavedToken();
@@ -110,8 +118,8 @@ export default function SideMenu({ visible, onClose }: Props) {
         <View style={styles.divider} />
 
         <View style={styles.menuItems}>
-          <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => router.push("/home")}/>
-          <MenuItem icon="person" label="Account" active={pathname === "/account"} onPress={() => router.push("/account")}/>
+          <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => handleNavigate("/home")}/>
+          <MenuItem icon="person" label="Account" active={pathname === "/account"} onPress={() => handleNavigate("/account")}/>
           <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
           <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
           <MenuItem icon="info" label="About Us" active={pathname === "/aboutUs"}/>
@@ -340,7 +348,7 @@ const styles = StyleSheet.create({
   },
 
   logoutText: {
-    fontSize: r(18),
+    fontSize: r(16),
     fontFamily: "Lexend_600SemiBold",
     color: "#EF4444",
   },

@@ -157,12 +157,14 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-    fontSize: 14,
-    color: "#737373",
+    fontSize: 16,
     fontFamily: "Lexend_500Medium",
+    color: "#64748B",
+    marginTop: 4,
   },
 
   buttonWrapper: {
     marginTop: 8,
   },
 });
+
