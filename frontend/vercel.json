@@ -1,13 +1,5 @@
 {
-  "routes": [
-    {
-      "src": "^/reset-password.*",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "status": 302,
-      "headers": { "Location": "/reset-password" }
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
