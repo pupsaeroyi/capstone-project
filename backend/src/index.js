@@ -543,6 +543,28 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
+// Get all venues (public, no auth required)
+app.get("/venues", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id AS venue_id, venue_name, latitude, longitude, court_count, rating, review_count, thumbnail_url, tags, condition_label FROM venues ORDER BY rating DESC"
+    );
+
+    const venues = result.rows.map(v => ({
+      ...v,
+      rating: parseFloat(v.rating),
+      distance_km: 0,
+      player_count: 0,
+      active_sessions: [],
+    }));
+
+    return res.json({ ok: true, venues });
+  } catch (err) {
+    console.error("Venues fetch error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, "0.0.0.0", () => {
   console.log(`API running on port ${port}`);
