@@ -119,6 +119,7 @@ export default function SideMenu({ visible, onClose }: Props) {
 
         <View style={styles.menuItems}>
           <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => handleNavigate("/home")}/>
+          <MenuItem icon="map" label="Map" active={pathname === "/map"} onPress={() => handleNavigate("/map")}/>
           <MenuItem icon="person" label="Account" active={pathname === "/account"} onPress={() => handleNavigate("/account")}/>
           <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
           <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
