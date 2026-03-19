@@ -4,6 +4,10 @@ import * as Location from "expo-location";
 import { r } from "@/utils/responsive";
 import { Venue } from "@/types/venue";
 import { API_BASE } from "@/lib/api";
+import MapSearchBar from "@/components/map/MapSearchBar";
+import MapFloatingButtons from "@/components/map/MapFloatingButtons";
+import VenueBottomSheet from "@/components/map/VenueBottomSheet";
+import SideMenu from "@/components/SideMenu";
 
 const BANGKOK_REGION = {
   latitude: 13.7563,
@@ -11,10 +15,6 @@ const BANGKOK_REGION = {
   latitudeDelta: 0.12,
   longitudeDelta: 0.12,
 };
-import MapSearchBar from "@/components/map/MapSearchBar";
-import MapFloatingButtons from "@/components/map/MapFloatingButtons";
-import VenueBottomSheet from "@/components/map/VenueBottomSheet";
-import SideMenu from "@/components/SideMenu";
 
 // Conditionally import react-native-maps (not available on web)
 let MapView: any = null;

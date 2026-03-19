@@ -55,7 +55,7 @@ export default function Account() {
 
   header: {
     width: "100%",
-		marginTop: 12,
+	marginTop: 12,
     marginLeft: -8,
   },
 
@@ -65,7 +65,7 @@ export default function Account() {
 
 	titleText: {
 		fontFamily: "Lexend_600SemiBold",
-		fontSize: 18,
+		fontSize: r(18),
 		color: "#0F172A",
 	},
 

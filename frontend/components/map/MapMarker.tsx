@@ -12,7 +12,7 @@ export default function MapMarker({ variant, activeCount = 0 }: Props) {
   if (variant === "inactive") {
     return (
       <View style={styles.inactiveContainer}>
-        <MaterialIcons name="trip-origin" size={r(16)} color="#94A3B8" />
+        <MaterialIcons name="sports-volleyball" size={r(16)} color="#94A3B8" />
       </View>
     );
   }
