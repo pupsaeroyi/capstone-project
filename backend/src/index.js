@@ -7,6 +7,7 @@ import { pool } from "./db.js";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "./auth.js";
 import { sendEmail } from "./mailer.js";
+import { sessionRoutes } from "./sessions.js";
 
 
 dotenv.config();
@@ -550,20 +551,53 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
-// Get all venues (public, no auth required)
+// Get all venues with active sessions (public)
 app.get("/venues", async (req, res) => {
   try {
-    const result = await pool.query(
+    const venueResult = await pool.query(
       "SELECT id AS venue_id, venue_name, latitude, longitude, court_count, rating, review_count, thumbnail_url, tags, condition_label FROM venues ORDER BY rating DESC"
     );
 
-    const venues = result.rows.map(v => ({
-      ...v,
-      rating: parseFloat(v.rating),
-      distance_km: 0,
-      player_count: 0,
-      active_sessions: [],
-    }));
+    const sessionResult = await pool.query(
+      `SELECT
+         s.venue_id,
+         s.id AS session_id,
+         s.sport,
+         s.max_players,
+         s.start_time,
+         s.end_time,
+         COUNT(sp.id)::int AS player_count
+       FROM sessions s
+       LEFT JOIN session_players sp ON sp.session_id = s.id
+       WHERE s.end_time > NOW()
+       GROUP BY s.id
+       ORDER BY s.start_time ASC`
+    );
+
+    const sessionsByVenue = {};
+    for (const s of sessionResult.rows) {
+      if (!sessionsByVenue[s.venue_id]) sessionsByVenue[s.venue_id] = [];
+      sessionsByVenue[s.venue_id].push({
+        session_id: s.session_id,
+        sport: s.sport,
+        player_count: s.player_count,
+        max_players: s.max_players,
+        start_time: s.start_time,
+        end_time: s.end_time,
+      });
+    }
+
+    const venues = venueResult.rows.map(v => {
+      const sessions = sessionsByVenue[v.venue_id] || [];
+      const totalPlayers = sessions.reduce((sum, s) => sum + s.player_count, 0);
+      return {
+        ...v,
+        rating: parseFloat(v.rating),
+        distance_km: 0,
+        player_count: totalPlayers,
+        active_sessions: sessions,
+      };
+    });
 
     return res.json({ ok: true, venues });
   } catch (err) {
@@ -572,6 +606,8 @@ app.get("/venues", async (req, res) => {
   }
 });
 
+// Mount session routes
+sessionRoutes(app);
 
 // Get user profile
 app.get("/profile/me", requireAuth, async (req, res) => {

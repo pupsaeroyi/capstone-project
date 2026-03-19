@@ -1,3 +1,5 @@
+import { pool } from "../../src/db.js";
+
 /*no overbooking*/
 /*either everything succeeds(COMMIT) or nothing is applied(ROLLBACK)*/
 export async function withTransaction(fn) {

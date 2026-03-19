@@ -1,7 +1,9 @@
 import { View, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import MenuButton from "@/components/MenuButton";
 
 type Props = {
   onMenuPress: () => void;
@@ -9,14 +11,12 @@ type Props = {
 };
 
 export default function MapSearchBar({ onMenuPress, onFilterPress }: Props) {
-  const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + r(8) }]}>
+    <View style={styles.container}>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
-          <MaterialIcons name="menu" size={r(20)} color="#334155" />
-        </TouchableOpacity>
+        <Ionicons name="chevron-back" size={28} color="#000" onPress={() => router.back()} />
 
         <View style={styles.searchPill}>
           <MaterialIcons name="search" size={r(20)} color="#94A3B8" />
@@ -27,9 +27,7 @@ export default function MapSearchBar({ onMenuPress, onFilterPress }: Props) {
           />
         </View>
 
-        <TouchableOpacity style={styles.iconButton} onPress={onFilterPress}>
-          <MaterialIcons name="tune" size={r(20)} color="#334155" />
-        </TouchableOpacity>
+        <MenuButton onPress={onMenuPress} />
       </View>
     </View>
   );
@@ -42,6 +40,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
+    paddingTop: r(50),
     paddingHorizontal: r(16),
     paddingBottom: r(12),
     zIndex: 10,

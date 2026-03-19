@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, PanResponder, Dimensions } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRef, useEffect } from "react";
+import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
 import { r } from "@/utils/responsive";
 import VenueInfoCard from "./VenueInfoCard";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function VenueBottomSheet({ venue, onClose }: Props) {
+  const router = useRouter();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
 
   useEffect(() => {
@@ -105,7 +107,16 @@ export default function VenueBottomSheet({ venue, onClose }: Props) {
         </View>
 
         {/* CTA button */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          activeOpacity={0.8}
+          onPress={() => {
+            router.push({
+              pathname: "/venue/[id]",
+              params: { id: venue.venue_id.toString(), venue_name: venue.venue_name },
+            });
+          }}
+        >
           <Text style={styles.ctaText}>
             {activeCount > 0
               ? `View ${activeCount} Active Session${activeCount > 1 ? "s" : ""}`
