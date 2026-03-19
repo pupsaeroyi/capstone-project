@@ -104,11 +104,18 @@ app.post("/auth/register", async (req, res) => {
     const newUser = result.rows[0];
     const userId = newUser.id;
     const userEmail = newUser.email;
+
+    // Automatically create user profile after registration
+    await pool.query(
+      "INSERT INTO player_profile (user_id) VALUES ($1)",
+      [userId]
+    );
+
     // Email verification code for registration (new users only)
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const codeHash = crypto.createHash("sha256").update(code).digest("hex");
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
+    
     await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
     await pool.query(
       "INSERT INTO email_verifications (user_id, code_hash, expires_at) VALUES ($1, $2, $3)",
@@ -564,6 +571,34 @@ app.get("/venues", async (req, res) => {
     return res.status(500).json({ ok: false, message: "Server error" });
   }
 });
+
+
+// Get user profile
+app.get("/profile/me", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT pp.*, u.username, u.email
+       FROM player_profile pp
+       JOIN users u ON u.id = pp.user_id
+       WHERE pp.user_id = $1`,
+      [req.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "Profile not found",
+        needsOnboarding: true
+      });
+    }
+
+    return res.json({ ok: true, profile: result.rows[0] });
+  } catch (err) {
+    console.error("Get profile error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, "0.0.0.0", () => {
