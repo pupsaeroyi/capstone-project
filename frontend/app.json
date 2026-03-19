@@ -55,7 +55,8 @@
         {
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find nearby courts."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
