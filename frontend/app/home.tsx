@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
@@ -7,101 +8,60 @@ import { FilterButton } from "@/components/FilterButton";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
 import { useAuth } from "@/context/AuthContext";
+import { API_BASE } from "@/lib/api";
 
 const { width } = Dimensions.get("window");
+
+type SessionWithVenue = {
+  session_id: number;
+  sport: string;
+  player_count: number;
+  max_players: number;
+  start_time: string;
+  end_time: string;
+  venue_id: number;
+  venue_name: string;
+};
+
+type VenueBasic = {
+  venue_id: number;
+  venue_name: string;
+  court_count: number;
+};
 
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
 
-  //Mock Data as placeholder until backend is ready
-  const venues = [
-    {
-      venue_id: 1,
-      venue_name: "Ocean Front",
-      court_count: 4,
-      open_time: "16:00",
-      close_time: "23:00",
-    },
-    {
-      venue_id: 2,
-      venue_name: "Chula Sports Complex",
-      court_count: 3,
-      open_time: "17:00",
-      close_time: "22:00",
-    },
-    {
-      venue_id: 3,
-      venue_name: "Sunset Beach Volley",
-      court_count: 5,
-      open_time: "16:00",
-      close_time: "23:30",
-    },
-  ];
-
-  const matches = [
-    {
-      match_post_id: 1,
-      venue_id: 1,
-      court_no: 4,
-      date: "2026-06-04",
-      start_time: "18:30",
-      end_time: "20:00",
-      max_players: 12,
-      slot_left: 4,
-      created_at: "2026-06-03T12:00:00",
-    },
-    {
-      match_post_id: 2,
-      venue_id: 2,
-      court_no: 1,
-      date: "2026-06-04",
-      start_time: "19:30",
-      end_time: "21:00",
-      max_players: 12,
-      slot_left: 6,
-      created_at: "2026-06-03T13:00:00",
-    },
-
-    {
-      match_post_id: 3,
-      venue_id: 3,
-      court_no: 4,
-      date: "2026-06-04",
-      start_time: "20:00",
-      end_time: "22:00",
-      max_players: 12,
-      slot_left: 5,
-      created_at: "2026-06-03T14:00:00",
-    },
-  ];
-
-  const match_players = [
-    {
-      match_id: 1,
-      user_id: 11,
-      avatar: "https://i.pravatar.cc/150?img=1",
-    },
-    {
-      match_id: 1,
-      user_id: 12,
-      avatar: "https://i.pravatar.cc/150?img=2",
-    },
-    {
-      match_id: 1,
-      user_id: 13,
-      avatar: "https://i.pravatar.cc/150?img=3",
-    },
-  ];
-
-  function getFeaturedMatch(matches: any[]) {
-    return [...matches].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0];
-  }
-  const featuredMatch = getFeaturedMatch(matches);
-  const featuredVenue = venues.find(v => v.venue_id === featuredMatch.venue_id);
+  const [sessions, setSessions] = useState<SessionWithVenue[]>([]);
+  const [venues, setVenues] = useState<VenueBasic[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/venues`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          const venueList: VenueBasic[] = [];
+          const allSessions: SessionWithVenue[] = [];
+
+          for (const v of data.venues) {
+            venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
+            for (const s of v.active_sessions) {
+              allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
+            }
+          }
+
+          setVenues(venueList);
+          setSessions(allSessions.sort((a, b) =>
+            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          ));
+        }
+      })
+      .catch(err => console.error("Failed to fetch venues:", err));
+  }, []);
+
+  const featuredSession = sessions[0] || null;
 
   function getGreeting() {
     const hour = new Date().getHours();
@@ -114,6 +74,11 @@ export default function Home() {
   function formatDate(dateStr: string) {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function formatTime(dateStr: string) {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
   return (
@@ -144,42 +109,71 @@ export default function Home() {
         </View>
       </View>
 
-      <View style={styles.featuredCard}>
+      {featuredSession && (
+        <TouchableOpacity
+          style={styles.featuredCard}
+          onPress={() => router.push(`/session/${featuredSession.session_id}`)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.dateDisplay}>
+            <Text style={styles.dateText}>{formatDate(featuredSession.start_time)}</Text>
+          </View>
+          <Text style={styles.featuredTitle}>{featuredSession.venue_name}</Text>
+          <Text style={styles.featuredLocation}>{featuredSession.sport}</Text>
+          <Text style={styles.featuredTime}>
+            {formatTime(featuredSession.start_time)} - {formatTime(featuredSession.end_time)}
+          </Text>
+          <Text style={styles.featuredText}>
+            {featuredSession.max_players - featuredSession.player_count} slots left
+          </Text>
+        </TouchableOpacity>
+      )}
 
-        {/* Date display */}
-        <View style={styles.dateDisplay}>
-          <Text style={styles.dateText}>{formatDate(featuredMatch.date)}</Text>
-        </View>
-
-        {/* Title */}
-        <Text style={styles.featuredTitle}>{featuredVenue?.venue_name}</Text>
-        <Text style={styles.featuredLocation}>Court {featuredMatch.court_no}</Text>
-
-        <Text style={styles.featuredTime}>{featuredMatch.start_time} - {featuredMatch.end_time}</Text>
-
-        <Text style={styles.featuredText}>{featuredMatch.slot_left} slots left</Text>
-      </View>
-
-      <View style={styles.sectionHeader}> 
+      <View style={styles.sectionHeader}>
         <Text style={styles.title}>Available Sessions</Text>
-        <Text style={styles.seeMore}>See More</Text>
+        <TouchableOpacity onPress={() => router.push("/sessions")}>
+          <Text style={styles.seeMore}>See More</Text>
+        </TouchableOpacity>
       </View>
-      
 
-      {matches.map((match) => (
-        <View key={match.match_post_id} style={styles.card}>
-          <Text style={styles.court}>{match.court_no}</Text>
-          <Text style={styles.meta}>{match.start_time} - {match.end_time}</Text>
-          <Text style={styles.players}>{match.slot_left} slots left</Text>
+      {sessions.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <MaterialIcons name="event-busy" size={32} color="#CBD5E1" />
+          <Text style={styles.emptyText}>No active sessions right now</Text>
         </View>
-      ))}
+      ) : (
+        sessions.map((session) => (
+          <TouchableOpacity
+            key={session.session_id}
+            style={styles.card}
+            onPress={() => router.push(`/session/${session.session_id}`)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.court}>{session.venue_name}</Text>
+            <Text style={styles.meta}>
+              {formatTime(session.start_time)} - {formatTime(session.end_time)}
+            </Text>
+            <Text style={styles.players}>
+              {session.max_players - session.player_count} slots left
+            </Text>
+          </TouchableOpacity>
+        ))
+      )}
 
-      <Text style={styles.title}>Courts</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.title}>Courts</Text>
+      </View>
 
       {venues.map((venue) => (
-        <View key={venue.venue_id} style={styles.card}>
+        <TouchableOpacity
+          key={venue.venue_id}
+          style={styles.card}
+          onPress={() => router.push({ pathname: "/venue/[id]", params: { id: venue.venue_id.toString(), venue_name: venue.venue_name } })}
+          activeOpacity={0.7}
+        >
           <Text style={styles.court}>{venue.venue_name}</Text>
-        </View>
+          <Text style={styles.courtSub}>{venue.court_count} court{venue.court_count !== 1 ? "s" : ""}</Text>
+        </TouchableOpacity>
       ))}
 
       {/* DEV tools */}
@@ -201,7 +195,7 @@ export default function Home() {
     />
 
   </View>
-  
+
   );
 }
 
@@ -292,6 +286,7 @@ const styles = StyleSheet.create({
 
   sectionHeader: {
     flexDirection: "row",
+    marginTop: 24,
     marginBottom: 16,
     justifyContent: "space-between",
     alignItems: "baseline",
@@ -324,6 +319,28 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 14,
     color: "#64748B",
+    marginTop: 4,
+  },
+
+  emptyCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    padding: 24,
+    marginBottom: 14,
+    alignItems: "center",
+    gap: 8,
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    fontFamily: "Lexend_400Regular",
+  },
+
+  courtSub: {
+    fontSize: 13,
+    color: "#64748B",
+    fontFamily: "Lexend_400Regular",
     marginTop: 4,
   },
 
