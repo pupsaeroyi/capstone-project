@@ -13,25 +13,33 @@ export default function Account() {
 		const { user } = useAuth();
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#fff" }}>
-        	<ScrollView
-          	style={[styles.container, { flex: 1 }]}
-          	contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false} 
-					>
+      <View style={{ flex: 1, backgroundColor: "#fff" }}>
+        <ScrollView
+          style={[styles.container, { flex: 1 }]}
+        	contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false} 
+				>
 
-						<View style={styles.header}>
-							<Ionicons
-								name="chevron-back"
-								size={28}
-								color="#000"
-								onPress={() => router.back()}>
-							</Ionicons>
+					<View style={styles.header}>
+						<Ionicons
+							name="chevron-back"
+							size={28}
+							color="#000"
+							onPress={() => router.back()}>
+						</Ionicons>
+					</View>
+
+					<View style={styles.title}>
+						<Text style={styles.titleText}>
+							  	{user?.username ?? "Player"}
+						</Text>
+
+						<View style={styles.avatarCircle}>
+							<Ionicons name="person-sharp" size={r(36)} color="#0B36F4" />
 						</View>
 
-						<View style={styles.title}>
-							<Text style={styles.titleText}>Edit Profile</Text>
-						</View>
+						<Text style={styles.RankLabel}>Athlete Rank</Text>
+					</View>
 
 
 
@@ -43,6 +51,7 @@ export default function Account() {
     )
 
 } const styles = StyleSheet.create({
+
   container: {
     backgroundColor: "#fff",
     paddingHorizontal: "10%",
@@ -55,7 +64,7 @@ export default function Account() {
 
   header: {
     width: "100%",
-	marginTop: 12,
+		marginTop: 12,
     marginLeft: -8,
   },
 
@@ -64,10 +73,28 @@ export default function Account() {
 	},
 
 	titleText: {
-		fontFamily: "Lexend_600SemiBold",
-		fontSize: r(18),
+		fontFamily: "Lexend_700Bold",
+		fontSize: r(20),
 		color: "#0F172A",
+		marginBottom: r(36),
 	},
+
+  avatarCircle: {
+    width: r(100),
+    height: r(100),
+    borderRadius: r(50),
+    backgroundColor: "#EEF2FF",
+    justifyContent: "center",
+    alignItems: "center",
+		marginBottom: r(24),
+  },
+
+	RankLabel: {
+		fontFamily: "Lexend_500Medium",
+		fontSize: r(16),
+		color: "#94A3B8",
+
+	}
 
 
 });

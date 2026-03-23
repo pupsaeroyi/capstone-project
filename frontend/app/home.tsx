@@ -2,13 +2,13 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from
 import { MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/Button";
 import { useRouter } from "expo-router";
 import { FilterButton } from "@/components/FilterButton";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
+import { r } from "@/utils/responsive";
 
 const { width } = Dimensions.get("window");
 
@@ -32,7 +32,6 @@ type VenueBasic = {
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
-
   const [sessions, setSessions] = useState<SessionWithVenue[]>([]);
   const [venues, setVenues] = useState<VenueBasic[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -82,12 +81,13 @@ export default function Home() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={{ flex: 1,backgroundColor: "#FFFFFF" }}>
+       <View style={styles.bottomBackground} />
+      <ScrollView
+        style={{flex:1}}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.headerCard}>
         <View style={styles.greetingRow}>
           <View>
@@ -105,7 +105,6 @@ export default function Home() {
             showSearchIcon
             style={styles.searchBar}
           />
-          <FilterButton onPress={() => {}} />
         </View>
       </View>
 
@@ -183,9 +182,10 @@ export default function Home() {
       onPress={() =>router.replace("/login")
       }
       >
-      Back to Login
-      </Text>
+        Back to Login
+        </Text>
       )}
+      
 
     </ScrollView>
 
@@ -200,10 +200,6 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#FFFFFF",
-    
-  },
 
   headerCard: {
     backgroundColor: "#FFFFFF",
@@ -242,7 +238,6 @@ const styles = StyleSheet.create({
 
   searchBar: {
     marginBottom: 30,
-    marginRight: 10,
     flex: 1,
   },
 
@@ -278,7 +273,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
+  bottomBackground: {
+    position: "absolute",
+    top: r(360),
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#F1F5F9",
+  },
+
   content: {
+    flexGrow: 1,
     backgroundColor: "#F1F5F9",
     paddingBottom: 120,
     paddingHorizontal: "6%",
