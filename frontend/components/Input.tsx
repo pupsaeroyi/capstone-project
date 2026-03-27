@@ -1,15 +1,17 @@
-import { TextInput, StyleSheet, TextInputProps, useWindowDimensions, View } from "react-native";
+import { TextInput, StyleSheet, TextInputProps, View, ViewStyle, TextStyle, StyleProp } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { r } from "@/utils/responsive";
 
-type InputProps = TextInputProps & {
+type InputProps = Omit<TextInputProps, "style"> & {
   placeholder: string;
   showSearchIcon?: boolean;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
 };
 
-export function Input({ placeholder, style, showSearchIcon, ...props }: InputProps) {
-  const { width } = useWindowDimensions();
-
-  const height = width < 360 ? 44 : width < 420 ? 50 : 52;
+export function Input({ placeholder, style, inputStyle, showSearchIcon, ...props }: InputProps) {
+  
+  const height = r(44);
 
   return (
     <View
@@ -32,7 +34,7 @@ export function Input({ placeholder, style, showSearchIcon, ...props }: InputPro
       )}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, inputStyle]}
         autoComplete="off"
         placeholder={placeholder}
         placeholderTextColor="#878B94"

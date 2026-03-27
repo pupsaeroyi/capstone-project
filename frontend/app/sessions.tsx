@@ -5,6 +5,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
 import { API_BASE, authFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/Input";
 
 type SessionItem = {
   session_id: number;
@@ -147,20 +148,14 @@ export default function SessionsScreen() {
       <View style={styles.header}>
         <Ionicons name="chevron-back" size={28} color="#000" onPress={() => router.back()} />
 
-        <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={r(18)} color="#94A3B8" />
-          <TextInput
-            style={styles.searchInput}
+          <Input
             placeholder="Search here"
-            placeholderTextColor="#94A3B8"
             value={search}
             onChangeText={setSearch}
+            showSearchIcon
+            style={styles.searchBar}
           />
-        </View>
 
-        <TouchableOpacity style={styles.filterIconButton}>
-          <MaterialIcons name="tune" size={r(20)} color="#0F172A" />
-        </TouchableOpacity>
       </View>
 
       {/* Filter chips */}
@@ -227,23 +222,11 @@ const styles = StyleSheet.create({
   backButton: {
     padding: r(4),
   },
-  searchContainer: {
+  
+  searchBar: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    borderRadius: r(20),
-    paddingHorizontal: r(12),
-    paddingVertical: r(8),
-    gap: r(6),
   },
-  searchInput: {
-    flex: 1,
-    fontSize: r(14),
-    fontFamily: "Lexend_400Regular",
-    color: "#0F172A",
-    padding: 0,
-  },
+
   filterIconButton: {
     padding: r(8),
     backgroundColor: "#F1F5F9",
