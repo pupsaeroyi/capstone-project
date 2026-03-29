@@ -36,47 +36,52 @@ export default function Home() {
   const [venues, setVenues] = useState<VenueBasic[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [refreshOffset, setRefreshOffset] = useState(0);
+
 
 
   const fetchHomeData = async () => {
 
-  try {
-    const res = await fetch(`${API_BASE}/venues`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`${API_BASE}/venues`);
+      const data = await res.json();
 
-    if (data.ok) {
-      const venueList: VenueBasic[] = [];
-      const allSessions: SessionWithVenue[] = [];
+      if (data.ok) {
+        const venueList: VenueBasic[] = [];
+        const allSessions: SessionWithVenue[] = [];
 
-      for (const v of data.venues) {
-        venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
+        for (const v of data.venues) {
+          venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
 
-        for (const s of v.active_sessions) {
-          allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
+          for (const s of v.active_sessions) {
+            allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
+          }
         }
-      }
 
-      setVenues(venueList);
-      setSessions(allSessions.sort((a, b) =>
-            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-        )
-      );
+        setVenues(venueList);
+        setSessions(allSessions.sort((a, b) =>
+              new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch venues:", err);
+    } finally {
+      setRefreshing(false); 
     }
-  } catch (err) {
-    console.error("Failed to fetch venues:", err);
-  } finally {
-    setRefreshing(false); // 👈 important for pull-to-refresh
-  }
-};
+  };
 
   useEffect(() => {
     fetchHomeData();
   }, []);
 
+  useEffect(() => {
+    const t = setTimeout(() => setRefreshOffset(80), 100);
+    return () => clearTimeout(t);
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true);
-    setLoading(false);
     fetchHomeData();
   };
 
@@ -108,7 +113,7 @@ export default function Home() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0B36F4" progressViewOffset={80}  />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0B36F4" progressViewOffset={refreshOffset} />
         }
       >
       <View style={styles.headerCard}>
