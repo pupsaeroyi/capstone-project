@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, RefreshControl } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
 import { useState, useEffect } from "react";
@@ -35,30 +35,50 @@ export default function Home() {
   const [sessions, setSessions] = useState<SessionWithVenue[]>([]);
   const [venues, setVenues] = useState<VenueBasic[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+
+  const fetchHomeData = async () => {
+
+  try {
+    const res = await fetch(`${API_BASE}/venues`);
+    const data = await res.json();
+
+    if (data.ok) {
+      const venueList: VenueBasic[] = [];
+      const allSessions: SessionWithVenue[] = [];
+
+      for (const v of data.venues) {
+        venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
+
+        for (const s of v.active_sessions) {
+          allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
+        }
+      }
+
+      setVenues(venueList);
+      setSessions(allSessions.sort((a, b) =>
+            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        )
+      );
+    }
+  } catch (err) {
+    console.error("Failed to fetch venues:", err);
+  } finally {
+    setRefreshing(false); // 👈 important for pull-to-refresh
+  }
+};
 
   useEffect(() => {
-    fetch(`${API_BASE}/venues`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.ok) {
-          const venueList: VenueBasic[] = [];
-          const allSessions: SessionWithVenue[] = [];
-
-          for (const v of data.venues) {
-            venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
-            for (const s of v.active_sessions) {
-              allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
-            }
-          }
-
-          setVenues(venueList);
-          setSessions(allSessions.sort((a, b) =>
-            new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-          ));
-        }
-      })
-      .catch(err => console.error("Failed to fetch venues:", err));
+    fetchHomeData();
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setLoading(false);
+    fetchHomeData();
+  };
 
   const featuredSession = sessions[0] || null;
 
@@ -87,6 +107,9 @@ export default function Home() {
         style={{flex:1}}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0B36F4" progressViewOffset={80}  />
+        }
       >
       <View style={styles.headerCard}>
         <View style={styles.greetingRow}>
