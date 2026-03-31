@@ -118,10 +118,10 @@ export default function SideMenu({ visible, onClose }: Props) {
         <View style={styles.divider} />
 
         <View style={styles.menuItems}>
-          <MenuItem icon="home" label="Home" active={pathname === "/home"} onPress={() => handleNavigate("/home")}/>
+          <MenuItem icon="home" label="Home" active={pathname === "tabs/home"} onPress={() => handleNavigate("/tabs/home")}/>
           <MenuItem icon="map" label="Map" active={pathname === "/map"} onPress={() => handleNavigate("/map")}/>
-          <MenuItem icon="person" label="Account" active={pathname === "/account"} onPress={() => handleNavigate("/account")}/>
-          <MenuItem icon="forum" label="Chat" active={pathname === "/chat"}/>
+          <MenuItem icon="person" label="Account" active={pathname === "tabs/account"} onPress={() => handleNavigate("/tabs/account")}/>
+          <MenuItem icon="forum" label="Chat" active={pathname === "tabs/chat"} onPress={() => handleNavigate("/tabs/chat")}/>
           <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
           <MenuItem icon="info" label="About Us" active={pathname === "/aboutUs"}/>
         </View>

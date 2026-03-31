@@ -35,7 +35,7 @@ export default function Account() {
 						</Text>
 
 						<View style={styles.avatarCircle}>
-							<Ionicons name="person-sharp" size={r(36)} color="#0B36F4" />
+							<Ionicons name="person" size={r(36)} color="#0B36F4" />
 						</View>
 
 						<Text style={styles.RankLabel}>Athlete Rank</Text>

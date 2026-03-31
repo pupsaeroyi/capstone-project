@@ -158,7 +158,7 @@ export default function Home() {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.title}>Available Sessions</Text>
-        <TouchableOpacity onPress={() => router.push("/sessions")}>
+        <TouchableOpacity onPress={() => router.push("/tabs/sessions")}>
           <Text style={styles.seeMore}>See More</Text>
         </TouchableOpacity>
       </View>

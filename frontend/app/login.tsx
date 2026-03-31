@@ -32,7 +32,7 @@ export default function Login() {
         if (res.ok && data.ok) {
           console.log("Auto-login success:", data.user.username);
           setUser(data.user);
-          router.replace("/home");
+          router.replace("/tabs/home");
         } else {
           await clearSavedToken();
         }
@@ -75,7 +75,7 @@ export default function Login() {
       setUser(data.user);
 
       alert(`Welcome ${data.user.username}!`);
-      router.replace("/home");
+      router.replace("/tabs/home");
       
     } catch (err: any) {
       console.log(err);
@@ -180,7 +180,7 @@ export default function Login() {
                 {__DEV__ && (
                   <Text
                     style={{ fontSize: 12, color: "#999" }}
-                    onPress={() =>router.replace("/home")
+                    onPress={() =>router.replace("/tabs/home")
                     }
                   >
                     Home Page
