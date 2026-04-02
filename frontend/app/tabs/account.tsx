@@ -80,9 +80,9 @@ export default function Account() {
 	},
 
   avatarCircle: {
-    width: r(100),
-    height: r(100),
-    borderRadius: r(50),
+    width: r(90),
+    height: r(90),
+    borderRadius: r(45),
     backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",

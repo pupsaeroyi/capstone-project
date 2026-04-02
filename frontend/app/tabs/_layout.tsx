@@ -1,6 +1,7 @@
 import { Tabs, useRouter } from "expo-router";
 import { MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { r } from "@/utils/responsive";
 
 function CreateSessionButton({onPress}: {onPress: () => void}) {
 	return (
@@ -106,16 +107,16 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   createButton: {
-    top: -20,
+    flex: 1,
+    top: -10,
     justifyContent: "center",
     alignItems: "center",
-    width: 60,
   },
 
   createButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: r(56),
+    height: r(56),
+    borderRadius: r(28),
     backgroundColor: "#0B36F4",
     justifyContent: "center",
     alignItems: "center",

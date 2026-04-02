@@ -2,10 +2,10 @@ import { Dimensions } from "react-native";
 
 const { width } = Dimensions.get("window");
 
-// iPhone 13 as baseline
-const BASE_WIDTH = 375;
+const BASE_WIDTH = 390;
 
 export const r = (size: number) => {
   const scale = width / BASE_WIDTH;
-  return Math.round(size * scale);
+  const dampened = 1 + (scale - 1) * 0.5;
+  return Math.round(size * dampened);
 };

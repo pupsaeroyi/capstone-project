@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Modal, Pressable, useColorScheme } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { r } from "@/utils/responsive";
 import { authFetch, API_BASE } from "@/lib/api";
 
 type VenueOption = { venue_id: number; venue_name: string };
+type PickerTarget = "date" | "start" | "end" | null;
 
 export default function CreateSessionScreen() {
   const { venue_id: paramVenueId, venue_name: paramVenueName } = useLocalSearchParams<{ venue_id: string; venue_name: string }>();
@@ -35,6 +36,34 @@ export default function CreateSessionScreen() {
   const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000));
   const [submitting, setSubmitting] = useState(false);
 
+  // --- Picker state ---
+  // On iOS: one modal at a time, temp value committed on "Done"
+  // On Android: inline system dialog
+  const [activePicker, setActivePicker] = useState<PickerTarget>(null);
+  const [tempDate, setTempDate] = useState(new Date());
+
+  const openPicker = (target: PickerTarget) => {
+    if (target === "date") setTempDate(date);
+    else if (target === "start") setTempDate(startTime);
+    else if (target === "end") setTempDate(endTime);
+    setActivePicker(target);
+  };
+
+  const confirmPicker = () => {
+    if (activePicker === "date") setDate(tempDate);
+    else if (activePicker === "start") setStartTime(tempDate);
+    else if (activePicker === "end") setEndTime(tempDate);
+    setActivePicker(null);
+  };
+
+  const handleAndroidChange = (target: PickerTarget, _: DateTimePickerEvent, selected?: Date) => {
+    setActivePicker(null);
+    if (!selected) return;
+    if (target === "date") setDate(selected);
+    else if (target === "start") setStartTime(selected);
+    else if (target === "end") setEndTime(selected);
+  };
+
   const skillLevels = [
     { value: "all", label: "All Levels" },
     { value: "beginner", label: "Beginner" },
@@ -42,11 +71,6 @@ export default function CreateSessionScreen() {
     { value: "advanced", label: "Advanced" },
     { value: "pro", label: "Pro" },
   ];
-
-  // Picker visibility (Android shows inline, iOS shows modal)
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
 
   const buildTimestamp = (dateObj: Date, timeObj: Date) => {
     const combined = new Date(dateObj);
@@ -107,7 +131,9 @@ export default function CreateSessionScreen() {
     d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
   const formatTime = (d: Date) =>
-    d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+
+  const pickerMode = activePicker === "date" ? "date" : "time";
 
   return (
     <View style={styles.container}>
@@ -187,57 +213,24 @@ export default function CreateSessionScreen() {
 
         {/* Date */}
         <Text style={styles.label}>Date</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDatePicker(true)}>
+        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("date")}>
           <MaterialIcons name="calendar-today" size={r(18)} color="#64748B" />
           <Text style={styles.pickerText}>{formatDate(date)}</Text>
         </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            minimumDate={new Date()}
-            onChange={(_, selected) => {
-              setShowDatePicker(Platform.OS === "ios");
-              if (selected) setDate(selected);
-            }}
-          />
-        )}
 
         {/* Start Time */}
         <Text style={styles.label}>Start Time</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => setShowStartPicker(true)}>
+        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("start")}>
           <MaterialIcons name="schedule" size={r(18)} color="#64748B" />
           <Text style={styles.pickerText}>{formatTime(startTime)}</Text>
         </TouchableOpacity>
-        {showStartPicker && (
-          <DateTimePicker
-            value={startTime}
-            mode="time"
-            is24Hour
-            onChange={(_, selected) => {
-              setShowStartPicker(Platform.OS === "ios");
-              if (selected) setStartTime(selected);
-            }}
-          />
-        )}
 
         {/* End Time */}
         <Text style={styles.label}>End Time</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => setShowEndPicker(true)}>
+        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("end")}>
           <MaterialIcons name="schedule" size={r(18)} color="#64748B" />
           <Text style={styles.pickerText}>{formatTime(endTime)}</Text>
         </TouchableOpacity>
-        {showEndPicker && (
-          <DateTimePicker
-            value={endTime}
-            mode="time"
-            is24Hour
-            onChange={(_, selected) => {
-              setShowEndPicker(Platform.OS === "ios");
-              if (selected) setEndTime(selected);
-            }}
-          />
-        )}
 
         {/* Max Players */}
         <Text style={styles.label}>Max Players</Text>
@@ -247,6 +240,7 @@ export default function CreateSessionScreen() {
           onChangeText={setMaxPlayers}
           keyboardType="number-pad"
           placeholder="12"
+          placeholderTextColor="#94A3B8"
         />
 
         {/* Submit */}
@@ -260,6 +254,67 @@ export default function CreateSessionScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {Platform.OS === "ios" && (
+        <Modal
+          visible={activePicker !== null}
+          transparent
+          animationType="slide"
+        >
+        <View style={styles.modalContainer}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setActivePicker(null)} />
+            <View style={styles.modalSheet}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setActivePicker(null)}>
+                  <Text style={styles.modalCancel}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>
+                  {activePicker === "date" ? "Select Date" : activePicker === "start" ? "Start Time" : "End Time"}
+                </Text>
+                <TouchableOpacity onPress={confirmPicker}>
+                  <Text style={styles.modalDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={tempDate}
+                mode={pickerMode}
+                display="spinner"
+                is24Hour
+                locale="en-GB" 
+                themeVariant="light"
+                minimumDate={pickerMode === "date" ? new Date() : undefined}
+                onChange={(_, selected) => { if (selected) setTempDate(selected); }}
+                style={styles.spinner}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {Platform.OS === "android" && activePicker === "date" && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          minimumDate={new Date()}
+          onChange={(e, s) => handleAndroidChange("date", e, s)}
+        />
+      )}
+      {Platform.OS === "android" && activePicker === "start" && (
+        <DateTimePicker
+          value={startTime}
+          mode="time"
+          is24Hour
+          onChange={(e, s) => handleAndroidChange("start", e, s)}
+        />
+      )}
+      {Platform.OS === "android" && activePicker === "end" && (
+        <DateTimePicker
+          value={endTime}
+          mode="time"
+          is24Hour
+          onChange={(e, s) => handleAndroidChange("end", e, s)}
+        />
+      )}
     </View>
   );
 }
@@ -279,9 +334,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
-  },
-  backButton: {
-    padding: r(4),
   },
   headerTitle: {
     fontSize: r(18),
@@ -404,5 +456,54 @@ const styles = StyleSheet.create({
     fontSize: r(16),
     fontFamily: "Lexend_700Bold",
     color: "#FFFFFF",
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",  
+  },
+  modalBackdrop: {
+    position: "absolute",
+    top: 0,
+left: 0,
+right: 0,
+bottom: 0,
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  
+  modalSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: r(24),
+    borderTopRightRadius: r(24),
+    paddingBottom: r(36),
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: r(20),
+    paddingVertical: r(14),
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+  modalTitle: {
+    fontSize: r(15),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0F172A",
+  },
+  modalCancel: {
+    fontSize: r(15),
+    fontFamily: "Lexend_400Regular",
+    color: "#64748B",
+  },
+  modalDone: {
+    fontSize: r(15),
+    fontFamily: "Lexend_700Bold",
+    color: "#0B36F4",
+  },
+  spinner: {
+    width: "100%",
   },
 });

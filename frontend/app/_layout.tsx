@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
 import { Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, Lexend_800ExtraBold } from "@expo-google-fonts/lexend";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
@@ -34,6 +35,7 @@ export default function RootLayout() {
 
     return (
     <AuthProvider>
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
     </AuthProvider>
   );
