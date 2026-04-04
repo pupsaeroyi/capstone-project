@@ -248,7 +248,7 @@ def compute_total_score(df: pd.DataFrame) -> pd.DataFrame:
 # 4) ASSIGN RANK (OPTIONAL)
 # -----------------------------
 # Example centroids (you should replace with your trained values)
-CENTROIDS = np.array([23.0920637 , 65.20136984, 44.8949472 , 81.51450138])
+CENTROIDS = np.array([23.0920637 , 44.8949472 , 65.20136984, 81.51450138])
 TIERS = ["Beginner", "Intermediate", "Advanced", "Professional"]
 
 
