@@ -43,8 +43,7 @@ export default function VerifyEmail() {
         return;
       }
 
-      alert("Email verified! Please log in.");
-      router.replace("/login");
+      router.replace("/questionnaire");
     } catch (err) {
       console.log(err);
       alert("Cannot connect to server");
