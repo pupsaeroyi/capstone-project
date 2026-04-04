@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { requireAuth } from "./auth.js";
 import { sendEmail } from "./mailer.js";
 import { sessionRoutes } from "./sessions.js";
+import questionnaireRouter from "./questionnaire.js";
 
 
 dotenv.config();
@@ -394,7 +395,10 @@ app.post("/auth/login", async (req, res) => {
 app.get("/me", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(
-      "SELECT id, username, email, created_at FROM users WHERE id = $1",
+      `SELECT u.id, u.username, u.email, u.created_at, pp.questionnaire_done
+      FROM users u
+      LEFT JOIN player_profile pp ON pp.user_id = u.id
+      WHERE u.id = $1`,
       [req.userId]
     );
 
@@ -608,6 +612,8 @@ app.get("/venues", async (req, res) => {
 
 // Mount session routes
 sessionRoutes(app);
+
+app.use("/auth", questionnaireRouter);
 
 // Get user profile
 app.get("/profile/me", requireAuth, async (req, res) => {
