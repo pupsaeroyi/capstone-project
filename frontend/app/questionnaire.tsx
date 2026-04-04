@@ -19,16 +19,37 @@ export default function Questionnaire() {
       setStep(s => s + 1);
       return;
     }
-    const token = await SecureStore.getItemAsync("accessToken");
-    const res = await fetch(`${API_BASE}/auth/submit-questionnaire`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(answers),
-    });
-    const data = await res.json();
-    if (data.ok) router.replace("/tabs/home");
-  };
 
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      console.log("token:", token);
+
+      if (!token) {
+        alert("Session expired. Please log in again.");
+        router.replace("/login");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/auth/submit-questionnaire`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(answers),
+      });
+
+      console.log("res status:", res.status);
+      const data = await res.json();
+      console.log("response data:", data);
+
+      if (data.ok) {
+        router.replace("/tabs/home");
+      } else {
+        alert(data.message || "Submission failed");
+      }
+    } catch (err) {
+      console.log("submit error:", err);
+      alert("Cannot connect to server");
+    }
+  };
   const renderQuestion = () => {
     if (current.type === "radio")
       return (
