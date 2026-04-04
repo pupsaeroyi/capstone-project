@@ -187,6 +187,16 @@ export default function Login() {
                   </Text>
                 )}
 
+                {__DEV__ && (
+                  <Text
+                    style={{ fontSize: 12, color: "#999" }}
+                    onPress={() =>router.replace("/questionnaire")
+                    }
+                  >
+                    Questionnaire Page
+                  </Text>
+                )}
+
 
               </View>
             </View>

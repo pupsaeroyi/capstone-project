@@ -31,48 +31,48 @@ def map_positions(df):
     
 def map_experience(df):
     experience_map = {
-        "มากกว่า 3 ปี": 10,
-        "1–3 ปี": 7.5,
-        "6 เดือน – 1 ปี": 5,
-        "3–6 เดือน": 2.5,
-        "น้อยกว่า 3 เดือน": 0
+        "More than 3 years":  10,
+        "1-3 years":          7.5,
+        "6 months - 1 year":  5,
+        "3-6 months":         2.5,
+        "Less than 3 months": 0,
     }
     df['experience'] = df['experience'].map(experience_map).fillna(0)
     return df
 
 def map_often(df):  
     often_map = {
-        "มากกว่า 18 ครั้งต่อเดือน": 10,
-        "17-18 ครั้งต่อเดือน": 9,
-        "15-16 ครั้งต่อเดือน": 8,
-        "13-14 ครั้งต่อเดือน": 7,
-        "11-12 ครั้งต่อเดือน": 6,
-        "9-10 ครั้งต่อเดือน": 5,
-        "7-8 ครั้งต่อเดือน": 4,
-        "5-6 ครั้งต่อเดือน": 3,
-        "3-4 ครั้งต่อเดือน": 2,
-        "1-2 ครั้งต่อเดือน": 1,
-        "เดือนละ 1 ครั้งหรือน้อยกว่า": 0
+        "More than 18 times per month": 10,
+        "17-18 times per month": 9,
+        "15-16 times per month": 8,
+        "13-14 times per month": 7,
+        "11-12 times per month": 6,
+        "9-10 times per month": 5,
+        "7-8 times per month": 4,
+        "5-6 times per month": 3,
+        "3-4 times per month": 2,
+        "1-2 times per month": 1,
+        "Once a month or less": 0
     }
     df['often'] = df['often'].map(often_map).fillna(0)
     return df
 
 def map_uni_team(df):
     uni_team_map = {
-        "เล่นอยู่": 10,
-        "เคย": 7,
-        "ไม่เคย": 0,
+        "Currently playing": 10,
+        "Previously": 7,
+        "Never": 0,
     }
     df['uni_team'] = df['uni_team'].map(uni_team_map).fillna(0)
     return df
 
 def map_intensity(df):
     intensity_map = {
-        "90+ นาที": 10,
-        "60-90 นาที": 7.5,
-        "30–60 นาที": 5,
-        "15–30 นาที": 2.5,
-        "<15 นาที": 0,
+        "90+ minutes":   10,
+        "60-90 minutes": 7.5,
+        "30-60 minutes": 5,
+        "15-30 minutes": 2.5,
+        "< 15 minutes":  0,
     }
     df['intensity'] = df['intensity'].map(intensity_map).fillna(0)
     return df
