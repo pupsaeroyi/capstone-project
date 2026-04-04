@@ -9,6 +9,7 @@ import { requireAuth } from "./auth.js";
 import { sendEmail } from "./mailer.js";
 import { sessionRoutes } from "./sessions.js";
 import questionnaireRouter from "./questionnaire.js";
+import { access } from "fs";
 
 
 dotenv.config();
@@ -142,11 +143,17 @@ app.post("/auth/register", async (req, res) => {
       console.error("Verification email failed:", err);
     }
 
+    const accessToken = jwt.sign(
+      { sub: newUser.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    );
 
     return res.json({ 
       ok: true, 
       message: "Registration successful",
       needsEmailVerification: true,
+      accessToken,
       user: newUser,
     });
 

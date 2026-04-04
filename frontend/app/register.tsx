@@ -8,6 +8,7 @@ import { API_BASE } from "@/lib/api";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import LoadingIcon from "@/components/LoadingIcon";
 import { AntDesign } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 
 
 export default function Register() {
@@ -118,6 +119,8 @@ export default function Register() {
         alert(data.message || "Registration failed. Please try again.");
         return;
       }
+
+      await SecureStore.setItemAsync("accessToken", data.accessToken);
       
       router.replace({
         pathname: "/verify-email",

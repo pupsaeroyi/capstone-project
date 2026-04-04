@@ -14,6 +14,7 @@ export default function Questionnaire() {
   const { step, setStep, answers, setAnswer, current, total, progress, canAdvance } = useQuestionnaire();
 
   const handleNext = async () => {
+    console.log("handleNext called, step:", step, "total:", total);
     if (step < total - 1) {
       setStep(s => s + 1);
       return;
