@@ -45,7 +45,9 @@ export function SliderQuestion({ config, value, onChange }: Props) {
 
         <View style={styles.tickRow}>
           {ticks.map((t) => (
-            <Text key={t} style={styles.tick}>{t}</Text>
+            <Text key={t} style={[styles.tick, t === value && styles.tickActive]}>
+              {t}
+            </Text>
           ))}
         </View>
       </View>
@@ -99,13 +101,18 @@ const styles = StyleSheet.create({
   },
   tickRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     marginTop: 4,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
   tick: {
+    flex: 1,
+    textAlign: "center",
     fontSize: 11,
     fontFamily: "Lexend_400Regular",
-    color: "#64748B",
+    color: "#94A3B8",
+  },
+  tickActive: {
+    color: "#0B36F4",
+    fontFamily: "Lexend_700Bold",
   },
 });
