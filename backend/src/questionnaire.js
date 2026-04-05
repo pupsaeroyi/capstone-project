@@ -69,7 +69,7 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
         (profile_id, experience, often, uni_team, intensity, rule, serve, 
         serve_receive, spike, spike_receive, set, block, pos1, pos2, pos3, is_draft)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, FALSE)
-    ON CONFLICT (profile_id) WHERE is_draft = TRUE
+    ON CONFLICT (profile_id)
     DO UPDATE SET
         experience = EXCLUDED.experience,
         often = EXCLUDED.often,
@@ -128,7 +128,7 @@ router.post("/questionnaire/save-draft", requireAuth, async (req, res) => {
         (profile_id, experience, often, uni_team, intensity, rule, serve,
          serve_receive, spike, spike_receive, set, block, current_step, is_draft)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, TRUE)
-       ON CONFLICT (profile_id) WHERE is_draft = TRUE
+       ON CONFLICT (profile_id) 
        DO UPDATE SET
          experience = EXCLUDED.experience,
          often = EXCLUDED.often,
