@@ -9,6 +9,7 @@ import { requireAuth } from "./auth.js";
 import { sendEmail } from "./mailer.js";
 import { sessionRoutes } from "./sessions.js";
 import questionnaireRouter from "./questionnaire.js";
+import { postRoutes } from "./posts.js";
 import { access } from "fs";
 
 
@@ -23,6 +24,12 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+
+app.use("/auth", questionnaireRouter);
+
+postRoutes(app);
+sessionRoutes(app);
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -617,10 +624,7 @@ app.get("/venues", async (req, res) => {
   }
 });
 
-// Mount session routes
-sessionRoutes(app);
 
-app.use("/auth", questionnaireRouter);
 
 // Get user profile
 app.get("/profile/me", requireAuth, async (req, res) => {
