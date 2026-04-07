@@ -25,6 +25,64 @@ def infer_positions(data: dict) -> dict:
 def root():
     return {"status": "ok"}
 
+# Basic Health Check
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
+# Deep Health Check
+@app.get("/health/deep")
+def deep_health():
+    checks = {}
+
+    # pandas check
+    try:
+        import pandas as pd
+        _ = pd.DataFrame({"test": [1]})
+        checks["pandas"] = "ok"
+    except Exception as e:
+        checks["pandas"] = f"error: {str(e)}"
+
+    # pipeline import check
+    try:
+        from main_pipeline import run_initial_pipeline
+        checks["pipeline_import"] = "ok"
+    except Exception as e:
+        checks["pipeline_import"] = f"error: {str(e)}"
+    
+
+    # pipeline execution check with dummy data
+    try:
+        test_df = pd.DataFrame([{
+            "serve": 5,
+            "serve_receive": 5,
+            "spike": 5,
+            "block": 5,
+            "set": 5,
+            "spike_receive": 5,
+            "pos1": "OH",
+            "pos2": "MB",
+            "pos3": "OP"
+        }])
+
+        result = run_initial_pipeline(test_df)
+        # verify expected columns exist
+        required_cols = ["total", "rank", "rating_score"]
+        for col in required_cols:
+            if col not in result.columns:
+                raise ValueError(f"Missing column: {col}")
+
+        checks["pipeline_execution"] = "ok"
+
+    except Exception as e:
+        checks["pipeline_execution"] = f"error: {str(e)}"
+
+    # Final status report
+    status = "healthy" if all(v == "ok" for v in checks.values()) else "unhealthy"
+    return {"status": status, "checks": checks}
+
+
 @app.post("/score")
 def score_user_api(data: dict):
     try:
