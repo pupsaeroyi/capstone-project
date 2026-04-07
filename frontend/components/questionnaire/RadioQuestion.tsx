@@ -10,9 +10,10 @@ type Props = {
   };
   value: string;
   onChange: (v: string) => void;
+  isDisabledOption?: (label: string) => boolean;
 };
 
-export function RadioQuestion({ config, value, onChange }: Props) {
+export function RadioQuestion({ config, value, onChange, isDisabledOption}: Props) {
   return (
     <ScrollView
       contentContainerStyle={styles.content}
@@ -26,12 +27,19 @@ export function RadioQuestion({ config, value, onChange }: Props) {
       <View style={styles.options}>
         {config.options.map((opt) => {
           const selected = value === opt.label;
+          const disabled = isDisabledOption?.(opt.label);
+
           return (
             <TouchableOpacity
               key={opt.label}
-              style={[styles.option, selected && styles.optionSelected]}
-              onPress={() => onChange(opt.label)}
+              style={[
+                styles.option,
+                selected && styles.optionSelected,
+                disabled && styles.optionDisabled
+              ]}
+              onPress={() => !disabled && onChange(opt.label)}
               activeOpacity={0.7}
+              disabled={disabled}
             >
               <View style={styles.optionLeft}>
                 <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
@@ -91,6 +99,11 @@ const styles = StyleSheet.create({
     borderColor: "#0B36F4",
     backgroundColor: "#EEF2FF",
   },
+
+  optionDisabled: {
+    opacity: 0.4,
+  },
+
   optionLeft: {
     flex: 1,
     marginRight: 12,

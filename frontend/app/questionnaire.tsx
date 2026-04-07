@@ -51,22 +51,41 @@ export default function Questionnaire() {
     }
   };
   const renderQuestion = () => {
-    if (current.type === "radio")
+    if (current.type === "radio") {
+
+      const key = current.key as keyof typeof answers;
+      const disabledOptions = (label: string) => {
+        if (key === "pos2") {
+          return label === answers.pos1;
+        }
+
+        if (key === "pos3") {
+          return label === answers.pos1 || label === answers.pos2;
+        }
+
+        return false;
+      };
+
       return (
         <RadioQuestion
           config={current}
-          value={answers[current.key as keyof typeof answers] as string}
+          value={answers[key] as string}
           onChange={v => setAnswer(current.key, v)}
+          isDisabledOption={disabledOptions}
         />
       );
-    if (current.type === "slider")
+    }
+
+    if (current.type === "slider") {
+      const key = current.key as keyof typeof answers;
       return (
         <SliderQuestion
           config={current}
-          value={answers[current.key as keyof typeof answers] as number}
+          value={answers[key] as number}
           onChange={v => setAnswer(current.key, v)}
         />
       );
+    }
   };
 
   return (

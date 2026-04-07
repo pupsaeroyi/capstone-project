@@ -18,7 +18,47 @@ export type QuestionConfig =
     };
 
 export const QUESTIONS: QuestionConfig[] = [
-  // Q1 — Experience
+  // Q1 — First preferred position
+  {
+    type: "radio",
+    key: "pos1",
+    question: "What is your FIRST preferred position?",
+    options: [
+      { label: "Setter" },
+      { label: "Outside Hitter" },
+      { label: "Middle Blocker" },
+      { label: "Opposite" },
+      { label: "Libero" },
+    ],
+  },
+  // Q2 — Second preferred position
+  {
+    type: "radio",
+    key: "pos2",
+    question: "What is your SECOND preferred position?",
+    options: [
+      { label: "Setter" },
+      { label: "Outside Hitter" },
+      { label: "Middle Blocker" },
+      { label: "Opposite" },
+      { label: "Libero" },
+    ],
+  },
+  // Q3 — Third preferred position
+  {
+    type: "radio",
+    key: "pos3",
+    question: "What is your THIRD preferred position?",
+    options: [
+      { label: "Setter" },
+      { label: "Outside Hitter" },
+      { label: "Middle Blocker" },
+      { label: "Opposite" },
+      { label: "Libero" },
+    ],
+  },
+
+  // Q4 — Experience
   {
     type: "radio",
     key: "experience",
@@ -32,7 +72,7 @@ export const QUESTIONS: QuestionConfig[] = [
     ],
   },
 
-  // Q2 — Frequency
+  // Q5 — Frequency
   {
     type: "radio",
     key: "often",
@@ -53,7 +93,7 @@ export const QUESTIONS: QuestionConfig[] = [
     ],
   },
 
-  // Q3 — Competitive history
+  // Q6 — Competitive history
   {
     type: "radio",
     key: "uni_team",
@@ -65,21 +105,21 @@ export const QUESTIONS: QuestionConfig[] = [
     ],
   },
 
-  // Q4 — Endurance
+  // Q7 — Endurance
   {
     type: "radio",
     key: "intensity",
     question: "How long can you play volleyball at your preferred intensity?",
     options: [
       { label: "< 15 minutes" },
-      { label: "15–30 minutes" },
-      { label: "30–60 minutes" },
-      { label: "60–90 minutes" },
+      { label: "15-30 minutes" },
+      { label: "30-60 minutes" },
+      { label: "60-90 minutes" },
       { label: "90+ minutes" },
     ],
   },
 
-  // Q5 — Rule knowledge
+  // Q8 — Rule knowledge
   {
     type: "slider",
     key: "rule",
@@ -90,7 +130,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q6 — Serving accuracy
+  // Q9 — Serving accuracy
   {
     type: "slider",
     key: "serve",
@@ -100,7 +140,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q7 — Receiving serves
+  // Q10 — Receiving serves
   {
     type: "slider",
     key: "serve_receive",
@@ -110,7 +150,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q8 — Receiving spikes
+  // Q11 — Receiving spikes
   {
     type: "slider",
     key: "spike_receive",
@@ -120,7 +160,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q9 — Setting
+  // Q12 — Setting
   {
     type: "slider",
     key: "set",
@@ -130,7 +170,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q10 — Spiking
+  // Q13 — Spiking
   {
     type: "slider",
     key: "spike",
@@ -140,7 +180,7 @@ export const QUESTIONS: QuestionConfig[] = [
     max: 10,
   },
 
-  // Q11 — Blocking
+  // Q14 — Blocking
   {
     type: "slider",
     key: "block",

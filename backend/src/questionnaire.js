@@ -6,6 +6,9 @@ const router = express.Router();
 
 router.post("/submit-questionnaire", requireAuth, async (req, res) => {
   const {
+    pos1,
+    pos2,
+    pos3,
     experience,
     often,
     uni_team,
@@ -29,6 +32,9 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        pos1,
+        pos2,
+        pos3,
         experience,
         often,
         uni_team,
@@ -49,7 +55,7 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
       return res.status(500).json({ ok: false, message: pyData.error });
     }
 
-    const { rank, rating_score, total, pos1, pos2, pos3 } = pyData;
+    const { rank, rating_score, total } = pyData;
 
     // 2. Get player_profile id for this user
     const profileResult = await pool.query(
@@ -66,8 +72,8 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
     // 3. Save final answers to player_questionnaire (mark as not draft)
     await pool.query(
     `INSERT INTO player_questionnaire 
-        (profile_id, experience, often, uni_team, intensity, rule, serve, 
-        serve_receive, spike, spike_receive, set, block, pos1, pos2, pos3, is_draft)
+        (profile_id, pos1, pos2, pos3, experience, often, uni_team, intensity, rule, serve, 
+        serve_receive, spike, spike_receive, set, block, is_draft)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, FALSE)
     ON CONFLICT (profile_id)
     DO UPDATE SET
@@ -86,8 +92,8 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
         pos2 = EXCLUDED.pos2,
         pos3 = EXCLUDED.pos3,
         is_draft = FALSE`,
-    [profileId, experience, often, uni_team, intensity, rule, serve,
-    serve_receive, spike, spike_receive, set, block, pos1, pos2, pos3]
+    [profileId, pos1, pos2, pos3, experience, often, uni_team, intensity, rule, serve,
+    serve_receive, spike, spike_receive, set, block]
     );
 
     // 4. Update player_profile with rank and rating
@@ -125,9 +131,9 @@ router.post("/questionnaire/save-draft", requireAuth, async (req, res) => {
 
     await pool.query(
       `INSERT INTO player_questionnaire 
-        (profile_id, experience, often, uni_team, intensity, rule, serve,
+        (profile_id, pos1, pos2, pos3, experience, often, uni_team, intensity, rule, serve,
          serve_receive, spike, spike_receive, set, block, current_step, is_draft)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, TRUE)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, TRUE)
        ON CONFLICT (profile_id) 
        DO UPDATE SET
          experience = EXCLUDED.experience,
@@ -144,6 +150,9 @@ router.post("/questionnaire/save-draft", requireAuth, async (req, res) => {
          current_step = EXCLUDED.current_step`,
       [
         profileId,
+        answers.pos1 || null,
+        answers.pos2 || null,
+        answers.pos3 || null,
         answers.experience || null,
         answers.often || null,
         answers.uni_team || null,

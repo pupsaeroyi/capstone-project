@@ -3,6 +3,9 @@ import { QUESTIONS, TOTAL_QUESTIONS } from "./questions.config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Answers = {
+  pos1: string;
+  pos2: string;
+  pos3: string;
   experience: string;
   often: string;
   uni_team: string;
@@ -17,6 +20,9 @@ export type Answers = {
 };
 
 const DEFAULT_ANSWERS: Answers = {
+  pos1: "",
+  pos2: "",
+  pos3: "",
   experience: "",
   often: "",
   uni_team: "",

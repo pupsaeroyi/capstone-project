@@ -4,23 +4,6 @@ from main_pipeline import run_initial_pipeline
 
 app = FastAPI()
 
-def infer_positions(data: dict) -> dict:
-    position_scores = {
-        "OH": (data["serve"] + data["serve_receive"] + data["spike"]) / 3,
-        "MB": (data["block"] + data["spike"]) / 2,
-        "OP": (data["block"] + data["spike"] + data["serve"]) / 3,
-        "S":  data["set"],
-        "L":  (data["serve_receive"] + data["spike_receive"]) / 2,
-    }
-
-    ranked = sorted(position_scores.items(), key=lambda x: x[1], reverse=True)
-
-    return {
-        "pos1": ranked[0][0],
-        "pos2": ranked[1][0],
-        "pos3": ranked[2][0],
-    }
-
 @app.get("/")
 def root():
     return {"status": "ok"}
@@ -55,15 +38,20 @@ def deep_health():
     # pipeline execution check with dummy data
     try:
         test_df = pd.DataFrame([{
-            "serve": 5,
-            "serve_receive": 5,
+            "pos1": "Setter",
+            "pos2": "Outside Hitter",
+            "pos3": "Libero",
+            "experience": "1-3 years",
+            "often": "7-8 times per month",
+            "uni_team": "Previously",
+            "intensity": "60-90 minutes",
+            "rule": 6,
+            "serve": 7,
+            "serve_receive": 6,
             "spike": 5,
-            "block": 5,
-            "set": 5,
-            "spike_receive": 5,
-            "pos1": "OH",
-            "pos2": "MB",
-            "pos3": "OP"
+            "spike_receive": 4,
+            "set": 9,
+            "block": 3
         }])
 
         result = run_initial_pipeline(test_df)
@@ -86,9 +74,6 @@ def deep_health():
 @app.post("/score")
 def score_user_api(data: dict):
     try:
-        # infer positions from skill scores
-        positions = infer_positions(data)
-        data.update(positions)  # adds pos1, pos2, pos3 into data
 
         df = pd.DataFrame([data])
         result = run_initial_pipeline(df)
@@ -99,9 +84,9 @@ def score_user_api(data: dict):
             "total": float(row["total"]),
             "rank": row["rank"],
             "rating_score": float(row["rating_score"]),
-            "pos1": positions["pos1"],
-            "pos2": positions["pos2"],
-            "pos3": positions["pos3"],
+            "pos1": data["pos1"],
+            "pos2": data["pos2"],
+            "pos3": data["pos3"],
         }
 
     except Exception as e:
