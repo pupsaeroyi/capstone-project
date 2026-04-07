@@ -1,4 +1,4 @@
-import { TextInput, StyleSheet, TextInputProps, View, ViewStyle, TextStyle, StyleProp } from "react-native";
+import { TextInput, StyleSheet, TextInputProps, View, ViewStyle, TextStyle, StyleProp, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
 
@@ -11,7 +11,7 @@ type InputProps = Omit<TextInputProps, "style"> & {
 
 export function Input({ placeholder, style, inputStyle, showSearchIcon, ...props }: InputProps) {
   
-  const height = r(44);
+  const height = Platform.OS === "web" ? 50 : r(44);
 
   return (
     <View
