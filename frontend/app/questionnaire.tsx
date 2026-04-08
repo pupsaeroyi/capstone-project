@@ -8,10 +8,12 @@ import { RadioQuestion } from "@/components/questionnaire/RadioQuestion";
 import { SliderQuestion } from "@/components/questionnaire/SliderQuestion";
 import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
+import { useAuth } from "@/context/AuthContext"; 
 
 export default function Questionnaire() {
   const router = useRouter();
   const { step, setStep, answers, setAnswer, current, total, progress, canAdvance } = useQuestionnaire();
+  const { refreshProfile } = useAuth(); 
 
   const handleNext = async () => {
     console.log("handleNext called, step:", step, "total:", total);
@@ -41,6 +43,8 @@ export default function Questionnaire() {
       console.log("response data:", data);
 
       if (data.ok) {
+        await refreshProfile();
+        
         router.replace("/tabs/home");
       } else {
         alert(data.message || "Submission failed");
@@ -50,19 +54,17 @@ export default function Questionnaire() {
       alert("Cannot connect to server");
     }
   };
+
   const renderQuestion = () => {
     if (current.type === "radio") {
-
       const key = current.key as keyof typeof answers;
       const disabledOptions = (label: string) => {
         if (key === "pos2") {
           return label === answers.pos1;
         }
-
         if (key === "pos3") {
           return label === answers.pos1 || label === answers.pos2;
         }
-
         return false;
       };
 
@@ -90,9 +92,7 @@ export default function Questionnaire() {
 
   return (
     <SafeAreaView style={styles.container}>
-
       {/* Header */}
-      
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Questionnaire</Text>
         <TouchableOpacity onPress={() => router.replace("/tabs/home")}>

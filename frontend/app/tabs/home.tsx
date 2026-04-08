@@ -31,7 +31,7 @@ type VenueBasic = {
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [sessions, setSessions] = useState<SessionWithVenue[]>([]);
   const [venues, setVenues] = useState<VenueBasic[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -121,7 +121,7 @@ export default function Home() {
           <View>
             <Text style={styles.greetingText}>{getGreeting()}</Text>
             <Text style={styles.greetingName}>
-              {user?.username ?? "Player"}
+              {profile?.username ?? user?.username ?? "Player"}
             </Text>
           </View>
             <MenuButton onPress={() => setMenuOpen(true)} />

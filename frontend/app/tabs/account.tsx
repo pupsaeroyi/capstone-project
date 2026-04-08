@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, Image, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useState, useEffect } from "react";
@@ -13,77 +13,114 @@ import { API_BASE } from "@/lib/api";
 
 export default function Account() {
     const router = useRouter();
-		const { user } = useAuth();
+		const { user, profile } = useAuth();
 		const [menuOpen, setMenuOpen] = useState(false);
-
-	// State for profile data and loading status
-		const [profile, setProfile] = useState<any>(null);
 		const [loading, setLoading] = useState(true);
-
-		// Fetch the full profile from your backend
-		useEffect(() => {
-			const fetchProfile = async () => {
-				try {
-					const token = await getSavedToken();
-					if (!token) return;
-
-					const response = await fetch(`${API_BASE}/profile/me`, {
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					});
-
-					const data = await response.json();
-
-					console.log("DEBUG PROFILE DATA", JSON.stringify(data, null, 2));
-					if (data.ok) {
-						setProfile(data.profile);
-					}
-				} catch (error) {
-					console.error("Error fetching profile:", error);
-				} finally {
-					setLoading(false);
-				}
-			};
-
-			fetchProfile();
-		}, []);
 
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
-					<View style={styles.header}>
-						<MenuButton onPress={() => setMenuOpen(true)} />
-					</View>
-
-						<SideMenu
-						  visible={menuOpen}
-						  onClose={() => setMenuOpen(false)}
-						/>
+					<View style={styles.header}></View>
 
         <ScrollView
           style={[styles.container, { flex: 1 }]}
         	contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false} 
 				>
+					<View style={styles.menuButtonContainer}>
+						<MenuButton onPress={() => setMenuOpen(true)} />
+					</View>
+					
+					<SideMenu
+						visible={menuOpen}
+						onClose={() => setMenuOpen(false)}
+					/>
+
 					<View style={styles.title}>
 						<Text style={styles.titleText}>
-							  	{user?.username ?? "Player"}
+							  	{profile?.username ?? user?.username ?? "Player"}
 						</Text>
 
 						<View style={styles.avatarCircle}>
-							<Ionicons name="person" size={r(36)} color="#0B36F4" />
+							{profile?.avatar_url ? (
+								<Image 
+									source={{ uri: profile.avatar_url }}
+									style={styles.avatarImage}
+								/>
+							) : (
+								<MaterialIcons name="person" size={r(42)} color="#0B36F4" />
+							)}
 						</View>
 
 						<Text style={styles.RankLabel}>Athlete Rank</Text>
 
-						<Text style={styles.RankValue}>
-              {profile?.rank ?? "Unranked"}
-            </Text>
+						{profile?.questionnaire_done ? (
+								<Text style={styles.RankValue}>{profile.rank}</Text>
+						) : (
+							<>
+								<Text style={styles.RankValue}>Unranked</Text>
+								<TouchableOpacity 
+									style={styles.unrankedButton}
+									onPress={() => router.push("/questionnaire")}
+									activeOpacity={0.7}
+								>
+									<Ionicons name="clipboard" size={r(16)} color="#0B36F4" />
+									<Text style={styles.unrankedButtonText}>Complete Questionnaire</Text>
+								</TouchableOpacity>
+							</>
+						)}
+
+						{/* Stats Row */}
+						<View style={styles.statsRow}>
+							<View style={styles.statCard}>
+								<Text style={styles.statLabel}>Matches</Text>
+								<Text style={styles.statValue}>{profile?.matches_played ?? 0}</Text>
+							</View>
+
+							<View style={styles.statCard}>
+								<Text style={styles.statLabel}>Win Rate</Text>
+								<Text style={styles.statValue}>
+									{profile?.matches_played && profile.matches_played > 0
+										? Math.round((profile.wins / profile.matches_played) * 100)
+										: 0}%
+								</Text>
+							</View>
+						</View>
+						{/* Information Sections */}
+						<View style={styles.infoSection}>
+							<Text style={styles.fieldLabel}>Age</Text>
+							<View style={styles.fieldCard}>
+								<Text style={styles.fieldText}>{profile?.age ?? "Not Set"}</Text>
+							</View>
+
+							<Text style={styles.fieldLabel}>MBTI Type</Text>
+							<View style={styles.fieldCard}>
+								<Text style={styles.fieldText}>{profile?.mbti_type ?? "Not Set"}</Text>
+							</View>
+
+							<Text style={styles.fieldLabel}>Preferred Positions</Text>
+							<View style={styles.positionsContainer}>
+								{["Setter", "Libero", "Outside Hitter", "Middle Blocker", "Opposite Hitter"].map((pos) => {
+									const isActive = [profile?.pos1, profile?.pos2, profile?.pos3].includes(pos);
+									
+									return (
+										<View 
+											key={pos} 
+											style={[styles.positionBadge, isActive ? styles.activeBadge : styles.inactiveBadge]}
+										>
+											<Text style={[styles.positionText, isActive ? styles.activeText : styles.inactiveText]}>
+												{pos}
+											</Text>
+											{isActive && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+										</View>
+									);
+								})}
+							</View>
+						</View>
 
 					</View>
 
 
-
+		
 
 					</ScrollView>	
 
@@ -97,11 +134,17 @@ export default function Account() {
     backgroundColor: "#fff",
     paddingHorizontal: "10%",
   },
-  
+  menuButtonContainer: {
+		position: "absolute",
+		right: r(-10),
+		top: r(-4),
+	},
   content: {
     flexGrow: 1,
-    paddingTop: 28,
+    paddingTop: 0,
+		paddingBottom: r(120),
   },
+	
 
   header: {
     width: "100%",
@@ -119,7 +162,7 @@ export default function Account() {
 		fontFamily: "Lexend_700Bold",
 		fontSize: r(20),
 		color: "#0F172A",
-		marginBottom: r(36),
+		marginBottom: r(18),
 	},
 
   avatarCircle: {
@@ -129,7 +172,14 @@ export default function Account() {
     backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
-		marginBottom: r(24),
+		marginBottom: r(18),
+		overflow: "hidden",
+  },
+
+	avatarImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 
 	RankLabel: {
@@ -144,5 +194,107 @@ export default function Account() {
 		color: "#0F172A",
 		marginTop: r(8),
 	},
+
+	unrankedButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#EEF2FF", 
+		paddingVertical: r(10),
+		paddingHorizontal: r(16),
+		borderRadius: r(24),        
+		marginTop: r(12),
+		gap: r(6),                 
+	},
+		
+	unrankedButtonText: {
+		fontFamily: "Lexend_600SemiBold",
+		fontSize: r(14),
+		color: "#0B36F4",        
+	},
+	statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: r(18),
+    marginBottom: r(18),
+    gap: r(0),
+  },
+
+  statCard: {
+    flex: 1,
+    backgroundColor: "#F8FAFC", 
+    paddingVertical: r(18),
+    borderRadius: r(16),
+    alignItems: "center",
+		marginHorizontal: r(12),
+    borderWidth: 1,
+    borderColor: "#E7EBFE",
+  },
+  statLabel: {
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+    color: "#0B36F4",
+    marginBottom: r(4),
+  },
+  statValue: {
+    fontFamily: "Lexend_700Bold",
+    fontSize: r(20),
+    color: "#0B36F4",
+  },
+	infoSection: {
+    width: "100%",
+    gap: r(12),
+  },
+
+  fieldLabel: {
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+    color: "#64748B",
+  },
+
+  fieldCard: {
+    backgroundColor: "#F8FAFC",
+    paddingVertical: r(12),
+    paddingHorizontal: r(20),
+    borderRadius: r(16),
+  },
+
+  fieldText: {
+    fontFamily: "Lexend_700Bold",
+    fontSize: r(15),
+    color: "#0F172A",
+  },
+
+  positionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap", 
+    gap: r(8),
+    marginTop: r(4),
+  },
+
+  positionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: r(8),
+    paddingHorizontal: r(14),
+    borderRadius: r(24),
+    gap: r(6),
+  },
+  activeBadge: {
+    backgroundColor: "#0B36F4",
+  },
+  inactiveBadge: {
+    backgroundColor: "#F1F5F9",
+  },
+  positionText: {
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(13),
+  },
+  activeText: {
+    color: "#FFFFFF",
+  },
+  inactiveText: {
+    color: "#64748B",
+  },
 
 });
