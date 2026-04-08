@@ -99,9 +99,9 @@ router.post("/submit-questionnaire", requireAuth, async (req, res) => {
     // 4. Update player_profile with rank and rating
     await pool.query(
       `UPDATE player_profile 
-       SET rank = $1, rating_score = $2, total_score = $3, questionnaire_done = TRUE
-       WHERE id = $4`,
-      [rank, rating_score, total, profileId]
+       SET rank = $1, rating_score = $2, total_score = $3, pos1 = $4, pos2 = $5, pos3 = $6, questionnaire_done = TRUE
+       WHERE id = $7`,
+      [rank, rating_score, total, pos1, pos2, pos3, profileId]
     );
 
     return res.json({ ok: true, rank, rating_score });
