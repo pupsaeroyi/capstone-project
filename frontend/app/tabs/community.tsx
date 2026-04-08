@@ -50,7 +50,7 @@ function SearchSheet({
   const router = useRouter();
   const slideAnim = useRef(new Animated.Value(800)).current;
   const inputRef = useRef<TextInput>(null);
-
+  
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -393,156 +393,164 @@ export default function Community() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Community</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
-              <MaterialIcons name="person-add-alt-1" size={22} color="#0B36F4" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.iconBtn}>
-              <MaterialIcons name="notifications" size={22} color="#0B36F4" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-
-        {/* Filters */}
+    
+    <SafeAreaView style={{ flex: 1,backgroundColor: "#FFFFFF" }}>
+      <View style={styles.bottomBackground} />
+      <View style={{ flex: 1, backgroundColor: "#F1F5F9" }}>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[
-                styles.filterBtn,
-                activeFilter === f && styles.filterBtnActive,
-              ]}
-              onPress={() => setActiveFilter(f)}
-            >
-              <Text
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Community</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+                <MaterialIcons name="person-add-alt-1" size={22} color="#0B36F4" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconBtn}>
+                <MaterialIcons name="notifications" size={22} color="#0B36F4" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+
+          {/* Filters */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filters}
+          >
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f}
                 style={[
-                  styles.filterText,
-                  activeFilter === f && styles.filterTextActive,
+                  styles.filterBtn,
+                  activeFilter === f && styles.filterBtnActive,
                 ]}
+                onPress={() => setActiveFilter(f)}
               >
-                {f}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.filterText,
+                    activeFilter === f && styles.filterTextActive,
+                  ]}
+                >
+                  {f}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Posts */}
+          <View style={styles.posts}>
+            {filteredPosts.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No posts yet. Be the first!</Text>
+              </View>
+            ) : (
+              filteredPosts.map((post) => (
+                <View key={post.id} style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    {post.avatar_url ? (
+                      <Image
+                        source={{ uri: post.avatar_url }}
+                        style={styles.avatar}
+                      />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarInitial}>
+                          {post.username?.[0]?.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userName}>{post.username}</Text>
+                      <View style={styles.metaRow}>
+                        <Text style={styles.time}>{timeAgo(post.created_at)}</Text>
+                        {post.tag && (
+                          <>
+                            <Text style={styles.dot}>·</Text>
+                            <Text
+                              style={[
+                                styles.tag,
+                                { color: TAG_COLORS[post.tag] || "#0B36F4" },
+                              ]}
+                            >
+                              {post.tag}
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                    <TouchableOpacity>
+                      <Feather name="more-horizontal" size={20} color="#94A3B8" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.content}>{post.content}</Text>
+
+                  {post.image_url && (
+                    <Image
+                      source={{ uri: post.image_url }}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                    />
+                  )}
+
+                  <View style={styles.actions}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => handleLike(post.id)}
+                    >
+                      <Ionicons
+                        name={post.liked ? "heart" : "heart-outline"}
+                        size={20}
+                        color={post.liked ? "#EF4444" : "#64748B"}
+                      />
+                      <Text style={styles.actionText}>{post.likes_count}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionBtn}>
+                      <Ionicons
+                        name="chatbubble-outline"
+                        size={20}
+                        color="#64748B"
+                      />
+                      <Text style={styles.actionText}>{post.comments_count}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionBtn}>
+                      <Ionicons name="share-outline" size={20} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
         </ScrollView>
 
-        {/* Posts */}
-        <View style={styles.posts}>
-          {filteredPosts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No posts yet. Be the first!</Text>
-            </View>
-          ) : (
-            filteredPosts.map((post) => (
-              <View key={post.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  {post.avatar_url ? (
-                    <Image
-                      source={{ uri: post.avatar_url }}
-                      style={styles.avatar}
-                    />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarInitial}>
-                        {post.username?.[0]?.toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{post.username}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.time}>{timeAgo(post.created_at)}</Text>
-                      {post.tag && (
-                        <>
-                          <Text style={styles.dot}>·</Text>
-                          <Text
-                            style={[
-                              styles.tag,
-                              { color: TAG_COLORS[post.tag] || "#0B36F4" },
-                            ]}
-                          >
-                            {post.tag}
-                          </Text>
-                        </>
-                      )}
-                    </View>
-                  </View>
-                  <TouchableOpacity>
-                    <Feather name="more-horizontal" size={20} color="#94A3B8" />
-                  </TouchableOpacity>
-                </View>
+        {/* FAB */}
+        <TouchableOpacity style={styles.fab}>
+          <Ionicons name="add" size={26} color="#fff" />
+        </TouchableOpacity>
 
-                <Text style={styles.content}>{post.content}</Text>
-
-                {post.image_url && (
-                  <Image
-                    source={{ uri: post.image_url }}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                  />
-                )}
-
-                <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => handleLike(post.id)}
-                  >
-                    <Ionicons
-                      name={post.liked ? "heart" : "heart-outline"}
-                      size={20}
-                      color={post.liked ? "#EF4444" : "#64748B"}
-                    />
-                    <Text style={styles.actionText}>{post.likes_count}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.actionBtn}>
-                    <Ionicons
-                      name="chatbubble-outline"
-                      size={20}
-                      color="#64748B"
-                    />
-                    <Text style={styles.actionText}>{post.comments_count}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.actionBtn}>
-                    <Ionicons name="share-outline" size={20} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))
-          )}
+        {/* search sheet */}
+        <SearchSheet visible={searchOpen} onClose={() => setSearchOpen(false)} />
         </View>
-      </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab}>
-        <Ionicons name="add" size={26} color="#fff" />
-      </TouchableOpacity>
-
-      {/* search sheet */}
-      <SearchSheet visible={searchOpen} onClose={() => setSearchOpen(false)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F1F5F9" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#F1F5F9"
+   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -552,6 +560,16 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: "#fff",
   },
+
+  bottomBackground: {
+    position: "absolute",
+    top: 120, // adjust based on your header height
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#F1F5F9",
+  },
+
   title: {
     fontSize: 26,
     fontFamily: "Lexend_700Bold",
@@ -593,18 +611,26 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 120,
   },
+
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
   },
+
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
     gap: 10,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
+
+  avatar: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22 
+  },
+
   avatarPlaceholder: {
     width: 44,
     height: 44,
@@ -613,30 +639,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   avatarInitial: {
     fontSize: 18,
     fontFamily: "Lexend_700Bold",
     color: "#fff",
   },
-  userInfo: { flex: 1 },
+
+  userInfo: { 
+    flex: 1 
+  },
+
   userName: {
     fontSize: 15,
     fontFamily: "Lexend_600SemiBold",
     color: "#0F172A",
   },
+
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     marginTop: 2,
   },
+
   time: {
     fontSize: 12,
     fontFamily: "Lexend_400Regular",
     color: "#94A3B8",
   },
-  dot: { fontSize: 12, color: "#94A3B8" },
-  tag: { fontSize: 12, fontFamily: "Lexend_500Medium" },
+  dot: { 
+    fontSize: 12, 
+    color: "#94A3B8" 
+  },
+
+  tag: { 
+    fontSize: 12, 
+    fontFamily: "Lexend_500Medium" 
+  },
+
   content: {
     fontSize: 14,
     fontFamily: "Lexend_400Regular",
@@ -693,7 +734,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-
 });
 
 const sheet = StyleSheet.create({

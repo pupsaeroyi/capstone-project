@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, TouchableOpacity, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
@@ -13,9 +13,22 @@ import { API_BASE } from "@/lib/api";
 
 export default function Account() {
     const router = useRouter();
-		const { user, profile } = useAuth();
+		const { user, profile, refreshProfile } = useAuth();
 		const [menuOpen, setMenuOpen] = useState(false);
 		const [loading, setLoading] = useState(true);
+		const [refreshing, setRefreshing] = useState(false);
+		const [refreshOffset, setRefreshOffset] = useState(0);
+
+		const onRefresh = async () => {
+        setRefreshing(true);
+        await refreshProfile(); 
+        setRefreshing(false);
+    };
+
+		useEffect(() => {
+			const t = setTimeout(() => setRefreshOffset(40), 100);
+			return () => clearTimeout(t);
+		}, []);
 
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -25,7 +38,11 @@ export default function Account() {
           style={[styles.container, { flex: 1 }]}
         	contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false} 
+					refreshControl={
+						<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0B36F4" progressViewOffset={refreshOffset} />
+					}
 				>
+					
 					<View style={styles.menuButtonContainer}>
 						<MenuButton onPress={() => setMenuOpen(true)} />
 					</View>
@@ -47,7 +64,11 @@ export default function Account() {
 									style={styles.avatarImage}
 								/>
 							) : (
-								<MaterialIcons name="person" size={r(42)} color="#0B36F4" />
+								<View style={styles.avatarPlaceholder}>
+									<Text style={styles.avatarInitial}>
+										{(profile?.username || user?.username || "P")[0].toUpperCase()}
+									</Text>
+								</View>
 							)}
 						</View>
 
@@ -180,6 +201,21 @@ export default function Account() {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+  },
+
+  avatarPlaceholder: {
+		width: "100%",
+		height: "100%",
+    borderRadius: r(45),
+    backgroundColor: "#0B36F4",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  avatarInitial: {
+    fontSize: r(36),
+    fontFamily: "Lexend_700Bold",
+    color: "#fff",
   },
 
 	RankLabel: {
