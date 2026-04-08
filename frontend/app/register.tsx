@@ -9,6 +9,7 @@ import Ionicons from "@expo/vector-icons/build/Ionicons";
 import LoadingIcon from "@/components/LoadingIcon";
 import { AntDesign } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function Register() {
@@ -23,7 +24,8 @@ export default function Register() {
 
   const [usernameStatus, setUsernameStatus] = useState("idle");
   const usernameReqId = useRef(0);
-
+  const { refreshProfile } = useAuth();
+  
   const handleUsernameChange = async (text: string) => {
     const trimmed = text.trim();
     setFormData((prev) => ({ ...prev, username: trimmed }));
@@ -121,6 +123,8 @@ export default function Register() {
       }
 
       await SecureStore.setItemAsync("accessToken", data.accessToken);
+      
+      await refreshProfile();
       
       router.replace({
         pathname: "/verify-email",
