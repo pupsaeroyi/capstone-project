@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       if (data.ok) {
         setProfile(data.profile);
-        setUser(data.user);
       }
     } catch (error) {
       console.error("Error fetching global profile:", error);
