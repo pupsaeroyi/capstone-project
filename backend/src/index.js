@@ -700,6 +700,64 @@ app.get("/api/users/search", requireAuth, async (req, res) => {
   }
 });
 
+// Fetch recent searches
+app.get("/api/search/recent", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.username, u.avatar_url
+       FROM recent_searches rs
+       JOIN users u ON u.id = rs.searched_id
+       WHERE rs.searcher_id = $1
+       ORDER BY rs.searched_at DESC
+       LIMIT 10`,
+      [req.userId]
+    );
+    res.json({ ok: true, recents: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Save recent searches
+app.post("/api/search/recent", requireAuth, async (req, res) => {
+  const { searched_id } = req.body;
+
+  if (!searched_id) {
+    return res.status(400).json({ ok: false, message: "searched_id required" });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO recent_searches (searcher_id, searched_id, searched_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (searcher_id, searched_id)
+       DO UPDATE SET searched_at = NOW()`,
+      [req.userId, searched_id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Remove one recent search
+app.delete("/api/search/recent/:searched_id", requireAuth, async (req, res) => {
+  const { searched_id } = req.params;
+
+  try {
+    await pool.query(
+      `DELETE FROM recent_searches 
+       WHERE searcher_id = $1 AND searched_id = $2`,
+      [req.userId, searched_id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
 
 const port = process.env.PORT || 3000;
 httpServer.listen(port, () => {
