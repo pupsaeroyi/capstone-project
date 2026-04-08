@@ -760,7 +760,7 @@ app.delete("/api/search/recent/:searched_id", requireAuth, async (req, res) => {
   }
 });
 
-const port = process.env.PORT || 3000;
-httpServer.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
