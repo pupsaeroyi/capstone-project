@@ -129,7 +129,7 @@ export default function Home() {
 
         <View style={styles.searchRow}>
           <Input
-            placeholder="Search courts or matches..."
+            placeholder="Search courts or matches"
             showSearchIcon
             style={styles.searchBar}
           />

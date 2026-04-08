@@ -46,7 +46,9 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
-
+  const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  
   const fetchPosts = useCallback(async () => {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
@@ -63,6 +65,55 @@ export default function Community() {
     }
   }, []);
 
+  // Put this near your fetchPosts function
+const searchUsers = async (text: string) => {
+  setSearch(text);
+  if (text.length === 0) {
+    setSearchedUsers([]);
+    return;
+  }
+
+  setIsSearchingUsers(true);
+  try {
+    const token = await SecureStore.getItemAsync("accessToken");
+    const res = await fetch(`${API_BASE}/api/users/search?q=${text}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.ok) setSearchedUsers(data.users);
+  } catch (err) {
+    console.error("User search error:", err);
+  } finally {
+    setIsSearchingUsers(false);
+  }
+};
+
+const sendFriendRequest = async (requestedId: number) => {
+  try {
+    const token = await SecureStore.getItemAsync("accessToken");
+    const res = await fetch(`${API_BASE}/api/friends/request`, {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ requestedId }),
+    });
+    const data = await res.json();
+    
+    if (data.ok) {
+      // Update the UI so the button changes to "Pending"
+      setSearchedUsers(prev => prev.map(user => 
+        user.id === requestedId ? { ...user, friend_status: 'pending' } : user
+      ));
+      alert("Friend request sent!");
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -131,16 +182,12 @@ export default function Community() {
 
         {/* Search */}
         <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search-outline" size={18} color="#94A3B8" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search here"
-              placeholderTextColor="#94A3B8"
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
+          <Input
+            placeholder="Search by username"
+            showSearchIcon
+            value={search}
+            onChangeText={searchUsers}
+          />
         </View>
 
         {/* Filters */}
@@ -162,82 +209,120 @@ export default function Community() {
           ))}
         </ScrollView>
 
-        {/* Posts */}
+        {/* Posts OR Search Results */}
         <View style={styles.posts}>
-          {filteredPosts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No posts yet. Be the first!</Text>
-            </View>
-          ) : (
-            filteredPosts.map((post) => (
-              <View key={post.id} style={styles.card}>
-                {/* Post header */}
-                <View style={styles.cardHeader}>
-                  {post.avatar_url ? (
-                    <Image source={{ uri: post.avatar_url }} style={styles.avatar} />
+          {search.length > 0 ? (
+            // --- SHOW SEARCHED USERS ---
+            searchedUsers.length === 0 && !isSearchingUsers ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No users found.</Text>
+              </View>
+            ) : (
+              searchedUsers.map((user) => (
+                <View key={user.id} style={[styles.card, { flexDirection: 'row', alignItems: 'center' }]}>
+                  {user.avatar_url ? (
+                    <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
                   ) : (
                     <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarInitial}>
-                        {post.username?.[0]?.toUpperCase()}
-                      </Text>
+                      <Text style={styles.avatarInitial}>{user.username[0]?.toUpperCase()}</Text>
                     </View>
                   )}
-                  <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{post.username}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.time}>{timeAgo(post.created_at)}</Text>
-                      {post.tag && (
-                        <>
-                          <Text style={styles.dot}>·</Text>
-                          <Text style={[styles.tag, { color: TAG_COLORS[post.tag] || "#0B36F4" }]}>
-                            {post.tag}
-                          </Text>
-                        </>
-                      )}
+                  <Text style={[styles.userName, { flex: 1, marginLeft: 12 }]}>{user.username}</Text>
+                  
+                  {/* Friend Status Button Logic */}
+                  {user.friend_status === 'accepted' ? (
+                    <TouchableOpacity style={[styles.filterBtn, styles.filterBtnActive]} onPress={() => router.push('/tabs/chat')}>
+                      <Text style={styles.filterTextActive}>Message</Text>
+                    </TouchableOpacity>
+                  ) : user.friend_status === 'pending' ? (
+                    <View style={styles.filterBtn}>
+                      <Text style={styles.filterText}>Pending</Text>
                     </View>
-                  </View>
-                  <TouchableOpacity>
-                    <Feather name="more-horizontal" size={20} color="#94A3B8" />
-                  </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={[styles.filterBtn, styles.filterBtnActive]} onPress={() => sendFriendRequest(user.id)}>
+                      <Text style={styles.filterTextActive}>Add Friend</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-
-                {/* Content */}
-                <Text style={styles.content}>{post.content}</Text>
-
-                {/* Image */}
-                {post.image_url && (
-                  <Image
-                    source={{ uri: post.image_url }}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                  />
-                )}
-
-                {/* Actions */}
-                <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => handleLike(post.id)}
-                  >
-                    <Ionicons
-                      name={post.liked ? "heart" : "heart-outline"}
-                      size={20}
-                      color={post.liked ? "#EF4444" : "#64748B"}
-                    />
-                    <Text style={styles.actionText}>{post.likes_count}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.actionBtn}>
-                    <Ionicons name="chatbubble-outline" size={20} color="#64748B" />
-                    <Text style={styles.actionText}>{post.comments_count}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.actionBtn}>
-                    <Ionicons name="share-outline" size={20} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
+              ))
+            )
+          ) : (
+            // Show normal posts feed
+            filteredPosts.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No posts yet. Be the first!</Text>
               </View>
-            ))
+            ) : (
+              filteredPosts.map((post) => (
+                <View key={post.id} style={styles.card}>
+                  {/* Post header */}
+                  <View style={styles.cardHeader}>
+                    {post.avatar_url ? (
+                      <Image source={{ uri: post.avatar_url }} style={styles.avatar} />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarInitial}>
+                          {post.username?.[0]?.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userName}>{post.username}</Text>
+                      <View style={styles.metaRow}>
+                        <Text style={styles.time}>{timeAgo(post.created_at)}</Text>
+                        {post.tag && (
+                          <>
+                            <Text style={styles.dot}>·</Text>
+                            <Text style={[styles.tag, { color: TAG_COLORS[post.tag] || "#0B36F4" }]}>
+                              {post.tag}
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                    <TouchableOpacity>
+                      <Feather name="more-horizontal" size={20} color="#94A3B8" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Content */}
+                  <Text style={styles.content}>{post.content}</Text>
+
+                  {/* Image */}
+                  {post.image_url && (
+                    <Image
+                      source={{ uri: post.image_url }}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                    />
+                  )}
+
+                  {/* Actions */}
+                  <View style={styles.actions}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => handleLike(post.id)}
+                    >
+                      <Ionicons
+                        name={post.liked ? "heart" : "heart-outline"}
+                        size={20}
+                        color={post.liked ? "#EF4444" : "#64748B"}
+                      />
+                      <Text style={styles.actionText}>{post.likes_count}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionBtn}>
+                      <Ionicons name="chatbubble-outline" size={20} color="#64748B" />
+                      <Text style={styles.actionText}>{post.comments_count}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionBtn}>
+                      <Ionicons name="share-outline" size={20} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )
           )}
         </View>
       </ScrollView>
@@ -283,8 +368,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: "6%",
     paddingVertical: 12,
     backgroundColor: "#fff",
-    gap: 10,
   },
+
   searchBox: {
     flex: 1,
     flexDirection: "row",

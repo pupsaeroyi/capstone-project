@@ -10,8 +10,10 @@ import { sendEmail } from "./mailer.js";
 import { sessionRoutes } from "./sessions.js";
 import questionnaireRouter from "./questionnaire.js";
 import { postRoutes } from "./posts.js";
-import { access } from "fs";
-
+import { createServer } from "http";    
+import { Server } from "socket.io";
+import friendsRoutes from "./friends.js";
+import { initChatLogic } from "./chat.js"; 
 
 dotenv.config();
 
@@ -21,15 +23,31 @@ if (!process.env.JWT_SECRET) {
 
 
 const app = express();
-
-app.use(cors());
 app.use(express.json());
 
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile app) or frontend Vercel URL only
+    if (!origin || origin === process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 
-app.use("/auth", questionnaireRouter);
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: { origin: "*" }
+});
+
+app.use("/api", questionnaireRouter);
+app.use("/api/friends", friendsRoutes);
 
 postRoutes(app);
 sessionRoutes(app);
+initChatLogic(io);
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -652,8 +670,38 @@ app.get("/profile/me", requireAuth, async (req, res) => {
   }
 });
 
+// Search users (for the Community tab)
+app.get("/api/users/search", requireAuth, async (req, res) => {
+  const { q } = req.query;
+  
+  if (!q) return res.json({ ok: true, users: [] });
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+         u.id, 
+         u.username, 
+         pp.avatar_url,
+         (SELECT status FROM friends 
+          WHERE (requester_id = $1 AND requested_id = u.id) 
+             OR (requester_id = u.id AND requested_id = $1)
+         ) as friend_status
+       FROM users u
+       LEFT JOIN player_profile pp ON pp.user_id = u.id
+       WHERE u.username ILIKE $2 AND u.id != $1
+       LIMIT 20`,
+      [req.userId, `%${q}%`]
+    );
+
+    res.json({ ok: true, users: result.rows });
+  } catch (err) {
+    console.error("Search users error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 
 const port = process.env.PORT || 3000;
-app.listen(port, "0.0.0.0", () => {
-  console.log(`API running on port ${port}`);
+httpServer.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
