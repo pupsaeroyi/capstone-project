@@ -23,12 +23,11 @@ if (!process.env.JWT_SECRET) {
 
 
 const app = express();
-app.use(express.json());
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile app) or frontend Vercel URL only
-    if (!origin || origin === process.env.FRONTEND_URL) {
+    if (!origin || origin === process.env.FRONTEND_URL || process.env.NODE_ENV === "development") {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -36,6 +35,7 @@ app.use(cors({
   }
 }));
 
+app.use(express.json());
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -704,9 +704,10 @@ app.get("/api/users/search", requireAuth, async (req, res) => {
 app.get("/api/search/recent", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.username, u.avatar_url
+      `SELECT u.id, u.username, pp.avatar_url
        FROM recent_searches rs
        JOIN users u ON u.id = rs.searched_id
+       LEFT JOIN player_profile pp ON pp.user_id = u.id
        WHERE rs.searcher_id = $1
        ORDER BY rs.searched_at DESC
        LIMIT 10`,
