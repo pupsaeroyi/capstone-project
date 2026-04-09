@@ -12,7 +12,7 @@ export default function MapMarker({ variant, activeCount = 0 }: Props) {
   if (variant === "inactive") {
     return (
       <View style={styles.inactiveContainer}>
-        <MaterialIcons name="sports-volleyball" size={r(16)} color="#94A3B8" />
+         <MaterialIcons name="sports-volleyball" size={r(8)} color="#94A3B8" />
       </View>
     );
   }
@@ -44,14 +44,22 @@ export default function MapMarker({ variant, activeCount = 0 }: Props) {
 }
 
 const styles = StyleSheet.create({
-  // Inactive
+  // Inactive — Google-Maps-style white pin dot
   inactiveContainer: {
+    width: r(22),
+    height: r(22),
+    borderRadius: r(11),
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#CBD5E1",
     alignItems: "center",
     justifyContent: "center",
-    width: r(28),
-    height: r(28),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
-
   // Selected
   selectedContainer: {
     alignItems: "center",

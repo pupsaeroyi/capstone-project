@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, Platform, ActivityIndicator } from "react-native";
 import * as Location from "expo-location";
 import { r } from "@/utils/responsive";
+import { haversineKm } from "@/utils/distance";
 import { Venue } from "@/types/venue";
 import { API_BASE } from "@/lib/api";
 import MapSearchBar from "@/components/map/MapSearchBar";
@@ -34,14 +35,25 @@ if (Platform.OS !== "web") {
 export default function MapScreen() {
   const mapRef = useRef<any>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
-  // Request location permission on mount
+  // Request location permission on mount and capture position once
   useEffect(() => {
     (async () => {
-      await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      try {
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+      } catch (err) {
+        console.log("Initial location fetch failed:", err);
+      }
     })();
   }, []);
 
@@ -55,8 +67,26 @@ export default function MapScreen() {
       .catch(err => console.error("Failed to fetch venues:", err));
   }, []);
 
+  // Enrich venues with user-relative distance (null if no user location yet)
+  const enrichedVenues = useMemo<Venue[]>(() => {
+    if (!userLocation) {
+      return venues.map(v => ({ ...v, distance_km: null }));
+    }
+    return venues.map(v => ({
+      ...v,
+      distance_km: haversineKm(
+        userLocation.latitude,
+        userLocation.longitude,
+        v.latitude,
+        v.longitude
+      ),
+    }));
+  }, [venues, userLocation]);
+
+  const selectedVenue = enrichedVenues.find(v => v.venue_id === selectedVenueId) ?? null;
+
   const handleMarkerPress = useCallback((venue: Venue) => {
-    setSelectedVenue(venue);
+    setSelectedVenueId(venue.venue_id);
     mapRef.current?.animateToRegion(
       {
         latitude: venue.latitude,
@@ -77,6 +107,10 @@ export default function MapScreen() {
         return;
       }
       const loc = await Location.getCurrentPositionAsync({});
+      setUserLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
       mapRef.current?.animateToRegion(
         {
           latitude: loc.coords.latitude,
@@ -122,9 +156,9 @@ export default function MapScreen() {
           initialRegion={BANGKOK_REGION}
           showsUserLocation
           showsMyLocationButton={false}
-          onPress={() => setSelectedVenue(null)}
+          onPress={() => setSelectedVenueId(null)}
         >
-          {venues.map((venue) => {
+          {enrichedVenues.map((venue) => {
             const variant = getMarkerVariant(venue);
             return (
               <Marker
@@ -170,7 +204,7 @@ export default function MapScreen() {
       {/* Bottom sheet */}
       <VenueBottomSheet
         venue={selectedVenue}
-        onClose={() => setSelectedVenue(null)}
+        onClose={() => setSelectedVenueId(null)}
       />
 
       {/* Side menu */}

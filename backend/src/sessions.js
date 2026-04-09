@@ -6,6 +6,28 @@ export function sessionRoutes(app) {
   // Get all active sessions across all venues (public)
   app.get("/sessions", async (req, res) => {
     try {
+      const { skill, when } = req.query;
+      const conditions = ["s.end_time > NOW()"];
+      const params = [];
+
+      if (skill && String(skill).toLowerCase() !== "all") {
+        const normalized = String(skill).toLowerCase();
+        if (["beginner", "intermediate", "advanced", "pro"].includes(normalized)) {
+          params.push(normalized);
+          conditions.push(`LOWER(s.skill_level) IN ('all', $${params.length})`);
+        }
+      }
+
+      if (when === "today") {
+        conditions.push("s.start_time::date = CURRENT_DATE");
+      } else if (when === "tomorrow") {
+        conditions.push("s.start_time::date = CURRENT_DATE + INTERVAL '1 day'");
+      } else if (when === "week") {
+        conditions.push("s.start_time BETWEEN NOW() AND NOW() + INTERVAL '7 days'");
+      }
+
+      const whereClause = conditions.join(" AND ");
+
       const result = await pool.query(
         `SELECT
            s.id AS session_id,
@@ -23,9 +45,10 @@ export function sessionRoutes(app) {
          FROM sessions s
          JOIN venues v ON v.id = s.venue_id
          LEFT JOIN session_players sp ON sp.session_id = s.id
-         WHERE s.end_time > NOW()
+         WHERE ${whereClause}
          GROUP BY s.id, v.id
-         ORDER BY s.start_time ASC`
+         ORDER BY s.start_time ASC`,
+        params
       );
 
       const sessionIds = result.rows.map(s => s.session_id);

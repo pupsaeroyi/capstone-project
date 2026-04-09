@@ -6,10 +6,13 @@ import { r } from "@/utils/responsive";
 import { API_BASE, authFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/Input";
+import { FilterSheet, FilterState } from "@/components/FilterSheet";
 
 type SessionItem = {
   session_id: number;
   sport: string;
+  session_name: string | null;
+  skill_level: string;
   player_count: number;
   max_players: number;
   start_time: string;
@@ -28,10 +31,17 @@ export default function SessionsScreen() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({ skill: "all", when: "any" });
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/sessions`);
+      const params = new URLSearchParams();
+      if (filters.skill !== "all") params.append("skill", filters.skill);
+      if (filters.when !== "any") params.append("when", filters.when);
+      const qs = params.toString();
+      const url = `${API_BASE}/sessions${qs ? "?" + qs : ""}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.ok) setSessions(data.sessions);
     } catch (err) {
@@ -40,7 +50,7 @@ export default function SessionsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     fetchSessions();
@@ -81,9 +91,15 @@ export default function SessionsScreen() {
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
   };
 
-  const filtered = sessions.filter(s =>
-    s.venue_name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = sessions.filter(s => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      s.venue_name.toLowerCase().includes(q) ||
+      (s.session_name?.toLowerCase().includes(q) ?? false) ||
+      s.sport.toLowerCase().includes(q)
+    );
+  });
 
   const renderSession = ({ item }: { item: SessionItem }) => {
     const slotsLeft = item.max_players - item.player_count;
@@ -168,9 +184,11 @@ export default function SessionsScreen() {
           <Text style={styles.chipText}>Map</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.chipOutline}>
+        <TouchableOpacity style={styles.chipOutline} onPress={() => setFilterOpen(true)}>
           <MaterialIcons name="filter-list" size={r(14)} color="#0F172A" />
-          <Text style={styles.chipText}>Filter</Text>
+          <Text style={styles.chipText}>
+            Filter{(filters.skill !== "all" || filters.when !== "any") ? " •" : ""}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -200,6 +218,13 @@ export default function SessionsScreen() {
             </Text>
           </View>
         }
+      />
+
+      <FilterSheet
+        visible={filterOpen}
+        value={filters}
+        onChange={setFilters}
+        onClose={() => setFilterOpen(false)}
       />
     </View>
   );
