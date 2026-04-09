@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
 import { r } from "@/utils/responsive";
+import { formatDistance } from "@/utils/distance";
 import VenueInfoCard from "./VenueInfoCard";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -85,9 +86,17 @@ export default function VenueBottomSheet({ venue, onClose }: Props) {
                 <Text style={styles.tagText}>{venue.tags[0]}</Text>
               </View>
             )}
-            <Text style={styles.distance}>{venue.distance_km}km away</Text>
+            {venue.distance_km !== null && (
+              <Text style={styles.distance}>{formatDistance(venue.distance_km)} away</Text>
+            )}
           </View>
-          <Image source={{ uri: venue.thumbnail_url }} style={styles.thumbnail} />
+          {venue.thumbnail_url ? (
+            <Image source={{ uri: venue.thumbnail_url }} style={styles.thumbnail} />
+          ) : (
+            <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+              <MaterialIcons name="sports-volleyball" size={r(28)} color="#94A3B8" />
+            </View>
+          )}
         </View>
 
         {/* Venue name */}
@@ -193,6 +202,10 @@ const styles = StyleSheet.create({
     height: r(64),
     borderRadius: r(32),
     backgroundColor: "#E2E8F0",
+  },
+  thumbnailPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Venue name

@@ -16,7 +16,7 @@ export type Venue = {
   rating: number;
   review_count: number;
   thumbnail_url: string;
-  distance_km: number;
+  distance_km: number | null;
   active_sessions: VenueSession[];
   tags: string[];
   condition_label: string;
