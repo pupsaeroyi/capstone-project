@@ -8,7 +8,7 @@ import { formatDistance } from "@/utils/distance";
 import VenueInfoCard from "./VenueInfoCard";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const SHEET_HEIGHT = r(340);
+const SHEET_HEIGHT = r(320);
 
 type Props = {
   venue: Venue | null;
@@ -90,11 +90,12 @@ export default function VenueBottomSheet({ venue, onClose }: Props) {
               <Text style={styles.distance}>{formatDistance(venue.distance_km)} away</Text>
             )}
           </View>
+          {/* Venue thumbnail */}
           {venue.thumbnail_url ? (
             <Image source={{ uri: venue.thumbnail_url }} style={styles.thumbnail} />
           ) : (
             <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-              <MaterialIcons name="sports-volleyball" size={r(28)} color="#94A3B8" />
+              <MaterialIcons name="sports-volleyball" size={r(28)} color="#0B36F4" />
             </View>
           )}
         </View>
@@ -188,20 +189,20 @@ const styles = StyleSheet.create({
     borderRadius: r(12),
   },
   tagText: {
-    fontSize: r(11),
-    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(12),
+    fontFamily: "Lexend_700Bold",
     color: "#0B36F4",
   },
   distance: {
     fontSize: r(12),
-    fontFamily: "Lexend_400Regular",
+    fontFamily: "Lexend_500Medium",
     color: "#64748B",
   },
   thumbnail: {
-    width: r(64),
-    height: r(64),
-    borderRadius: r(32),
-    backgroundColor: "#E2E8F0",
+    width: r(50),
+    height: r(50),
+    borderRadius: r(25),
+    backgroundColor: "#F5F6F8",
   },
   thumbnailPlaceholder: {
     alignItems: "center",

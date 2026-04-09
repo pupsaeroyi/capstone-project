@@ -180,7 +180,7 @@ export default function SessionsScreen() {
           style={styles.chipOutline}
           onPress={() => router.push("/map")}
         >
-          <MaterialIcons name="map" size={r(14)} color="#EF4444" />
+          <MaterialIcons name="map" size={r(14)} color="#10B981" />
           <Text style={styles.chipText}>Map</Text>
         </TouchableOpacity>
 
