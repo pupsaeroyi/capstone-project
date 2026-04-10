@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
 import { API_BASE, authFetch } from "@/lib/api";
@@ -51,9 +51,11 @@ export default function SessionDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchSession();
+    }, [fetchSession])
+  );
 
   const isCreator = user?.id === session?.created_by;
   const hasJoined = session ? session.players.some(p => p.user_id === user?.id) : false;

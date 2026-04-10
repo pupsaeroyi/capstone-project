@@ -1,13 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, FlatList, Dimensions, TouchableOpacity, RefreshControl, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Input } from "@/components/Input";
-import { useState, useEffect } from "react";
-import { useRouter } from "expo-router";
+import { useState, useCallback } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
 import { FilterButton } from "@/components/FilterButton";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
 import { useAuth } from "@/context/AuthContext";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, authFetch } from "@/lib/api";
 import { r } from "@/utils/responsive";
 
 const { width } = Dimensions.get("window");
@@ -15,18 +15,22 @@ const { width } = Dimensions.get("window");
 type SessionWithVenue = {
   session_id: number;
   sport: string;
+  session_name: string | null;
+  skill_level: string;
   player_count: number;
   max_players: number;
   start_time: string;
   end_time: string;
   venue_id: number;
   venue_name: string;
+  thumbnail_url: string;
 };
 
 type VenueBasic = {
   venue_id: number;
   venue_name: string;
   court_count: number;
+  thumbnail_url: string;
 };
 
 export default function Home() {
@@ -34,9 +38,11 @@ export default function Home() {
   const { user, profile } = useAuth();
   const [sessions, setSessions] = useState<SessionWithVenue[]>([]);
   const [venues, setVenues] = useState<VenueBasic[]>([]);
+  const [toRate, setToRate] = useState<{ session_id: number; session_name: string | null; venue_name: string; end_time: string }[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshOffset, setRefreshOffset] = useState(0);
+  const [rateIndex, setRateIndex] = useState(0);
 
 
 
@@ -71,18 +77,33 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    fetchHomeData();
+  const fetchToRate = useCallback(async () => {
+    try {
+      const data = await authFetch("/sessions/to-rate");
+      if (data.ok) setToRate(data.sessions);
+    } catch (err) {
+      console.error("Failed to fetch to-rate:", err);
+    }
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => setRefreshOffset(80), 100);
-    return () => clearTimeout(t);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchHomeData();
+      fetchToRate();
+    }, [fetchToRate])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const t = setTimeout(() => setRefreshOffset(80), 100);
+      return () => clearTimeout(t);
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchHomeData();
+    fetchToRate();
   };
 
   const featuredSession = sessions[0] || null;
@@ -154,6 +175,53 @@ export default function Home() {
             {featuredSession.max_players - featuredSession.player_count} slots left
           </Text>
         </TouchableOpacity>
+      )}
+
+      {toRate.length > 0 && (
+        <View style={styles.toRateBanner}>
+          <View style={styles.toRateHeader}>
+            <MaterialIcons name="star-rate" size={r(20)} color="#F59E0B" />
+            <Text style={styles.toRateTitle}>Rate Your Match</Text>
+          </View>
+          <FlatList
+            data={toRate}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={width * 0.76 + r(10)}
+            decelerationRate="fast"
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+            keyExtractor={(item) => item.session_id.toString()}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (width * 0.76 + r(10)));
+              setRateIndex(index);
+            }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.toRateCard}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/session/${item.session_id}` as any)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.toRateVenue} numberOfLines={1}>{item.venue_name}</Text>
+                  {item.session_name && (
+                    <Text style={styles.toRateName} numberOfLines={1}>{item.session_name}</Text>
+                  )}
+                </View>
+                <View style={styles.toRateButton}>
+                  <Text style={styles.toRateButtonText}>Rate</Text>
+                  <MaterialIcons name="chevron-right" size={r(16)} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+          {toRate.length > 1 && (
+            <View style={styles.dotsRow}>
+              {toRate.map((_, i) => (
+                <View key={i} style={[styles.dot, i === rateIndex && styles.dotActive]} />
+              ))}
+            </View>
+          )}
+        </View>
       )}
 
       <View style={styles.sectionHeader}>
@@ -395,5 +463,86 @@ const styles = StyleSheet.create({
     color: "#0B36F4",
     fontSize: 12,
     fontFamily: "Lexend_700Bold",
+  },
+
+  toRateBanner: {
+    backgroundColor: "#FFFBEB",
+    borderRadius: 16,
+    padding: r(16),
+    marginBottom: r(8),
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+
+  toRateHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(8),
+    marginBottom: r(12),
+  },
+
+  toRateTitle: {
+    fontSize: r(16),
+    fontFamily: "Lexend_700Bold",
+    color: "#92400E",
+  },
+
+  toRateCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF3C7",
+    borderRadius: r(12),
+    padding: r(12),
+    marginRight: r(10),
+    width: width * 0.76,
+    gap: r(10),
+  },
+
+  toRateVenue: {
+    fontSize: r(14),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#92400E",
+  },
+
+  toRateName: {
+    fontSize: r(12),
+    fontFamily: "Lexend_400Regular",
+    color: "#B45309",
+    marginTop: r(2),
+  },
+
+  toRateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(4),
+    backgroundColor: "#F59E0B",
+    paddingHorizontal: r(16),
+    paddingVertical: r(10),
+    borderRadius: r(20),
+  },
+
+  toRateButtonText: {
+    fontSize: r(13),
+    fontFamily: "Lexend_700Bold",
+    color: "#FFFFFF",
+  },
+
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: r(6),
+    marginTop: r(10),
+  },
+
+  dot: {
+    width: r(6),
+    height: r(6),
+    borderRadius: r(3),
+    backgroundColor: "#E5D5A0",
+  },
+
+  dotActive: {
+    backgroundColor: "#92400E",
+    width: r(16),
   },
 });

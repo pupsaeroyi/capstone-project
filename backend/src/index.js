@@ -47,8 +47,8 @@ app.use("/api", questionnaireRouter);
 app.use("/api/friends", friendsRoutes);
 
 postRoutes(app);
-sessionRoutes(app);
 ratingRoutes(app);
+sessionRoutes(app);
 initChatLogic(io);
 
 // Health check

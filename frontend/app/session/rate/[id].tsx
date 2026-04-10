@@ -216,7 +216,7 @@ export default function RatePlayersScreen() {
 
         {/* Self evaluation */}
         <View style={styles.selfSection}>
-          <Text style={styles.selfLabel}>Self Evaluation (optional)</Text>
+          <Text style={styles.selfLabel}>Self Evaluation</Text>
           <View style={styles.playerCard}>
             <View style={styles.playerInfo}>
               <View style={[styles.avatarCircle, { backgroundColor: "#0B36F4" }]}>
