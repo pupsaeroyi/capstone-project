@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Modal, Pressable, useColorScheme } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Modal, Pressable, Image, Switch } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { r } from "@/utils/responsive";
 import { authFetch, API_BASE } from "@/lib/api";
 
-type VenueOption = { venue_id: number; venue_name: string };
+type VenueOption = { venue_id: number; venue_name: string; thumbnail_url: string };
 type PickerTarget = "date" | "start" | "end" | null;
 
 export default function CreateSessionScreen() {
@@ -16,16 +16,23 @@ export default function CreateSessionScreen() {
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [selectedVenueId, setSelectedVenueId] = useState<string | undefined>(paramVenueId);
   const [selectedVenueName, setSelectedVenueName] = useState<string | undefined>(paramVenueName);
+  const [venueImage, setVenueImage] = useState<string>("");
+  const [venuePickerOpen, setVenuePickerOpen] = useState(false);
 
   useEffect(() => {
-    if (!paramVenueId) {
-      fetch(`${API_BASE}/venues`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.ok) setVenues(data.venues.map((v: any) => ({ venue_id: v.venue_id, venue_name: v.venue_name })));
-        })
-        .catch(err => console.error("Failed to fetch venues:", err));
-    }
+    fetch(`${API_BASE}/venues`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          const list = data.venues.map((v: any) => ({ venue_id: v.venue_id, venue_name: v.venue_name, thumbnail_url: v.thumbnail_url || "" }));
+          setVenues(list);
+          if (paramVenueId) {
+            const match = list.find((v: VenueOption) => v.venue_id.toString() === paramVenueId);
+            if (match) setVenueImage(match.thumbnail_url);
+          }
+        }
+      })
+      .catch(err => console.error("Failed to fetch venues:", err));
   }, [paramVenueId]);
 
   const [sessionName, setSessionName] = useState("");
@@ -34,11 +41,10 @@ export default function CreateSessionScreen() {
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000));
+  const [sessionType, setSessionType] = useState<"casual" | "ranked">("casual");
+  const [mbtiMatching, setMbtiMatching] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // --- Picker state ---
-  // On iOS: one modal at a time, temp value committed on "Done"
-  // On Android: inline system dialog
   const [activePicker, setActivePicker] = useState<PickerTarget>(null);
   const [tempDate, setTempDate] = useState(new Date());
 
@@ -65,10 +71,10 @@ export default function CreateSessionScreen() {
   };
 
   const skillLevels = [
-    { value: "all", label: "All Levels" },
-    { value: "beginner", label: "Beginner" },
-    { value: "intermediate", label: "Intermediate" },
-    { value: "advanced", label: "Advanced" },
+    { value: "all", label: "All" },
+    { value: "beginner", label: "Beg." },
+    { value: "intermediate", label: "Int." },
+    { value: "advanced", label: "Adv." },
     { value: "pro", label: "Pro" },
   ];
 
@@ -94,7 +100,7 @@ export default function CreateSessionScreen() {
     }
 
     if (!selectedVenueId) {
-      Alert.alert("Invalid", "Please select a venue");
+      Alert.alert("Invalid", "Please select a court");
       return;
     }
 
@@ -110,6 +116,8 @@ export default function CreateSessionScreen() {
           end_time,
           session_name: sessionName || undefined,
           skill_level: skillLevel,
+          session_type: sessionType,
+          mbti_matching: mbtiMatching,
         }),
       });
 
@@ -128,109 +136,124 @@ export default function CreateSessionScreen() {
   };
 
   const formatDate = (d: Date) =>
-    d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 
   const formatTime = (d: Date) =>
     d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 
   const pickerMode = activePicker === "date" ? "date" : "time";
 
+  const selectVenue = (v: VenueOption) => {
+    setSelectedVenueId(v.venue_id.toString());
+    setSelectedVenueName(v.venue_name);
+    setVenueImage(v.thumbnail_url);
+    setVenuePickerOpen(false);
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="chevron-back" size={28} color="#000" onPress={() => router.back()} />
-        <Text style={styles.headerTitle}>Create Session</Text>
+        <Text style={styles.headerTitle}>New Session</Text>
         <View style={{ width: r(24) }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
+        {/* Venue Image */}
+        <Image
+          source={venueImage ? { uri: venueImage } : require("@/assets/images/default-court.jpg")}
+          style={styles.venueImage}
+        />
+
         {/* Session Name */}
         <Text style={styles.label}>Session Name</Text>
         <TextInput
           style={styles.input}
           value={sessionName}
           onChangeText={setSessionName}
-          placeholder="e.g. Friday Night Volleyball"
+          placeholder="Sunday Morning Smash"
           placeholderTextColor="#94A3B8"
         />
 
-        {/* Venue */}
-        <Text style={styles.label}>Venue</Text>
-        {paramVenueId ? (
-          <View style={styles.readOnlyField}>
-            <MaterialIcons name="location-on" size={r(18)} color="#0B36F4" />
-            <Text style={styles.readOnlyText}>{paramVenueName || `Venue #${paramVenueId}`}</Text>
+        {/* Court Selection */}
+        <Text style={styles.label}>Court Selection</Text>
+        <TouchableOpacity style={styles.courtSelectRow} onPress={() => setVenuePickerOpen(true)}>
+          <Text style={[styles.courtSelectText, !selectedVenueName && { color: "#94A3B8" }]} numberOfLines={1}>
+            {selectedVenueName || "Select a Court"}
+          </Text>
+          <View style={styles.courtSelectIcon}>
+            <MaterialIcons name="location-on" size={r(18)} color="#FFFFFF" />
           </View>
-        ) : (
-          <View style={styles.venueList}>
-            {venues.map((v) => (
-              <TouchableOpacity
-                key={v.venue_id}
-                style={[
-                  styles.venueOption,
-                  selectedVenueId === v.venue_id.toString() && styles.venueOptionActive,
-                ]}
-                onPress={() => {
-                  setSelectedVenueId(v.venue_id.toString());
-                  setSelectedVenueName(v.venue_name);
-                }}
-              >
-                <MaterialIcons
-                  name="location-on"
-                  size={r(16)}
-                  color={selectedVenueId === v.venue_id.toString() ? "#FFFFFF" : "#0B36F4"}
-                />
-                <Text
-                  style={[
-                    styles.venueOptionText,
-                    selectedVenueId === v.venue_id.toString() && styles.venueOptionTextActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {v.venue_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        </TouchableOpacity>
+
+        {/* Date & Time Card */}
+        <View style={styles.dateTimeCard}>
+          <Text style={styles.dateTimeTitle}>Date & Time</Text>
+
+          <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("date")}>
+            <MaterialIcons name="calendar-today" size={r(18)} color="#0F172A" />
+            <Text style={styles.dateTimeLabel}>Date</Text>
+            <Text style={styles.dateTimeValue}>{formatDate(date)}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("start")}>
+            <MaterialIcons name="schedule" size={r(18)} color="#0F172A" />
+            <Text style={styles.dateTimeLabel}>Time</Text>
+            <Text style={styles.dateTimeValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Skill Level */}
         <Text style={styles.label}>Skill Level</Text>
-        <View style={styles.sportRow}>
+        <View style={styles.skillRow}>
           {skillLevels.map((level) => (
             <TouchableOpacity
               key={level.value}
-              style={[styles.sportChip, skillLevel === level.value && styles.sportChipActive]}
+              style={[styles.skillChip, skillLevel === level.value && styles.skillChipActive]}
               onPress={() => setSkillLevel(level.value)}
             >
-              <Text style={[styles.sportChipText, skillLevel === level.value && styles.sportChipTextActive]}>
+              <Text style={[styles.skillChipText, skillLevel === level.value && styles.skillChipTextActive]}>
                 {level.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Date */}
-        <Text style={styles.label}>Date</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("date")}>
-          <MaterialIcons name="calendar-today" size={r(18)} color="#64748B" />
-          <Text style={styles.pickerText}>{formatDate(date)}</Text>
-        </TouchableOpacity>
+        {/* Casual / Ranked Toggle */}
+        <View style={styles.typeToggle}>
+          <TouchableOpacity
+            style={[styles.typeButton, sessionType === "casual" && styles.typeButtonActive]}
+            onPress={() => setSessionType("casual")}
+          >
+            <Text style={[styles.typeButtonText, sessionType === "casual" && styles.typeButtonTextActive]}>Casual</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.typeButton, sessionType === "ranked" && styles.typeButtonActive]}
+            onPress={() => setSessionType("ranked")}
+          >
+            <Text style={[styles.typeButtonText, sessionType === "ranked" && styles.typeButtonTextActive]}>Ranked</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Start Time */}
-        <Text style={styles.label}>Start Time</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("start")}>
-          <MaterialIcons name="schedule" size={r(18)} color="#64748B" />
-          <Text style={styles.pickerText}>{formatTime(startTime)}</Text>
-        </TouchableOpacity>
-
-        {/* End Time */}
-        <Text style={styles.label}>End Time</Text>
-        <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker("end")}>
-          <MaterialIcons name="schedule" size={r(18)} color="#64748B" />
-          <Text style={styles.pickerText}>{formatTime(endTime)}</Text>
-        </TouchableOpacity>
+        {/* MBTI Matching */}
+        <View style={styles.mbtiCard}>
+          <View style={styles.mbtiHeader}>
+            <View style={styles.mbtiIconCircle}>
+              <MaterialIcons name="psychology" size={r(18)} color="#0B36F4" />
+            </View>
+            <Text style={styles.mbtiTitle}>MBTI Matching</Text>
+          </View>
+          <View style={styles.mbtiContent}>
+            <Text style={styles.mbtiDesc}>Prioritize teammates with compatible personality types for better chemistry.</Text>
+            <Switch
+              value={mbtiMatching}
+              onValueChange={setMbtiMatching}
+              trackColor={{ false: "#E2E8F0", true: "#0B36F4" }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        </View>
 
         {/* Max Players */}
         <Text style={styles.label}>Max Players</Text>
@@ -252,24 +275,48 @@ export default function CreateSessionScreen() {
           <Text style={styles.submitText}>
             {submitting ? "Creating..." : "Create Session"}
           </Text>
+          {!submitting && <MaterialIcons name="chevron-right" size={r(20)} color="#FFFFFF" />}
         </TouchableOpacity>
       </ScrollView>
 
-      {Platform.OS === "ios" && (
-        <Modal
-          visible={activePicker !== null}
-          transparent
-          animationType="slide"
-        >
+      {/* Venue Picker Modal */}
+      <Modal visible={venuePickerOpen} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setActivePicker(null)} />
+          <Pressable style={styles.modalBackdrop} onPress={() => setVenuePickerOpen(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select a Court</Text>
+              <TouchableOpacity onPress={() => setVenuePickerOpen(false)}>
+                <Ionicons name="close" size={r(24)} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: r(400) }}>
+              {venues.map((v) => (
+                <TouchableOpacity key={v.venue_id} style={styles.venueOptionRow} onPress={() => selectVenue(v)}>
+                  <MaterialIcons name="location-on" size={r(18)} color="#0B36F4" />
+                  <Text style={styles.venueOptionText} numberOfLines={1}>{v.venue_name}</Text>
+                  {selectedVenueId === v.venue_id.toString() && (
+                    <Ionicons name="checkmark-circle" size={r(20)} color="#0B36F4" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date/Time Pickers */}
+      {Platform.OS === "ios" && (
+        <Modal visible={activePicker !== null} transparent animationType="slide">
+          <View style={styles.modalContainer}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setActivePicker(null)} />
             <View style={styles.modalSheet}>
               <View style={styles.modalHeader}>
                 <TouchableOpacity onPress={() => setActivePicker(null)}>
                   <Text style={styles.modalCancel}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>
-                  {activePicker === "date" ? "Select Date" : activePicker === "start" ? "Start Time" : "End Time"}
+                  {activePicker === "date" ? "Select Date" : "Select Time"}
                 </Text>
                 <TouchableOpacity onPress={confirmPicker}>
                   <Text style={styles.modalDone}>Done</Text>
@@ -280,11 +327,11 @@ export default function CreateSessionScreen() {
                 mode={pickerMode}
                 display="spinner"
                 is24Hour
-                locale="en-GB" 
+                locale="en-GB"
                 themeVariant="light"
                 minimumDate={pickerMode === "date" ? new Date() : undefined}
                 onChange={(_, selected) => { if (selected) setTempDate(selected); }}
-                style={styles.spinner}
+                style={{ width: "100%" }}
               />
             </View>
           </View>
@@ -292,28 +339,13 @@ export default function CreateSessionScreen() {
       )}
 
       {Platform.OS === "android" && activePicker === "date" && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          minimumDate={new Date()}
-          onChange={(e, s) => handleAndroidChange("date", e, s)}
-        />
+        <DateTimePicker value={date} mode="date" minimumDate={new Date()} onChange={(e, s) => handleAndroidChange("date", e, s)} />
       )}
       {Platform.OS === "android" && activePicker === "start" && (
-        <DateTimePicker
-          value={startTime}
-          mode="time"
-          is24Hour
-          onChange={(e, s) => handleAndroidChange("start", e, s)}
-        />
+        <DateTimePicker value={startTime} mode="time" is24Hour onChange={(e, s) => handleAndroidChange("start", e, s)} />
       )}
       {Platform.OS === "android" && activePicker === "end" && (
-        <DateTimePicker
-          value={endTime}
-          mode="time"
-          is24Hour
-          onChange={(e, s) => handleAndroidChange("end", e, s)}
-        />
+        <DateTimePicker value={endTime} mode="time" is24Hour onChange={(e, s) => handleAndroidChange("end", e, s)} />
       )}
     </View>
   );
@@ -344,93 +376,19 @@ const styles = StyleSheet.create({
     padding: r(20),
     paddingBottom: r(40),
   },
+
+  venueImage: {
+    width: "100%",
+    height: r(160),
+    borderRadius: r(16),
+    marginBottom: r(16),
+  },
   label: {
     fontSize: r(13),
     fontFamily: "Lexend_600SemiBold",
     color: "#475569",
     marginBottom: r(6),
-    marginTop: r(16),
-  },
-  readOnlyField: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(8),
-    backgroundColor: "#FFFFFF",
-    padding: r(14),
-    borderRadius: r(12),
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  readOnlyText: {
-    fontSize: r(15),
-    fontFamily: "Lexend_500Medium",
-    color: "#0F172A",
-  },
-  venueList: {
-    gap: r(8),
-  },
-  venueOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(8),
-    backgroundColor: "#FFFFFF",
-    padding: r(14),
-    borderRadius: r(12),
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  venueOptionActive: {
-    backgroundColor: "#0B36F4",
-    borderColor: "#0B36F4",
-  },
-  venueOptionText: {
-    fontSize: r(14),
-    fontFamily: "Lexend_500Medium",
-    color: "#0F172A",
-    flex: 1,
-  },
-  venueOptionTextActive: {
-    color: "#FFFFFF",
-  },
-  sportRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: r(8),
-  },
-  sportChip: {
-    paddingHorizontal: r(14),
-    paddingVertical: r(8),
-    borderRadius: r(20),
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  sportChipActive: {
-    backgroundColor: "#0B36F4",
-    borderColor: "#0B36F4",
-  },
-  sportChipText: {
-    fontSize: r(13),
-    fontFamily: "Lexend_500Medium",
-    color: "#64748B",
-  },
-  sportChipTextActive: {
-    color: "#FFFFFF",
-  },
-  pickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(8),
-    backgroundColor: "#FFFFFF",
-    padding: r(14),
-    borderRadius: r(12),
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  pickerText: {
-    fontSize: r(15),
-    fontFamily: "Lexend_500Medium",
-    color: "#0F172A",
+    marginTop: r(14),
   },
   input: {
     backgroundColor: "#FFFFFF",
@@ -442,12 +400,161 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_500Medium",
     color: "#0F172A",
   },
+
+  courtSelectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    padding: r(14),
+    borderRadius: r(12),
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  courtSelectText: {
+    flex: 1,
+    fontSize: r(15),
+    fontFamily: "Lexend_500Medium",
+    color: "#0F172A",
+  },
+  courtSelectIcon: {
+    width: r(32),
+    height: r(32),
+    borderRadius: r(8),
+    backgroundColor: "#0B36F4",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  dateTimeCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: r(16),
+    padding: r(16),
+    marginTop: r(16),
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  dateTimeTitle: {
+    fontSize: r(13),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#475569",
+    marginBottom: r(12),
+  },
+  dateTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: r(10),
+    gap: r(10),
+  },
+  dateTimeLabel: {
+    fontSize: r(15),
+    fontFamily: "Lexend_500Medium",
+    color: "#0F172A",
+    flex: 1,
+  },
+  dateTimeValue: {
+    fontSize: r(14),
+    fontFamily: "Lexend_500Medium",
+    color: "#0B36F4",
+  },
+
+  skillRow: {
+    flexDirection: "row",
+    gap: r(8),
+  },
+  skillChip: {
+    flex: 1,
+    paddingVertical: r(10),
+    borderRadius: r(20),
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+  },
+  skillChipActive: {
+    backgroundColor: "#0B36F4",
+    borderColor: "#0B36F4",
+  },
+  skillChipText: {
+    fontSize: r(13),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#64748B",
+  },
+  skillChipTextActive: {
+    color: "#FFFFFF",
+  },
+
+  typeToggle: {
+    flexDirection: "row",
+    backgroundColor: "#E2E8F0",
+    borderRadius: r(24),
+    padding: r(4),
+    marginTop: r(18),
+  },
+  typeButton: {
+    flex: 1,
+    paddingVertical: r(12),
+    borderRadius: r(20),
+    alignItems: "center",
+  },
+  typeButtonActive: {
+    backgroundColor: "#0B36F4",
+  },
+  typeButtonText: {
+    fontSize: r(14),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#64748B",
+  },
+  typeButtonTextActive: {
+    color: "#FFFFFF",
+  },
+
+  mbtiCard: {
+    backgroundColor: "#EEF2FF",
+    borderRadius: r(16),
+    padding: r(16),
+    marginTop: r(16),
+  },
+  mbtiHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(8),
+    marginBottom: r(8),
+  },
+  mbtiIconCircle: {
+    width: r(28),
+    height: r(28),
+    borderRadius: r(14),
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mbtiTitle: {
+    fontSize: r(15),
+    fontFamily: "Lexend_700Bold",
+    color: "#0F172A",
+  },
+  mbtiContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(12),
+  },
+  mbtiDesc: {
+    flex: 1,
+    fontSize: r(12),
+    fontFamily: "Lexend_400Regular",
+    color: "#64748B",
+    lineHeight: r(18),
+  },
+
   submitButton: {
+    flexDirection: "row",
     backgroundColor: "#0B36F4",
     borderRadius: r(28),
     paddingVertical: r(16),
     alignItems: "center",
-    marginTop: r(28),
+    justifyContent: "center",
+    marginTop: r(24),
+    gap: r(6),
   },
   submitButtonDisabled: {
     opacity: 0.6,
@@ -458,27 +565,39 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
+  venueOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(10),
+    padding: r(16),
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+  venueOptionText: {
+    flex: 1,
+    fontSize: r(14),
+    fontFamily: "Lexend_500Medium",
+    color: "#0F172A",
+  },
+
   modalContainer: {
     flex: 1,
-    justifyContent: "flex-end",  
+    justifyContent: "flex-end",
   },
   modalBackdrop: {
     position: "absolute",
     top: 0,
-left: 0,
-right: 0,
-bottom: 0,
-    flex: 1,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0,0,0,0.35)",
   },
-  
   modalSheet: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: r(24),
     borderTopRightRadius: r(24),
     paddingBottom: r(36),
   },
-
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -502,8 +621,5 @@ bottom: 0,
     fontSize: r(15),
     fontFamily: "Lexend_700Bold",
     color: "#0B36F4",
-  },
-  spinner: {
-    width: "100%",
   },
 });

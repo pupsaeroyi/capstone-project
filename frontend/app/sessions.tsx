@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, TextInput, R
 import { useRouter, useFocusEffect } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, authFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/Input";
 import { FilterSheet, FilterState } from "@/components/FilterSheet";
@@ -22,11 +22,39 @@ type SessionItem = {
   venue_rating: number;
   created_by: number;
   player_ids: number[];
+  session_type: string;
+  mbti_matching: boolean;
+  creator_mbti: string | null;
+  creator_rank: string | null;
 };
+
+const MBTI_COMPAT: Record<string, string[]> = {
+  INTJ: ["ENFP", "ENTP"],
+  INTP: ["ENFJ", "ENTJ"],
+  ENTJ: ["INTP", "INFP"],
+  ENTP: ["INFJ", "INTJ"],
+  INFJ: ["ENFP", "ENTP"],
+  INFP: ["ENFJ", "ENTJ"],
+  ENFJ: ["INTP", "ISFP"],
+  ENFP: ["INFJ", "INTJ"],
+  ISTJ: ["ESFP", "ESTP"],
+  ISFJ: ["ESFP", "ESTP"],
+  ESTJ: ["ISFP", "ISTP"],
+  ESFJ: ["ISFP", "ISTP"],
+  ISTP: ["ESFJ", "ESTJ"],
+  ISFP: ["ENFJ", "ESFJ", "ESTJ"],
+  ESTP: ["ISFJ", "ISTJ"],
+  ESFP: ["ISFJ", "ISTJ"],
+};
+
+function isMbtiCompatible(userMbti: string | null | undefined, creatorMbti: string | null) {
+  if (!userMbti || !creatorMbti) return false;
+  return MBTI_COMPAT[userMbti]?.includes(creatorMbti) || MBTI_COMPAT[creatorMbti]?.includes(userMbti);
+}
 
 export default function SessionsScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -93,7 +121,15 @@ export default function SessionsScreen() {
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
   };
 
+  const userMbti = profile?.mbti_type;
+  const userRank = profile?.rank;
+
   const filtered = sessions.filter(s => {
+    // Skip MBTI filter for own sessions or already joined
+    const isOwn = user && (s.created_by === user.id || (s.player_ids || []).includes(user.id));
+    if (!isOwn && s.mbti_matching && s.creator_mbti && userMbti) {
+      if (!isMbtiCompatible(userMbti, s.creator_mbti)) return false;
+    }
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -108,36 +144,56 @@ export default function SessionsScreen() {
     const isFull = slotsLeft <= 0;
     const hasJoined = user ? (item.player_ids || []).includes(user.id) || item.created_by === user.id : false;
 
+    const mbtiMatch = item.mbti_matching && isMbtiCompatible(userMbti, item.creator_mbti);
+    const rankMatch = userRank && item.skill_level !== "all" && userRank.toLowerCase() === item.skill_level;
+    const isRecommended = mbtiMatch || rankMatch;
+
+    const skillLabel = item.skill_level === "all" ? "ALL LEVELS" : item.skill_level.toUpperCase();
+    const skillColors: Record<string, string> = {
+      beginner: "#16A34A", intermediate: "#0B36F4", advanced: "#D97706", pro: "#DC2626", all: "#64748B",
+    };
+    const sc = skillColors[item.skill_level] || "#64748B";
+
     return (
       <TouchableOpacity
         style={styles.sessionCard}
         onPress={() => router.push(`/session/${item.session_id}`)}
         activeOpacity={0.7}
       >
-        {/* Top row: venue name + rating */}
+        {/* Row 1: skill badge + rating + recommend */}
         <View style={styles.cardTopRow}>
-          <Text style={styles.venueName} numberOfLines={1}>{item.venue_name}</Text>
+          <Text style={[styles.skillLabel, { color: sc }]}>{skillLabel}</Text>
           <View style={styles.ratingBadge}>
             <MaterialIcons name="star" size={r(12)} color="#FBBF24" />
             <Text style={styles.ratingText}>{item.venue_rating}</Text>
           </View>
+          {isRecommended && (
+            <View style={styles.recommendBadge}>
+              <Text style={styles.recommendText}>
+                {mbtiMatch ? "MBTI Match" : "Rank Match"}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Time + date */}
+        {/* Row 2: session name */}
+        <Text style={styles.sessionName} numberOfLines={1}>
+          {item.session_name || item.venue_name}
+        </Text>
+
+        {/* Row 3: time + venue */}
         <View style={styles.timeRow}>
           <MaterialIcons name="schedule" size={r(14)} color="#64748B" />
           <Text style={styles.timeText}>
-            {formatTime(item.start_time)} - {formatTime(item.end_time)}
+            {formatTime(item.start_time)} - {formatTime(item.end_time)} · {item.venue_name}
           </Text>
-          <Text style={styles.dateChip}>{formatDate(item.start_time)}</Text>
         </View>
 
-        {/* Bottom row: players + join */}
+        {/* Row 4: players + join */}
         <View style={styles.cardBottomRow}>
           <View style={styles.playerInfo}>
-            <MaterialIcons name="groups" size={r(18)} color="#64748B" />
-            <Text style={styles.playerText}>+{item.player_count}</Text>
-            <Text style={styles.maxText}>/{item.max_players}</Text>
+            <MaterialIcons name="groups" size={r(16)} color="#64748B" />
+            <Text style={styles.playerText}>{item.player_count}/{item.max_players}</Text>
           </View>
 
           {hasJoined ? (
@@ -298,6 +354,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   listContent: {
+    flexGrow: 1,
     padding: r(16),
     paddingBottom: r(40),
   },
@@ -314,16 +371,13 @@ const styles = StyleSheet.create({
   },
   cardTopRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: r(8),
+    gap: r(8),
+    marginBottom: r(4),
   },
-  venueName: {
-    fontSize: r(16),
+  skillLabel: {
+    fontSize: r(11),
     fontFamily: "Lexend_700Bold",
-    color: "#0F172A",
-    flex: 1,
-    marginRight: r(8),
   },
   ratingBadge: {
     flexDirection: "row",
@@ -335,6 +389,26 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_600SemiBold",
     color: "#0F172A",
   },
+  recommendBadge: {
+    backgroundColor: "#FDF2F8",
+    paddingHorizontal: r(10),
+    paddingVertical: r(4),
+    borderRadius: r(8),
+    borderWidth: 1,
+    borderColor: "#FBCFE8",
+    marginLeft: "auto",
+  },
+  recommendText: {
+    fontSize: r(10),
+    fontFamily: "Lexend_700Bold",
+    color: "#DB2777",
+  },
+  sessionName: {
+    fontSize: r(17),
+    fontFamily: "Lexend_700Bold",
+    color: "#0F172A",
+    marginBottom: r(4),
+  },
   timeRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -342,24 +416,16 @@ const styles = StyleSheet.create({
     marginBottom: r(12),
   },
   timeText: {
-    fontSize: r(13),
+    fontSize: r(12),
     fontFamily: "Lexend_400Regular",
     color: "#64748B",
-  },
-  dateChip: {
-    fontSize: r(11),
-    fontFamily: "Lexend_500Medium",
-    color: "#0B36F4",
-    backgroundColor: "#E6EAFD",
-    paddingHorizontal: r(8),
-    paddingVertical: r(2),
-    borderRadius: r(8),
-    overflow: "hidden",
+    flex: 1,
   },
   cardBottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: r(8),
   },
   playerInfo: {
     flexDirection: "row",
@@ -367,14 +433,9 @@ const styles = StyleSheet.create({
     gap: r(4),
   },
   playerText: {
-    fontSize: r(14),
+    fontSize: r(13),
     fontFamily: "Lexend_600SemiBold",
-    color: "#0F172A",
-  },
-  maxText: {
-    fontSize: r(12),
-    fontFamily: "Lexend_400Regular",
-    color: "#94A3B8",
+    color: "#64748B",
   },
   joinButton: {
     backgroundColor: "#0B36F4",
