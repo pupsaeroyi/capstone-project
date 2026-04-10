@@ -158,16 +158,16 @@ const styles = StyleSheet.create({
   
   header: {
     width: "100%",
-    marginBottom: 24,
+    marginBottom: 32,
     marginLeft: -8,
   },
-  
+
   content: {
     flexGrow: 1,
-    paddingTop: 90,
-    paddingBottom: 40,
-
+    paddingTop: 80,
+    paddingBottom: 60,
   },
+
   form: {
     width: "100%",
     alignItems: "center",
@@ -180,21 +180,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: "Lexend_700Bold",
-    lineHeight: 34,
-
+    lineHeight: 36,
   },
+
   subtitle: {
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 16,
     fontFamily: "Lexend_500Medium",
     color: "#64748B",
-    lineHeight: 20,
+    lineHeight: 24,
   },
 
   label: {
     fontSize: 14,
     fontFamily: "Lexend_500Medium",
-    color: "#555",
+    color: "#475569",
   },
 
   helper: {
@@ -205,17 +205,15 @@ const styles = StyleSheet.create({
   },
 
   helperContainer: {
-    marginTop: 14,
+    marginTop: 20,
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
 
   resendLink: {
-  fontSize: 15,
-  color: "#0B36F4",
-  fontFamily: "Lexend_400Regular",
-  textAlign: "center",
+    fontSize: 15,
+    color: "#0B36F4",
+    fontFamily: "Lexend_400Regular",
+    textAlign: "center",
   },
-
-
 });
