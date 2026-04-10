@@ -601,6 +601,8 @@ app.get("/venues", async (req, res) => {
          s.venue_id,
          s.id AS session_id,
          s.sport,
+         s.session_name,
+         s.skill_level,
          s.max_players,
          s.start_time,
          s.end_time,
@@ -618,6 +620,8 @@ app.get("/venues", async (req, res) => {
       sessionsByVenue[s.venue_id].push({
         session_id: s.session_id,
         sport: s.sport,
+        session_name: s.session_name,
+        skill_level: s.skill_level,
         player_count: s.player_count,
         max_players: s.max_players,
         start_time: s.start_time,
