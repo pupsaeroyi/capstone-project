@@ -43,6 +43,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshOffset, setRefreshOffset] = useState(0);
   const [rateIndex, setRateIndex] = useState(0);
+  const [showAllCourts, setShowAllCourts] = useState(false);
 
 
 
@@ -57,10 +58,10 @@ export default function Home() {
         const allSessions: SessionWithVenue[] = [];
 
         for (const v of data.venues) {
-          venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count });
+          venueList.push({ venue_id: v.venue_id, venue_name: v.venue_name, court_count: v.court_count, thumbnail_url: v.thumbnail_url });
 
           for (const s of v.active_sessions) {
-            allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name });
+            allSessions.push({ ...s, venue_id: v.venue_id, venue_name: v.venue_name, thumbnail_url: v.thumbnail_url });
           }
         }
 
@@ -119,6 +120,27 @@ export default function Home() {
   function formatDate(dateStr: string) {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function formatDateShort(dateStr: string) {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+  }
+
+  function skillColor(level: string) {
+    const map: Record<string, { bg: string; text: string }> = {
+      beginner: { bg: "#DCFCE7", text: "#16A34A" },
+      intermediate: { bg: "#E0F2FE", text: "#0284C7" },
+      advanced: { bg: "#FEF3C7", text: "#D97706" },
+      pro: { bg: "#FEE2E2", text: "#DC2626" },
+      all: { bg: "#F1F5F9", text: "#64748B" },
+    };
+    return map[level] || map.all;
   }
 
   function formatTime(dateStr: string) {
@@ -237,39 +259,72 @@ export default function Home() {
           <Text style={styles.emptyText}>No active sessions right now</Text>
         </View>
       ) : (
-        sessions.map((session) => (
-          <TouchableOpacity
-            key={session.session_id}
-            style={styles.card}
-            onPress={() => router.push(`/session/${session.session_id}`)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.court}>{session.venue_name}</Text>
-            <Text style={styles.meta}>
-              {formatTime(session.start_time)} - {formatTime(session.end_time)}
-            </Text>
-            <Text style={styles.players}>
-              {session.max_players - session.player_count} slots left
-            </Text>
-          </TouchableOpacity>
-        ))
+        sessions.map((session) => {
+          const slotsLeft = session.max_players - session.player_count;
+          const sc = skillColor(session.skill_level);
+          return (
+            <TouchableOpacity
+              key={session.session_id}
+              style={styles.sessionCard}
+              onPress={() => router.push(`/session/${session.session_id}`)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.sessionCardRow}>
+                {session.thumbnail_url ? (
+                  <Image source={{ uri: session.thumbnail_url }} style={styles.venueThumb} />
+                ) : (
+                  <View style={[styles.venueThumb, styles.venueThumbPlaceholder]}>
+                    <MaterialIcons name="sports-volleyball" size={r(28)} color="#94A3B8" />
+                  </View>
+                )}
+                <View style={styles.sessionCardInfo}>
+                  <View style={styles.sessionNameRow}>
+                    <Text style={styles.sessionCardName} numberOfLines={2}>
+                      {session.session_name || session.venue_name}
+                    </Text>
+                    <View style={[styles.skillBadge, { backgroundColor: sc.bg }]}>
+                      <Text style={[styles.skillBadgeText, { color: sc.text }]}>
+                        {session.skill_level === "all" ? "All" : session.skill_level.charAt(0).toUpperCase() + session.skill_level.slice(1)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.sessionTimeRow}>
+                    <MaterialIcons name="schedule" size={r(14)} color="#64748B" />
+                    <Text style={styles.sessionTimeText}>
+                      {formatTime(session.start_time)} - {formatTime(session.end_time)} · {formatDateShort(session.start_time)}
+                    </Text>
+                  </View>
+                  <Text style={[styles.sessionSlots, slotsLeft <= 2 && slotsLeft > 0 && styles.sessionSlotsUrgent]}>
+                    {slotsLeft <= 0 ? "Full" : slotsLeft <= 2 ? `Only ${slotsLeft} spots left!` : `${session.player_count}/${session.max_players} spots`}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })
       )}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.title}>Courts</Text>
       </View>
 
-      {venues.map((venue) => (
+      {(showAllCourts ? venues : venues.slice(0, 5)).map((venue) => (
         <TouchableOpacity
           key={venue.venue_id}
-          style={styles.card}
+          style={styles.courtCard}
           onPress={() => router.push({ pathname: "/venue/[id]", params: { id: venue.venue_id.toString(), venue_name: venue.venue_name } })}
           activeOpacity={0.7}
         >
-          <Text style={styles.court}>{venue.venue_name}</Text>
+          <Text style={styles.courtName}>{venue.venue_name}</Text>
           <Text style={styles.courtSub}>{venue.court_count} court{venue.court_count !== 1 ? "s" : ""}</Text>
         </TouchableOpacity>
       ))}
+      {venues.length > 5 && (
+        <TouchableOpacity style={styles.showMoreButton} onPress={() => setShowAllCourts(!showAllCourts)}>
+          <Text style={styles.showMoreText}>{showAllCourts ? "Show Less" : `Show All (${venues.length})`}</Text>
+          <MaterialIcons name={showAllCourts ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={r(18)} color="#0B36F4" />
+        </TouchableOpacity>
+      )}
 
       {/* DEV tools */}
       {__DEV__ && (
@@ -405,27 +460,94 @@ const styles = StyleSheet.create({
     color: "#0B36F4",
   },
 
-  card: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 14,
+  sessionCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: r(16),
+    padding: r(14),
+    marginBottom: r(12),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
-  court: {
-    fontSize: 16,
-    fontWeight: "600",
+  sessionCardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(12),
   },
 
-  meta: {
-    fontSize: 14,
+  venueThumb: {
+    width: r(64),
+    height: r(64),
+    borderRadius: r(32),
+  },
+
+  venueThumbPlaceholder: {
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  sessionCardInfo: {
+    flex: 1,
+  },
+
+  sessionNameRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: r(8),
+    marginBottom: r(4),
+  },
+
+  sessionCardName: {
+    fontSize: r(15),
+    fontFamily: "Lexend_700Bold",
+    color: "#0F172A",
+    flex: 1,
+  },
+
+  skillBadge: {
+    paddingHorizontal: r(10),
+    paddingVertical: r(3),
+    borderRadius: r(10),
+  },
+
+  skillBadgeText: {
+    fontSize: r(11),
+    fontFamily: "Lexend_600SemiBold",
+  },
+
+  sessionTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(4),
+    marginBottom: r(4),
+  },
+
+  sessionTimeText: {
+    fontSize: r(12),
+    fontFamily: "Lexend_400Regular",
     color: "#64748B",
-    marginTop: 4,
+  },
+
+  sessionSlots: {
+    fontSize: r(12),
+    fontFamily: "Lexend_500Medium",
+    color: "#64748B",
+    textAlign: "right",
+  },
+
+  sessionSlotsUrgent: {
+    color: "#DC2626",
+    fontFamily: "Lexend_700Bold",
   },
 
   emptyCard: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: r(16),
     padding: 24,
     marginBottom: 14,
     alignItems: "center",
@@ -438,16 +560,43 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_400Regular",
   },
 
-  courtSub: {
-    fontSize: 13,
-    color: "#64748B",
-    fontFamily: "Lexend_400Regular",
-    marginTop: 4,
+  courtCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: r(16),
+    padding: r(14),
+    marginBottom: r(12),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
-  players: {
-    fontSize: 14,
-    marginTop: 4,
+  courtName: {
+    fontSize: r(15),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0F172A",
+  },
+
+  courtSub: {
+    fontSize: r(13),
+    color: "#64748B",
+    fontFamily: "Lexend_400Regular",
+    marginTop: r(4),
+  },
+
+  showMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: r(12),
+    gap: r(4),
+  },
+
+  showMoreText: {
+    fontSize: r(14),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0B36F4",
   },
 
   dateDisplay: {
