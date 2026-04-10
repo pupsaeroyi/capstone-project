@@ -32,7 +32,7 @@ export default function Questionnaire() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/auth/submit-questionnaire`, {
+      const res = await fetch(`${API_BASE}/api/submit-questionnaire`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(answers),

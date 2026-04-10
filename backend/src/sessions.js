@@ -121,12 +121,48 @@ export function sessionRoutes(app) {
         [sessionId]
       );
 
+      const isEnded = new Date(session.end_time) < new Date();
+
+      // If there's an auth header, try to add rating flags
+      let hasRated = false;
+      let isFinalized = false;
+      let requestingUserId = null;
+
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        try {
+          const jwt = await import("jsonwebtoken");
+          const token = authHeader.split(" ")[1];
+          const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
+          requestingUserId = decoded.sub;
+
+          if (isEnded && requestingUserId) {
+            const ratedCheck = await pool.query(
+              "SELECT 1 FROM session_ratings WHERE session_id = $1 AND rater_id = $2 LIMIT 1",
+              [sessionId, requestingUserId]
+            );
+            hasRated = ratedCheck.rows.length > 0;
+
+            const statusCheck = await pool.query(
+              "SELECT finalized FROM session_rating_status WHERE session_id = $1",
+              [sessionId]
+            );
+            isFinalized = statusCheck.rows.length > 0 && statusCheck.rows[0].finalized;
+          }
+        } catch (_) {
+          // Invalid token — just skip rating flags, keep endpoint public
+        }
+      }
+
       return res.json({
         ok: true,
         session: {
           ...session,
           player_count: playersResult.rows.length,
           players: playersResult.rows,
+          is_ended: isEnded,
+          has_rated: hasRated,
+          is_finalized: isFinalized,
         },
       });
     } catch (err) {

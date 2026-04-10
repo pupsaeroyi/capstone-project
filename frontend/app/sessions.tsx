@@ -28,6 +28,7 @@ export default function SessionsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [toRate, setToRate] = useState<SessionItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,9 +53,19 @@ export default function SessionsScreen() {
     }
   }, [filters]);
 
+  const fetchToRate = useCallback(async () => {
+    try {
+      const data = await authFetch("/sessions/to-rate");
+      if (data.ok) setToRate(data.sessions);
+    } catch (err) {
+      console.error("Failed to fetch to-rate:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSessions();
-  }, [fetchSessions]);
+    fetchToRate();
+  }, [fetchSessions, fetchToRate]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -200,6 +211,30 @@ export default function SessionsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Sessions to rate */}
+      {toRate.length > 0 && (
+        <View style={styles.toRateSection}>
+          <Text style={styles.toRateTitle}>Sessions to Rate</Text>
+          {toRate.map((s) => (
+            <TouchableOpacity
+              key={s.session_id}
+              style={styles.toRateCard}
+              activeOpacity={0.7}
+              onPress={() => router.push(`/session/${s.session_id}` as any)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.toRateVenue} numberOfLines={1}>{s.venue_name}</Text>
+                {s.session_name ? <Text style={styles.toRateName} numberOfLines={1}>{s.session_name}</Text> : null}
+              </View>
+              <View style={styles.toRateBadge}>
+                <MaterialIcons name="star-rate" size={r(14)} color="#FFFFFF" />
+                <Text style={styles.toRateBadgeText}>Rate</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* Sessions list */}
       <FlatList
         data={filtered}
@@ -234,6 +269,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F1F5F9",
+  },
+  toRateSection: {
+    paddingHorizontal: r(16),
+    marginBottom: r(8),
+  },
+  toRateTitle: {
+    fontSize: r(14),
+    fontFamily: "Lexend_700Bold",
+    color: "#0F172A",
+    marginBottom: r(8),
+  },
+  toRateCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF7ED",
+    borderRadius: r(12),
+    padding: r(12),
+    marginBottom: r(8),
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    gap: r(10),
+  },
+  toRateVenue: {
+    fontSize: r(14),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0F172A",
+  },
+  toRateName: {
+    fontSize: r(12),
+    fontFamily: "Lexend_400Regular",
+    color: "#64748B",
+    marginTop: r(2),
+  },
+  toRateBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(4),
+    backgroundColor: "#0B36F4",
+    paddingHorizontal: r(12),
+    paddingVertical: r(6),
+    borderRadius: r(12),
+  },
+  toRateBadgeText: {
+    fontSize: r(12),
+    fontFamily: "Lexend_700Bold",
+    color: "#FFFFFF",
   },
   header: {
     flexDirection: "row",
