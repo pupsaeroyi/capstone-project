@@ -13,7 +13,8 @@ import { postRoutes } from "./posts.js";
 import { createServer } from "http";    
 import { Server } from "socket.io";
 import friendsRoutes from "./friends.js";
-import { initChatLogic } from "./chat.js"; 
+import { initChatLogic } from "./chat.js";
+import { ratingRoutes } from "./ratings.js";
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use("/api/friends", friendsRoutes);
 
 postRoutes(app);
 sessionRoutes(app);
+ratingRoutes(app);
 initChatLogic(io);
 
 // Health check

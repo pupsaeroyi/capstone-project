@@ -27,6 +27,9 @@ type SessionDetail = {
   host_username: string;
   player_count: number;
   players: Player[];
+  is_ended: boolean;
+  has_rated: boolean;
+  is_finalized: boolean;
 };
 
 export default function SessionDetailScreen() {
@@ -36,15 +39,16 @@ export default function SessionDetailScreen() {
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchSession = useCallback(() => {
+  const fetchSession = useCallback(async () => {
     setLoading(true);
-    fetch(`${API_BASE}/sessions/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.ok) setSession(data.session);
-      })
-      .catch(err => console.error("Failed to fetch session:", err))
-      .finally(() => setLoading(false));
+    try {
+      const data = await authFetch(`/sessions/${id}`);
+      if (data.ok) setSession(data.session);
+    } catch (err) {
+      console.error("Failed to fetch session:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -260,7 +264,28 @@ export default function SessionDetailScreen() {
 
       {/* Bottom action */}
       <View style={styles.bottomBar}>
-        {isCreator ? (
+        {session.is_ended && hasJoined && !session.has_rated && !session.is_finalized ? (
+          <TouchableOpacity
+            style={styles.joinButton}
+            onPress={() => router.push(`/session/rate/${id}` as any)}
+          >
+            <Text style={styles.joinButtonText}>Rate Players</Text>
+          </TouchableOpacity>
+        ) : session.is_ended && hasJoined && session.has_rated && !session.is_finalized ? (
+          <View style={styles.statusBadge}>
+            <MaterialIcons name="check-circle-outline" size={r(18)} color="#64748B" />
+            <Text style={styles.statusBadgeText}>Ratings Submitted</Text>
+          </View>
+        ) : session.is_ended && session.is_finalized ? (
+          <View style={styles.statusBadge}>
+            <MaterialIcons name="verified" size={r(18)} color="#0B36F4" />
+            <Text style={[styles.statusBadgeText, { color: "#0B36F4" }]}>Session Completed</Text>
+          </View>
+        ) : session.is_ended ? (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>Session Ended</Text>
+          </View>
+        ) : isCreator ? (
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>Cancel Session</Text>
           </TouchableOpacity>
@@ -544,6 +569,20 @@ const styles = StyleSheet.create({
     fontSize: r(16),
     fontFamily: "Lexend_700Bold",
     color: "#EF4444",
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F5F9",
+    borderRadius: r(28),
+    paddingVertical: r(16),
+    gap: r(8),
+  },
+  statusBadgeText: {
+    fontSize: r(15),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#64748B",
   },
   emptyText: {
     fontSize: r(16),
