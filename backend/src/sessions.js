@@ -122,10 +122,11 @@ export function sessionRoutes(app) {
       const session = result.rows[0];
 
       const playersResult = await pool.query(
-        `SELECT sp.user_id, u.username
-         FROM session_players sp
-         JOIN users u ON u.id = sp.user_id
-         WHERE sp.session_id = $1`,
+        `SELECT sp.user_id, u.username, pp.avatar_url
+        FROM session_players sp
+        JOIN users u ON u.id = sp.user_id
+        LEFT JOIN player_profile pp ON pp.user_id = sp.user_id
+        WHERE sp.session_id = $1`,
         [sessionId]
       );
 

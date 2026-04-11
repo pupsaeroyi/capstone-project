@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 type Player = {
   user_id: number;
   username: string;
+  avatar_url?: string;
 };
 
 type SessionDetail = {
@@ -238,25 +239,35 @@ export default function SessionDetailScreen() {
         {/* Requirements */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Requirements</Text>
-          <View style={styles.reqRow}>
-            <MaterialIcons name="fitness-center" size={r(18)} color="#64748B" />
+          <View style={[styles.reqPill, { borderLeftColor: skillColor(session.skill_level) }]}>
+            <MaterialIcons name="fitness-center" size={r(18)} color="#94A3B8" />
             <Text style={styles.reqLabel}>Skill Level</Text>
-            <Text style={styles.reqValue}>{skillLabel(session.skill_level)}</Text>
+            <View style={[styles.countPill, { backgroundColor: skillColor(session.skill_level) + "20", marginLeft: "auto" }]}>
+              <Text style={[styles.countPillText, { color: skillColor(session.skill_level) }]}>
+                {skillLabel(session.skill_level)}
+              </Text>
+            </View>
           </View>
         </View>
-
+        
         {/* Current Roster */}
         <View style={styles.section}>
           <View style={styles.rosterHeader}>
-            <Text style={styles.sectionTitle}>Current Roster</Text>
-            <Text style={styles.rosterCount}>{session.player_count} / {session.max_players} Joined</Text>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Current Roster</Text>
+            <View style={styles.countPill}>
+              <Text style={styles.rosterCount}>{session.player_count} / {session.max_players} Joined</Text>
+            </View>
           </View>
           <View style={styles.rosterRow}>
             {session.players.map((player) => (
               <View key={player.user_id} style={styles.rosterPlayer}>
-                <View style={[styles.rosterAvatar, player.user_id === session.created_by && styles.rosterAvatarHost]}>
-                  <Text style={styles.rosterInitial}>{player.username.charAt(0).toUpperCase()}</Text>
-                </View>
+                  <View style={[styles.rosterAvatar, player.user_id === session.created_by && styles.rosterAvatarHost]}>
+                    {player.avatar_url ? (
+                      <Image source={{ uri: player.avatar_url }} style={{ width: "100%", height: "100%", borderRadius: r(22) }} />
+                    ) : (
+                      <Text style={styles.rosterInitial}>{player.username.charAt(0).toUpperCase()}</Text>
+                    )}
+                  </View>
                 <Text style={styles.rosterName} numberOfLines={1}>{player.username.split(" ")[0]}</Text>
               </View>
             ))}
@@ -302,7 +313,7 @@ export default function SessionDetailScreen() {
             <Text style={styles.feeLabel}>Booking Fee</Text>
             <View style={styles.feeValue}>
               <Text style={styles.feeAmount}>300</Text>
-              <Text style={styles.feePer}>/person</Text>
+              <Text style={styles.feePer}>/ person</Text>
             </View>
           </View>
           <View style={{ alignItems: "flex-end" }}>
@@ -423,7 +434,6 @@ const styles = StyleSheet.create({
 
   // Roster
   rosterHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: r(12) },
-  rosterCount: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#0B36F4" },
   rosterRow: { flexDirection: "row", flexWrap: "wrap", gap: r(12) },
   rosterPlayer: { alignItems: "center", width: r(56) },
   rosterAvatar: {
@@ -437,6 +447,11 @@ const styles = StyleSheet.create({
     width: r(44), height: r(44), borderRadius: r(22),
     borderWidth: 2, borderColor: "#E2E8F0", borderStyle: "dashed",
     justifyContent: "center", alignItems: "center",
+  },
+    rosterCount: {
+    fontSize: r(12),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0B36F4",
   },
 
   // About
@@ -452,10 +467,10 @@ const styles = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end",
     marginHorizontal: r(20), marginTop: r(16), paddingBottom: r(8),
   },
-  feeLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8", marginBottom: r(2) },
+  feeLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#64748B", marginBottom: r(2) },
   feeValue: { flexDirection: "row", alignItems: "baseline" },
-  feeAmount: { fontSize: r(28), fontFamily: "Lexend_700Bold", color: "#0F172A" },
-  feePer: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#64748B" },
+  feeAmount: { fontSize: r(28), fontFamily: "Lexend_700Bold", color: "#0B36F4" },
+  feePer: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#94A3B8" },
   remainValue: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#0B36F4" },
 
   // Bottom bar
@@ -485,4 +500,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9", borderRadius: r(28), paddingVertical: r(16), gap: r(8),
   },
   statusBadgeText: { fontSize: r(15), fontFamily: "Lexend_600SemiBold", color: "#64748B" },
+
+  countPill: {
+    backgroundColor: "#EEF2FF",
+    paddingHorizontal: r(10),
+    paddingVertical: r(4),
+    borderRadius: r(20),
+  },
+
+  countPillText: {
+    fontSize: r(12),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#0B36F4",
+  },
+  reqPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(10),
+    backgroundColor: "#F8FAFC",
+    borderRadius: r(16),
+    padding: r(14),
+  },
 });

@@ -174,7 +174,7 @@ app.post("/auth/register", async (req, res) => {
     const accessToken = jwt.sign(
       { sub: newUser.id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || "15m" }
     );
 
     return res.json({ 
@@ -402,7 +402,7 @@ app.post("/auth/login", async (req, res) => {
     const accessToken = jwt.sign(
       { sub: user.id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || "15m" }
     );
 
     // Return token and user info

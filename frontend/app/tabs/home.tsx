@@ -160,11 +160,11 @@ export default function Home() {
 
   function skillColor(level: string) {
     const map: Record<string, { bg: string; text: string }> = {
-      beginner: { bg: "#DCFCE7", text: "#16A34A" },
-      intermediate: { bg: "#E7EBFE", text: "#0B36F4" },
-      advanced: { bg: "#FEF3C7", text: "#D97706" },
-      pro: { bg: "#FFEDD5", text: "#EA580C" },
-      all: { bg: "#F1F5F9", text: "#64748B" },
+      beginner: { bg: "#DCEEE5", text: "#16A34A" },
+      intermediate: { bg: "#D8E1FB", text: "#0B36F4" },
+      advanced: { bg: "#F3E9DD", text: "#D97706" },
+      pro: { bg: "#f4e0e1", text: "#DC2626" },
+      all: { bg: "#E5E8ED", text: "#64748B" },
     };
     return map[level] || map.all;
   }
@@ -193,7 +193,6 @@ export default function Home() {
               {profile?.username ?? user?.username ?? "Player"}
             </Text>
           </View>
-            <MenuButton onPress={() => setMenuOpen(true)} />
         </View>
 
         <View style={styles.searchRow}>
