@@ -6,10 +6,9 @@ export const LOCAL_API =
     ? "http://10.0.2.2:3000/"
     : "http://localhost:3000/";
 
-const DEV_IP = "192.168.1.143";
+const PROD_API = "https://capstone-project-t6ye.onrender.com";
 
-export const API_BASE = `http://${DEV_IP}:3000`;
-
+export const API_BASE = PROD_API;
 
 export async function authFetch(path: string, options: RequestInit = {}) {
   const token = await SecureStore.getItemAsync("accessToken");
