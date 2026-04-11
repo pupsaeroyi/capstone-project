@@ -161,9 +161,9 @@ export default function Home() {
   function skillColor(level: string) {
     const map: Record<string, { bg: string; text: string }> = {
       beginner: { bg: "#DCFCE7", text: "#16A34A" },
-      intermediate: { bg: "#E0F2FE", text: "#0284C7" },
+      intermediate: { bg: "#E7EBFE", text: "#0B36F4" },
       advanced: { bg: "#FEF3C7", text: "#D97706" },
-      pro: { bg: "#FEE2E2", text: "#DC2626" },
+      pro: { bg: "#FFEDD5", text: "#EA580C" },
       all: { bg: "#F1F5F9", text: "#64748B" },
     };
     return map[level] || map.all;
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0B36F4",
     borderRadius: r(24),
     padding: r(20),
-    marginBottom: r(16),
+    
   },
 
   featuredTopRow: {

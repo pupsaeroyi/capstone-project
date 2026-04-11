@@ -192,13 +192,13 @@ export default function CreateSessionScreen() {
           <Text style={styles.dateTimeTitle}>Date & Time</Text>
 
           <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("date")}>
-            <MaterialIcons name="calendar-today" size={r(18)} color="#0F172A" />
+            <MaterialIcons name="calendar-today" size={r(22)} color="#0B36F4" />
             <Text style={styles.dateTimeLabel}>Date</Text>
             <Text style={styles.dateTimeValue}>{formatDate(date)}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("start")}>
-            <MaterialIcons name="schedule" size={r(18)} color="#0F172A" />
+            <MaterialIcons name="schedule" size={r(22)} color="#0B36F4" />
             <Text style={styles.dateTimeLabel}>Time</Text>
             <Text style={styles.dateTimeValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
           </TouchableOpacity>
@@ -275,7 +275,7 @@ export default function CreateSessionScreen() {
           <Text style={styles.submitText}>
             {submitting ? "Creating..." : "Create Session"}
           </Text>
-          {!submitting && <MaterialIcons name="chevron-right" size={r(20)} color="#FFFFFF" />}
+          {!submitting && <MaterialIcons name="send" size={r(20)} color="#FFFFFF" />}
         </TouchableOpacity>
       </ScrollView>
 
@@ -386,14 +386,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: r(13),
     fontFamily: "Lexend_600SemiBold",
-    color: "#475569",
+    color: "#64748B",
     marginBottom: r(6),
     marginTop: r(14),
   },
   input: {
     backgroundColor: "#FFFFFF",
     padding: r(14),
-    borderRadius: r(12),
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: "#E2E8F0",
     fontSize: r(15),
@@ -405,8 +405,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    padding: r(14),
-    borderRadius: r(12),
+    paddingHorizontal: r(14),
+    paddingVertical: r(10),
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   courtSelectIcon: {
     width: r(32),
     height: r(32),
-    borderRadius: r(8),
+    borderRadius: 28,
     backgroundColor: "#0B36F4",
     justifyContent: "center",
     alignItems: "center",
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
 
   dateTimeCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: r(16),
+    borderRadius: 28,
     padding: r(16),
     marginTop: r(16),
     borderWidth: 1,
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
   dateTimeTitle: {
     fontSize: r(13),
     fontFamily: "Lexend_600SemiBold",
-    color: "#475569",
+    color: "#64748B",
     marginBottom: r(12),
   },
   dateTimeRow: {
@@ -510,8 +511,10 @@ const styles = StyleSheet.create({
 
   mbtiCard: {
     backgroundColor: "#EEF2FF",
-    borderRadius: r(16),
-    padding: r(16),
+    borderColor: "#CED7FD",
+    borderWidth: 1,
+    borderRadius: 28,
+    padding: r(18),
     marginTop: r(16),
   },
   mbtiHeader: {

@@ -296,8 +296,8 @@ export default function Account() {
     backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
-		marginBottom: r(18),
-		overflow: "hidden",
+	marginBottom: r(18),
+	overflow: "hidden",
   },
 
 	avatarImage: {
@@ -307,8 +307,8 @@ export default function Account() {
   },
 
   avatarPlaceholder: {
-		width: "100%",
-		height: "100%",
+	width: "100%",
+	height: "100%",
     borderRadius: r(45),
     backgroundColor: "#0B36F4",
     alignItems: "center",
@@ -398,7 +398,10 @@ export default function Account() {
     backgroundColor: "#F8FAFC",
     paddingVertical: r(12),
     paddingHorizontal: r(20),
-    borderRadius: r(16),
+    borderRadius: 28,
+	borderColor: "#E7EBFE",
+    borderWidth: 1,
+
   },
 
   fieldText: {
