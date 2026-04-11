@@ -261,11 +261,16 @@ export default function SessionDetailScreen() {
           <View style={styles.rosterRow}>
             {session.players.map((player) => (
               <View key={player.user_id} style={styles.rosterPlayer}>
-                  <View style={[styles.rosterAvatar, player.user_id === session.created_by && styles.rosterAvatarHost]}>
+                  <View style={styles.rosterAvatar}>
                     {player.avatar_url ? (
-                      <Image source={{ uri: player.avatar_url }} style={{ width: "100%", height: "100%", borderRadius: r(22) }} />
+                      <Image
+                        source={{ uri: player.avatar_url }}
+                        style={{ width: "100%", height: "100%" }}
+                      />
                     ) : (
-                      <Text style={styles.rosterInitial}>{player.username.charAt(0).toUpperCase()}</Text>
+                      <Text style={styles.rosterInitial}>
+                        {player.username.charAt(0).toUpperCase()}
+                      </Text>
                     )}
                   </View>
                 <Text style={styles.rosterName} numberOfLines={1}>{player.username.split(" ")[0]}</Text>
@@ -438,9 +443,8 @@ const styles = StyleSheet.create({
   rosterPlayer: { alignItems: "center", width: r(56) },
   rosterAvatar: {
     width: r(44), height: r(44), borderRadius: r(22),
-    backgroundColor: "#E2E8F0", justifyContent: "center", alignItems: "center",
+    backgroundColor: "#0B36F4", justifyContent: "center", alignItems: "center", overflow: "hidden",  
   },
-  rosterAvatarHost: { backgroundColor: "#0B36F4" },
   rosterInitial: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#FFF" },
   rosterName: { fontSize: r(11), fontFamily: "Lexend_500Medium", color: "#64748B", marginTop: r(4) },
   rosterOpen: {
