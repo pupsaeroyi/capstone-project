@@ -107,7 +107,33 @@ export default function Home() {
     fetchToRate();
   };
 
-  const featuredSession = sessions[0] || null;
+  const MBTI_COMPAT: Record<string, string[]> = {
+    INTJ: ["ENFP", "ENTP"], INTP: ["ENFJ", "ENTJ"], ENTJ: ["INTP", "INFP"], ENTP: ["INFJ", "INTJ"],
+    INFJ: ["ENFP", "ENTP"], INFP: ["ENFJ", "ENTJ"], ENFJ: ["INTP", "ISFP"], ENFP: ["INFJ", "INTJ"],
+    ISTJ: ["ESFP", "ESTP"], ISFJ: ["ESFP", "ESTP"], ESTJ: ["ISFP", "ISTP"], ESFJ: ["ISFP", "ISTP"],
+    ISTP: ["ESFJ", "ESTJ"], ISFP: ["ENFJ", "ESFJ", "ESTJ"], ESTP: ["ISFJ", "ISTJ"], ESFP: ["ISFJ", "ISTJ"],
+  };
+
+  const featuredSession = (() => {
+    if (sessions.length === 0) return null;
+    const userRank = profile?.rank?.toLowerCase();
+    const userMbti = profile?.mbti_type;
+
+    const scored = sessions.map(s => {
+      let score = 0;
+      // Rank match = highest priority
+      if (userRank && s.skill_level !== "all" && userRank === s.skill_level) score = 2;
+      // MBTI match = second priority
+      else if (userMbti && (s as any).creator_mbti) {
+        const compat = MBTI_COMPAT[userMbti];
+        if (compat?.includes((s as any).creator_mbti) || MBTI_COMPAT[(s as any).creator_mbti]?.includes(userMbti)) score = 1;
+      }
+      return { session: s, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored[0].session;
+  })();
 
   function getGreeting() {
     const hour = new Date().getHours();
@@ -172,12 +198,14 @@ export default function Home() {
 
         <View style={styles.searchRow}>
           <Input
-            placeholder="Search courts or matches"
+            placeholder="Find courts or sessions..."
             showSearchIcon
             style={styles.searchBar}
           />
         </View>
       </View>
+
+      <View style={{ height: r(16) }} />
 
       {featuredSession && (
         <TouchableOpacity
@@ -185,17 +213,31 @@ export default function Home() {
           onPress={() => router.push(`/session/${featuredSession.session_id}`)}
           activeOpacity={0.8}
         >
-          <View style={styles.dateDisplay}>
-            <Text style={styles.dateText}>{formatDate(featuredSession.start_time)}</Text>
+          {/* Date + Recommend */}
+          <View style={styles.featuredTopRow}>
+            <View style={styles.featuredDatePill}>
+              <Text style={styles.featuredDateText}>{formatDate(featuredSession.start_time)}</Text>
+            </View>
+            <View style={styles.featuredRecommend}>
+              <Text style={styles.featuredRecommendText}>RECOMMEND</Text>
+            </View>
           </View>
-          <Text style={styles.featuredTitle}>{featuredSession.venue_name}</Text>
-          <Text style={styles.featuredLocation}>{featuredSession.sport}</Text>
-          <Text style={styles.featuredTime}>
-            {formatTime(featuredSession.start_time)} - {formatTime(featuredSession.end_time)}
+
+          {/* Session Name */}
+          <Text style={styles.featuredTitle}>
+            {featuredSession.session_name || featuredSession.venue_name}
           </Text>
-          <Text style={styles.featuredText}>
-            {featuredSession.max_players - featuredSession.player_count} slots left
-          </Text>
+
+          {/* Venue + Join */}
+          <View style={styles.featuredBottomRow}>
+            <View style={styles.featuredLocationRow}>
+              <MaterialIcons name="location-on" size={r(14)} color="#E2E8F0" />
+              <Text style={styles.featuredLocation}>{featuredSession.venue_name}</Text>
+            </View>
+            <View style={styles.featuredJoinBtn}>
+              <Text style={styles.featuredJoinText}>Join Session</Text>
+            </View>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -394,34 +436,82 @@ const styles = StyleSheet.create({
 
   featuredCard: {
     backgroundColor: "#0B36F4",
-    borderRadius: 32,
-    padding: 20,
-    marginBottom: 30,
+    borderRadius: r(24),
+    padding: r(20),
+    marginBottom: r(16),
+  },
+
+  featuredTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: r(12),
+  },
+
+  featuredDatePill: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: r(12),
+    paddingVertical: r(5),
+    borderRadius: r(12),
+  },
+
+  featuredDateText: {
+    fontSize: r(11),
+    fontFamily: "Lexend_700Bold",
+    color: "#0B36F4",
+  },
+
+  featuredRecommend: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: r(12),
+    paddingVertical: r(5),
+    borderRadius: r(12),
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+
+  featuredRecommendText: {
+    fontSize: r(11),
+    fontFamily: "Lexend_700Bold",
+    color: "#FFFFFF",
   },
 
   featuredTitle: {
     color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 6,
+    fontSize: r(20),
+    fontFamily: "Lexend_700Bold",
+    marginBottom: r(6),
+  },
+
+  featuredBottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  featuredLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(4),
   },
 
   featuredLocation: {
     color: "#E2E8F0",
-    fontSize: 14,
-    marginBottom: 4,
-    fontFamily: "Lexend_500Medium",
+    fontSize: r(13),
+    fontFamily: "Lexend_400Regular",
   },
 
-  featuredTime: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    marginBottom: 4,
+  featuredJoinBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: r(16),
+    paddingVertical: r(8),
+    paddingHorizontal: r(16),
   },
 
-  featuredText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+  featuredJoinText: {
+    fontSize: r(12),
+    fontFamily: "Lexend_700Bold",
+    color: "#0B36F4",
   },
 
   bottomBackground: {
@@ -599,20 +689,6 @@ const styles = StyleSheet.create({
     color: "#0B36F4",
   },
 
-  dateDisplay: {
-    backgroundColor: "#FFFFFF",
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-
-  dateText: {
-    color: "#0B36F4",
-    fontSize: 12,
-    fontFamily: "Lexend_700Bold",
-  },
 
   toRateBanner: {
     backgroundColor: "#FFFBEB",

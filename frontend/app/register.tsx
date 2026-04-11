@@ -238,19 +238,15 @@ const styles = StyleSheet.create({
 
   content: {
     flexGrow: 1,
-    paddingTop: 70,
-    paddingBottom: 40, 
+    justifyContent: "center",
+    paddingTop: 60,
+    paddingBottom: 60,
   },
 
-  header: {
-    width: "100%",
-    marginBottom: 24,
-    left: 15,
-  },
-
-  title: { 
-    fontSize: 32, 
+  title: {
+    fontSize: 32,
     fontFamily: "Lexend_700Bold",
+    lineHeight: 42,
   },
 
   registerText: {
@@ -265,43 +261,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Lexend_500Medium",
     color: "#64748B",
-    marginTop: 8,
+    marginTop: 12,
+    lineHeight: 24,
   },
 
-  form: { 
-    width: "100%", 
+  form: {
+    width: "100%",
     alignItems: "center",
   },
 
-  formCard: { 
-    width: "100%", 
-    marginBottom: 32,
+  formCard: {
+    width: "100%",
+    marginBottom: 36,
   },
 
-  buttonWrapper: { 
-    marginTop: 12,
+  buttonWrapper: {
+    marginTop: 20,
   },
 
-  loginContainer: { 
-    alignItems: "center", 
-    gap: 5,
+  loginContainer: {
+    alignItems: "center",
+    gap: 8,
   },
 
-  loginText: { 
-    fontSize: 14, 
+  loginText: {
+    fontSize: 14,
     color: "#737373",
     fontFamily: "Lexend_400Regular",
   },
 
-  loginLink: { 
-    fontSize: 14, 
-    color: "#0B36F4", 
+  loginLink: {
+    fontSize: 14,
+    color: "#0B36F4",
     fontFamily: "Lexend_400Regular",
   },
 
   usernameWrapper: {
     position: "relative",
-    
   },
 
   usernameInput: {
@@ -322,8 +318,6 @@ const styles = StyleSheet.create({
   },
 
   field: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
-
-
 });

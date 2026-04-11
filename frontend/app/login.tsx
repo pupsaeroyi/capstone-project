@@ -244,13 +244,14 @@ const styles = StyleSheet.create({
 
   content: {
     flexGrow: 1,
-    paddingTop: 80,
-    paddingBottom: 40,
+    justifyContent: "center",
+    paddingTop: 60,
+    paddingBottom: 60,
   },
-  
+
   header: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 48,
   },
 
   title: {
@@ -258,6 +259,7 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_800ExtraBold",
     textAlign: "center",
     color: "#0F172A",
+    lineHeight: 46,
   },
 
   subtitle: {
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_500Medium",
     textAlign: "center",
     color: "#64748B",
-    marginTop: 14,
+    marginTop: 16,
   },
 
   form: {
@@ -281,6 +283,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 4,
   },
 
   rememberRow: {
@@ -301,7 +304,7 @@ const styles = StyleSheet.create({
   },
 
   buttonWrapper: {
-    marginTop: 16,
+    marginTop: 24,
   },
 
   signupContainer: {
@@ -331,8 +334,8 @@ const styles = StyleSheet.create({
 
   divider: {
     height: 1,
-    backgroundColor: "#CFCFCF",
-    marginVertical: 16,
+    backgroundColor: "#E2E8F0",
+    marginVertical: 24,
     width: "100%",
    },
 
@@ -355,6 +358,6 @@ const styles = StyleSheet.create({
   },
 
   field: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
 });

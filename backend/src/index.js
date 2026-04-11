@@ -676,6 +676,48 @@ app.get("/profile/me", requireAuth, async (req, res) => {
   }
 });
 
+// Update profile fields
+app.patch("/profile/me", requireAuth, async (req, res) => {
+  const { age, mbti_type } = req.body;
+  const updates = [];
+  const values = [];
+  let idx = 1;
+
+  if (age !== undefined) {
+    const parsed = parseInt(age, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 120) {
+      return res.status(400).json({ ok: false, message: "Age must be between 1 and 120" });
+    }
+    updates.push(`age = $${idx++}`);
+    values.push(parsed);
+  }
+
+  if (mbti_type !== undefined) {
+    const valid = ["INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP","ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"];
+    if (!valid.includes(mbti_type)) {
+      return res.status(400).json({ ok: false, message: "Invalid MBTI type" });
+    }
+    updates.push(`mbti_type = $${idx++}`);
+    values.push(mbti_type);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ ok: false, message: "Nothing to update" });
+  }
+
+  values.push(req.userId);
+  try {
+    await pool.query(
+      `UPDATE player_profile SET ${updates.join(", ")}, updated_at = NOW() WHERE user_id = $${idx}`,
+      values
+    );
+    return res.json({ ok: true, message: "Profile updated" });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    return res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 // Search users (for the Community tab)
 app.get("/api/users/search", requireAuth, async (req, res) => {
   const { q } = req.query;

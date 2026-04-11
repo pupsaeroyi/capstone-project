@@ -122,11 +122,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: "6%",
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "Lexend_700Bold",
     color: "#0F172A",
     position: "absolute",
@@ -138,8 +138,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Lexend_500Medium",
     color: "#94A3B8",
-    top: -3,
-    
   },
   content: {
     flex: 1,

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Image } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
@@ -30,6 +30,8 @@ type SessionDetail = {
   is_ended: boolean;
   has_rated: boolean;
   is_finalized: boolean;
+  session_type: string;
+  mbti_matching: boolean;
 };
 
 export default function SessionDetailScreen() {
@@ -60,6 +62,7 @@ export default function SessionDetailScreen() {
   const isCreator = user?.id === session?.created_by;
   const hasJoined = session ? session.players.some(p => p.user_id === user?.id) : false;
   const isFull = session ? session.player_count >= session.max_players : false;
+  const slotsLeft = session ? session.max_players - session.player_count : 0;
 
   const handleJoin = async () => {
     try {
@@ -127,14 +130,19 @@ export default function SessionDetailScreen() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const formatDate = (iso: string) => {
+  const formatDateShort = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "2-digit" });
   };
 
   const skillLabel = (level: string) => {
     const map: Record<string, string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced", pro: "Pro", all: "All Levels" };
     return map[level] || level;
+  };
+
+  const skillColor = (level: string) => {
+    const map: Record<string, string> = { beginner: "#16A34A", intermediate: "#0B36F4", advanced: "#D97706", pro: "#DC2626", all: "#64748B" };
+    return map[level] || "#64748B";
   };
 
   if (loading) {
@@ -159,118 +167,155 @@ export default function SessionDetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Ionicons name="chevron-back" size={28} color="#000" onPress={() => router.back()} />
-        <Text style={styles.headerTitle} numberOfLines={1}>Session Details</Text>
-        <View style={{ width: r(24) }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Session name + sport */}
-        <View style={styles.titleSection}>
-          <Text style={styles.sessionName}>
-            {session.session_name || `${session.sport} Session`}
-          </Text>
-          <View style={styles.badgeRow}>
-            <View style={styles.sportBadge}>
-              <Text style={styles.sportText}>{session.sport}</Text>
-            </View>
-            <View style={styles.skillBadge}>
-              <Text style={styles.skillText}>{skillLabel(session.skill_level)}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Venue info */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <MaterialIcons name="location-on" size={r(20)} color="#0B36F4" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Venue</Text>
-              <Text style={styles.infoValue}>{session.venue_name}</Text>
-              {session.condition_label && (
-                <Text style={styles.infoSubtext}>{session.condition_label}</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <MaterialIcons name="calendar-today" size={r(20)} color="#0B36F4" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Date & Time</Text>
-              <Text style={styles.infoValue}>{formatDate(session.start_time)}</Text>
-              <Text style={styles.infoSubtext}>
-                {formatTime(session.start_time)} - {formatTime(session.end_time)}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <MaterialIcons name="person" size={r(20)} color="#0B36F4" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Host</Text>
-              <Text style={styles.infoValue}>{session.host_username}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Players */}
-        <View style={styles.playersSection}>
-          <View style={styles.playersSectionHeader}>
-            <Text style={styles.sectionTitle}>Players</Text>
-            <Text style={styles.playerCount}>
-              {session.player_count}/{session.max_players}
+      <ScrollView contentContainerStyle={{ paddingBottom: r(120) }} showsVerticalScrollIndicator={false}>
+        {/* Hero Image */}
+        <View style={styles.hero}>
+          <Image source={require("@/assets/images/default-court.jpg")} style={styles.heroImage} />
+          <View style={styles.heroOverlay} />
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTitle} numberOfLines={2}>
+              {session.session_name || `${session.sport} Session`}
             </Text>
-          </View>
-
-          {/* Progress bar */}
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${Math.min((session.player_count / session.max_players) * 100, 100)}%` },
-              ]}
-            />
-          </View>
-
-          {/* Player list */}
-          {session.players.map((player) => (
-            <View key={player.user_id} style={styles.playerRow}>
-              <View style={styles.playerAvatar}>
-                <Text style={styles.playerInitial}>
-                  {player.username.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <Text style={styles.playerName}>{player.username}</Text>
-              {player.user_id === session.created_by && (
-                <View style={styles.hostTag}>
-                  <Text style={styles.hostTagText}>Host</Text>
-                </View>
-              )}
+            <View style={styles.heroLocation}>
+              <MaterialIcons name="location-on" size={r(14)} color="#FFF" />
+              <Text style={styles.heroLocationText} numberOfLines={1}>{session.venue_name}</Text>
             </View>
-          ))}
+          </View>
         </View>
 
-        {session.description && (
-          <View style={styles.descriptionSection}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>{session.description}</Text>
+        {/* Badges */}
+        <View style={styles.badgeRow}>
+          <View style={[styles.heroBadge, { backgroundColor: skillColor(session.skill_level) }]}>
+            <Text style={styles.heroBadgeText}>{skillLabel(session.skill_level)}</Text>
           </View>
-        )}
+          <View style={[styles.heroBadge, { backgroundColor: session.session_type === "ranked" ? "#F59E0B" : "#94A3B8" }]}>
+            <Text style={styles.heroBadgeText}>{session.session_type === "ranked" ? "Ranked" : "Casual"}</Text>
+          </View>
+          {session.mbti_matching && (
+            <View style={[styles.heroBadge, { backgroundColor: "#8B5CF6" }]}>
+              <Text style={styles.heroBadgeText}>MBTI</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Date & Time Pills */}
+        <View style={styles.dateTimeRow}>
+          <View style={styles.dateTimePill}>
+            <MaterialIcons name="calendar-today" size={r(16)} color="#0B36F4" />
+            <View>
+              <Text style={styles.dtLabel}>Date</Text>
+              <Text style={styles.dtValue}>{formatDateShort(session.start_time)}</Text>
+            </View>
+          </View>
+          <View style={styles.dateTimePill}>
+            <MaterialIcons name="schedule" size={r(16)} color="#0B36F4" />
+            <View>
+              <Text style={styles.dtLabel}>Time</Text>
+              <Text style={styles.dtValue}>{formatTime(session.start_time)} - {formatTime(session.end_time)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Host */}
+        <View style={styles.section}>
+          <View style={styles.hostRow}>
+            <View style={styles.hostAvatar}>
+              <Text style={styles.hostInitial}>{session.host_username.charAt(0).toUpperCase()}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.hostLabel}>Host</Text>
+              <Text style={styles.hostName}>{session.host_username}</Text>
+            </View>
+            <TouchableOpacity style={styles.messageBtn}>
+              <Text style={styles.messageBtnText}>Message</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Requirements */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Requirements</Text>
+          <View style={styles.reqRow}>
+            <MaterialIcons name="fitness-center" size={r(18)} color="#64748B" />
+            <Text style={styles.reqLabel}>Skill Level</Text>
+            <Text style={styles.reqValue}>{skillLabel(session.skill_level)}</Text>
+          </View>
+        </View>
+
+        {/* Current Roster */}
+        <View style={styles.section}>
+          <View style={styles.rosterHeader}>
+            <Text style={styles.sectionTitle}>Current Roster</Text>
+            <Text style={styles.rosterCount}>{session.player_count} / {session.max_players} Joined</Text>
+          </View>
+          <View style={styles.rosterRow}>
+            {session.players.map((player) => (
+              <View key={player.user_id} style={styles.rosterPlayer}>
+                <View style={[styles.rosterAvatar, player.user_id === session.created_by && styles.rosterAvatarHost]}>
+                  <Text style={styles.rosterInitial}>{player.username.charAt(0).toUpperCase()}</Text>
+                </View>
+                <Text style={styles.rosterName} numberOfLines={1}>{player.username.split(" ")[0]}</Text>
+              </View>
+            ))}
+            {slotsLeft > 0 && (
+              <View style={styles.rosterPlayer}>
+                <View style={styles.rosterOpen}>
+                  <Ionicons name="add" size={r(20)} color="#94A3B8" />
+                </View>
+                <Text style={styles.rosterName}>Open</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* About the Session */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About the Session</Text>
+          <Text style={styles.aboutText}>
+            {session.description || "Join us for a fun volleyball session! All skill levels are welcome. Please arrive 10 minutes early for warm-ups."}
+          </Text>
+        </View>
+
+        {/* Court Rules */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Court Rules</Text>
+          <View style={styles.ruleRow}>
+            <Text style={styles.ruleBullet}>•</Text>
+            <Text style={styles.ruleText}>No outdoor shoes on the court.</Text>
+          </View>
+          <View style={styles.ruleRow}>
+            <Text style={styles.ruleBullet}>•</Text>
+            <Text style={styles.ruleText}>Cancellations must be made 24h prior.</Text>
+          </View>
+          <View style={styles.ruleRow}>
+            <Text style={styles.ruleBullet}>•</Text>
+            <Text style={styles.ruleText}>Fair play and positive communication only.</Text>
+          </View>
+        </View>
+
+        {/* Booking Fee + Remaining */}
+        <View style={styles.feeRow}>
+          <View>
+            <Text style={styles.feeLabel}>Booking Fee</Text>
+            <View style={styles.feeValue}>
+              <Text style={styles.feeAmount}>300</Text>
+              <Text style={styles.feePer}>/person</Text>
+            </View>
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={styles.feeLabel}>Remaining</Text>
+            <Text style={styles.remainValue}>{slotsLeft} Spots</Text>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* Bottom action */}
+      {/* Bottom Action */}
       <View style={styles.bottomBar}>
         {session.is_ended && hasJoined && !session.has_rated && !session.is_finalized ? (
-          <TouchableOpacity
-            style={styles.joinButton}
-            onPress={() => router.push(`/session/rate/${id}` as any)}
-          >
+          <TouchableOpacity style={styles.joinButton} onPress={() => router.push(`/session/rate/${id}` as any)}>
             <Text style={styles.joinButtonText}>Rate Players</Text>
           </TouchableOpacity>
         ) : session.is_ended && hasJoined && session.has_rated && !session.is_finalized ? (
@@ -302,7 +347,7 @@ export default function SessionDetailScreen() {
             disabled={isFull}
           >
             <Text style={[styles.joinButtonText, isFull && styles.joinButtonTextDisabled]}>
-              {isFull ? "Session Full" : "Join Session"}
+              {isFull ? "Session Full" : "Join Session →"}
             </Text>
           </TouchableOpacity>
         )}
@@ -312,288 +357,132 @@ export default function SessionDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F1F5F9",
-  },
-  centered: {
-    justifyContent: "center",
-    alignItems: "center",
-    gap: r(12),
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: r(50),
-    paddingBottom: r(16),
-    paddingHorizontal: r(20),
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  backButton: {
-    padding: r(4),
-  },
-  headerTitle: {
-    fontSize: r(18),
-    fontFamily: "Lexend_700Bold",
-    color: "#0F172A",
-    flex: 1,
-    textAlign: "center",
-    marginHorizontal: r(12),
-  },
-  scrollContent: {
-    padding: r(20),
-    paddingBottom: r(120),
-  },
-  titleSection: {
-    marginBottom: r(20),
-  },
-  sessionName: {
-    fontSize: r(22),
-    fontFamily: "Lexend_700Bold",
-    color: "#0F172A",
-    marginBottom: r(10),
+  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  centered: { justifyContent: "center", alignItems: "center", gap: r(12) },
+  emptyText: { fontSize: r(16), fontFamily: "Lexend_600SemiBold", color: "#64748B" },
+  linkText: { fontSize: r(14), fontFamily: "Lexend_600SemiBold", color: "#0B36F4" },
+
+  // Hero
+  hero: { height: r(220), position: "relative" },
+  heroImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
+  backBtn: {
+    position: "absolute", top: r(50), left: r(16),
+    width: r(36), height: r(36), borderRadius: r(18),
+    backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "center", alignItems: "center",
   },
   badgeRow: {
-    flexDirection: "row",
-    gap: r(8),
+    flexDirection: "row", gap: r(6), paddingHorizontal: r(20), marginTop: r(14),
   },
-  sportBadge: {
-    backgroundColor: "#E6EAFD",
-    paddingHorizontal: r(12),
-    paddingVertical: r(4),
-    borderRadius: r(12),
+  heroBadge: {
+    paddingHorizontal: r(10), paddingVertical: r(4), borderRadius: r(8),
   },
-  sportText: {
-    fontSize: r(12),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#0B36F4",
-    textTransform: "capitalize",
+  heroBadgeText: { fontSize: r(11), fontFamily: "Lexend_700Bold", color: "#FFF" },
+  heroContent: { position: "absolute", bottom: r(16), left: r(16), right: r(16) },
+  heroTitle: { fontSize: r(22), fontFamily: "Lexend_700Bold", color: "#FFF", marginBottom: r(4) },
+  heroLocation: { flexDirection: "row", alignItems: "center", gap: r(4) },
+  heroLocationText: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#FFF" },
+
+  // Date & Time
+  dateTimeRow: {
+    flexDirection: "row", gap: r(12), paddingHorizontal: r(20), marginTop: r(16),
   },
-  skillBadge: {
-    backgroundColor: "#F0FDF4",
-    paddingHorizontal: r(12),
-    paddingVertical: r(4),
-    borderRadius: r(12),
+  dateTimePill: {
+    flex: 1, flexDirection: "row", alignItems: "center", gap: r(10),
+    backgroundColor: "#FFF", borderRadius: r(16), padding: r(14),
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
   },
-  skillText: {
-    fontSize: r(12),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#16A34A",
+  dtLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8" },
+  dtValue: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#0F172A" },
+
+  // Sections
+  section: {
+    backgroundColor: "#FFF", marginHorizontal: r(20), marginTop: r(16),
+    borderRadius: r(16), padding: r(16),
   },
-  infoCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: r(16),
-    padding: r(16),
-    marginBottom: r(20),
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  sectionTitle: { fontSize: r(15), fontFamily: "Lexend_700Bold", color: "#0F172A", marginBottom: r(12) },
+
+  // Host
+  hostRow: { flexDirection: "row", alignItems: "center", gap: r(12) },
+  hostAvatar: {
+    width: r(44), height: r(44), borderRadius: r(22),
+    backgroundColor: "#0B36F4", justifyContent: "center", alignItems: "center",
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: r(12),
-    paddingVertical: r(8),
+  hostInitial: { fontSize: r(18), fontFamily: "Lexend_700Bold", color: "#FFF" },
+  hostLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8" },
+  hostName: { fontSize: r(15), fontFamily: "Lexend_700Bold", color: "#0F172A" },
+  messageBtn: {
+    backgroundColor: "#EEF2FF", paddingHorizontal: r(16), paddingVertical: r(8), borderRadius: r(12),
   },
-  infoContent: {
-    flex: 1,
+  messageBtnText: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#0B36F4" },
+
+  // Requirements
+  reqRow: { flexDirection: "row", alignItems: "center", gap: r(10) },
+  reqLabel: { fontSize: r(14), fontFamily: "Lexend_500Medium", color: "#0F172A", flex: 1 },
+  reqValue: { fontSize: r(14), fontFamily: "Lexend_700Bold", color: "#0F172A" },
+
+  // Roster
+  rosterHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: r(12) },
+  rosterCount: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#0B36F4" },
+  rosterRow: { flexDirection: "row", flexWrap: "wrap", gap: r(12) },
+  rosterPlayer: { alignItems: "center", width: r(56) },
+  rosterAvatar: {
+    width: r(44), height: r(44), borderRadius: r(22),
+    backgroundColor: "#E2E8F0", justifyContent: "center", alignItems: "center",
   },
-  infoLabel: {
-    fontSize: r(11),
-    fontFamily: "Lexend_500Medium",
-    color: "#94A3B8",
-    marginBottom: r(2),
+  rosterAvatarHost: { backgroundColor: "#0B36F4" },
+  rosterInitial: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#FFF" },
+  rosterName: { fontSize: r(11), fontFamily: "Lexend_500Medium", color: "#64748B", marginTop: r(4) },
+  rosterOpen: {
+    width: r(44), height: r(44), borderRadius: r(22),
+    borderWidth: 2, borderColor: "#E2E8F0", borderStyle: "dashed",
+    justifyContent: "center", alignItems: "center",
   },
-  infoValue: {
-    fontSize: r(15),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#0F172A",
+
+  // About
+  aboutText: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#475569", lineHeight: r(20) },
+
+  // Rules
+  ruleRow: { flexDirection: "row", gap: r(8), marginBottom: r(6) },
+  ruleBullet: { fontSize: r(14), color: "#F59E0B", fontFamily: "Lexend_700Bold" },
+  ruleText: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#475569", flex: 1 },
+
+  // Fee
+  feeRow: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end",
+    marginHorizontal: r(20), marginTop: r(16), paddingBottom: r(8),
   },
-  infoSubtext: {
-    fontSize: r(13),
-    fontFamily: "Lexend_400Regular",
-    color: "#64748B",
-    marginTop: r(2),
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
-    marginVertical: r(4),
-  },
-  playersSection: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: r(16),
-    padding: r(16),
-    marginBottom: r(20),
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  playersSectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: r(12),
-  },
-  sectionTitle: {
-    fontSize: r(16),
-    fontFamily: "Lexend_700Bold",
-    color: "#0F172A",
-  },
-  playerCount: {
-    fontSize: r(14),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#64748B",
-  },
-  progressBarBg: {
-    height: r(6),
-    backgroundColor: "#E2E8F0",
-    borderRadius: r(3),
-    marginBottom: r(16),
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#0B36F4",
-    borderRadius: r(3),
-  },
-  playerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: r(8),
-    gap: r(12),
-  },
-  playerAvatar: {
-    width: r(36),
-    height: r(36),
-    borderRadius: r(18),
-    backgroundColor: "#E6EAFD",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  playerInitial: {
-    fontSize: r(14),
-    fontFamily: "Lexend_700Bold",
-    color: "#0B36F4",
-  },
-  playerName: {
-    fontSize: r(14),
-    fontFamily: "Lexend_500Medium",
-    color: "#0F172A",
-    flex: 1,
-  },
-  hostTag: {
-    backgroundColor: "#FEF3C7",
-    paddingHorizontal: r(8),
-    paddingVertical: r(2),
-    borderRadius: r(8),
-  },
-  hostTagText: {
-    fontSize: r(10),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#D97706",
-  },
-  descriptionSection: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: r(16),
-    padding: r(16),
-    marginBottom: r(20),
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  descriptionText: {
-    fontSize: r(14),
-    fontFamily: "Lexend_400Regular",
-    color: "#475569",
-    marginTop: r(8),
-    lineHeight: r(22),
-  },
+  feeLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8", marginBottom: r(2) },
+  feeValue: { flexDirection: "row", alignItems: "baseline" },
+  feeAmount: { fontSize: r(28), fontFamily: "Lexend_700Bold", color: "#0F172A" },
+  feePer: { fontSize: r(13), fontFamily: "Lexend_400Regular", color: "#64748B" },
+  remainValue: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#0B36F4" },
+
+  // Bottom bar
   bottomBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    padding: r(20),
-    paddingBottom: r(36),
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    backgroundColor: "#FFF", padding: r(20), paddingBottom: r(36),
+    borderTopWidth: 1, borderTopColor: "#E2E8F0",
   },
   joinButton: {
-    backgroundColor: "#0B36F4",
-    borderRadius: r(28),
-    paddingVertical: r(16),
-    alignItems: "center",
+    backgroundColor: "#0B36F4", borderRadius: r(28), paddingVertical: r(16), alignItems: "center",
   },
-  joinButtonDisabled: {
-    backgroundColor: "#E2E8F0",
-  },
-  joinButtonText: {
-    fontSize: r(16),
-    fontFamily: "Lexend_700Bold",
-    color: "#FFFFFF",
-  },
-  joinButtonTextDisabled: {
-    color: "#94A3B8",
-  },
+  joinButtonDisabled: { backgroundColor: "#E2E8F0" },
+  joinButtonText: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#FFF" },
+  joinButtonTextDisabled: { color: "#94A3B8" },
   leaveButton: {
-    backgroundColor: "#FEF2F2",
-    borderRadius: r(28),
-    paddingVertical: r(16),
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FECACA",
+    backgroundColor: "#FEF2F2", borderRadius: r(28), paddingVertical: r(16),
+    alignItems: "center", borderWidth: 1, borderColor: "#FECACA",
   },
-  leaveButtonText: {
-    fontSize: r(16),
-    fontFamily: "Lexend_700Bold",
-    color: "#EF4444",
-  },
+  leaveButtonText: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#EF4444" },
   cancelButton: {
-    backgroundColor: "#FEF2F2",
-    borderRadius: r(28),
-    paddingVertical: r(16),
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FECACA",
+    backgroundColor: "#FEF2F2", borderRadius: r(28), paddingVertical: r(16),
+    alignItems: "center", borderWidth: 1, borderColor: "#FECACA",
   },
-  cancelButtonText: {
-    fontSize: r(16),
-    fontFamily: "Lexend_700Bold",
-    color: "#EF4444",
-  },
+  cancelButtonText: { fontSize: r(16), fontFamily: "Lexend_700Bold", color: "#EF4444" },
   statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F1F5F9",
-    borderRadius: r(28),
-    paddingVertical: r(16),
-    gap: r(8),
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#F1F5F9", borderRadius: r(28), paddingVertical: r(16), gap: r(8),
   },
-  statusBadgeText: {
-    fontSize: r(15),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#64748B",
-  },
-  emptyText: {
-    fontSize: r(16),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#64748B",
-  },
-  linkText: {
-    fontSize: r(14),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#0B36F4",
-  },
+  statusBadgeText: { fontSize: r(15), fontFamily: "Lexend_600SemiBold", color: "#64748B" },
 });

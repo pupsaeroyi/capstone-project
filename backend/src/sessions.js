@@ -39,14 +39,19 @@ export function sessionRoutes(app) {
            s.end_time,
            s.created_by,
            s.venue_id,
+           s.session_type,
+           s.mbti_matching,
            v.venue_name,
            v.rating AS venue_rating,
+           pp.mbti_type AS creator_mbti,
+           pp.rank AS creator_rank,
            COUNT(sp.id)::int AS player_count
          FROM sessions s
          JOIN venues v ON v.id = s.venue_id
          LEFT JOIN session_players sp ON sp.session_id = s.id
+         LEFT JOIN player_profile pp ON pp.user_id = s.created_by
          WHERE ${whereClause}
-         GROUP BY s.id, v.id
+         GROUP BY s.id, v.id, pp.mbti_type, pp.rank
          ORDER BY s.start_time ASC`,
         params
       );
@@ -97,6 +102,8 @@ export function sessionRoutes(app) {
            s.end_time,
            s.created_by,
            s.venue_id,
+           s.session_type,
+           s.mbti_matching,
            v.venue_name,
            v.condition_label,
            u.username AS host_username
@@ -227,11 +234,13 @@ export function sessionRoutes(app) {
 
   // Create a session (auth required)
   app.post("/sessions", requireAuth, async (req, res) => {
-    let { venue_id, sport, max_players, start_time, end_time, session_name, skill_level } = req.body;
+    let { venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching } = req.body;
 
     sport = typeof sport === "string" ? sport.trim() : "volleyball";
     session_name = typeof session_name === "string" ? session_name.trim() : "";
     skill_level = typeof skill_level === "string" ? skill_level.trim() : "all";
+    session_type = session_type === "ranked" ? "ranked" : "casual";
+    mbti_matching = mbti_matching === true;
 
     if (!venue_id || !max_players || !start_time || !end_time) {
       return res.status(400).json({ ok: false, message: "venue_id, max_players, start_time, and end_time are required" });
@@ -265,10 +274,10 @@ export function sessionRoutes(app) {
 
       const session = await withTransaction(async (client) => {
         const result = await client.query(
-          `INSERT INTO sessions (venue_id, created_by, sport, max_players, start_time, end_time, session_name, skill_level)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING id, venue_id, sport, max_players, start_time, end_time, session_name, skill_level`,
-          [venue_id, req.userId, sport, max_players, start_time, end_time, session_name || null, skill_level]
+          `INSERT INTO sessions (venue_id, created_by, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING id, venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching`,
+          [venue_id, req.userId, sport, max_players, start_time, end_time, session_name || null, skill_level, session_type, mbti_matching]
         );
 
         const newSession = result.rows[0];

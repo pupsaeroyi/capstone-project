@@ -16,7 +16,7 @@ function getRankFromScore(score) {
 function computeScoreDelta(peerScores, selfScore = null) {
   const PEER_WEIGHT = 1.0;
   const SELF_WEIGHT = 0.3;
-  const SCALE_FACTOR = 20.0;
+  const SCALE_FACTOR = 8.0;
   const NEUTRAL = 5.0;
 
   const peerAvg = peerScores.reduce((a, b) => a + b, 0) / peerScores.length;
@@ -93,7 +93,7 @@ async function finalizeSession(sessionId, client) {
 
     // Update profile
     await client.query(
-      "UPDATE player_profile SET rating_score = $1, rank = $2 WHERE user_id = $3",
+      "UPDATE player_profile SET rating_score = $1, rank = $2, matches_played = COALESCE(matches_played, 0) + 1 WHERE user_id = $3",
       [result.newScore, result.newRank, player.user_id]
     );
 
@@ -129,7 +129,8 @@ export function ratingRoutes(app) {
          JOIN venues v ON v.id = s.venue_id
          LEFT JOIN session_players sp2 ON sp2.session_id = s.id
          WHERE s.end_time < NOW()
-           AND s.end_time > NOW() - INTERVAL '24 hours'
+           AND s.end_time > NOW() - INTERVAL '7 days'
+           AND COALESCE(s.session_type, 'casual') = 'ranked'
            AND NOT EXISTS (
              SELECT 1 FROM session_ratings sr
              WHERE sr.session_id = s.id AND sr.rater_id = $1
