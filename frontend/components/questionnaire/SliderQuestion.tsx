@@ -59,13 +59,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: "6%",
-    paddingTop: 28,
+    paddingTop: 24,
   },
   question: {
     fontSize: 24,
     fontFamily: "Lexend_700Bold",
     color: "#0F172A",
-    marginBottom: 10,
+    marginBottom: 8,
     lineHeight: 34,
   },
   subtitle: {
@@ -73,7 +73,6 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_400Regular",
     color: "#64748B",
     marginBottom: 36,
-    lineHeight: 22,
   },
   card: {
     backgroundColor: "#FFFFFF",

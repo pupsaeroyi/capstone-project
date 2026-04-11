@@ -23,13 +23,13 @@ export function ProgressBar({ progress, step, total }: Props) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: "6%",
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   Questionlabel: {

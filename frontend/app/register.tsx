@@ -152,7 +152,7 @@ export default function Register() {
 
         
           <View style={styles.form}>
-            <View style={styles.formCard}>
+            <View style={[styles.formCard, { marginBottom: 32 }]}>
               <Text style={styles.title}>
                 <Text style={styles.registerText}>Register</Text>
                 {"\n"}
@@ -217,6 +217,8 @@ export default function Register() {
               </View>
             </View>
 
+            <View style={styles.divider} />
+
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account?</Text>
               <Link href="/login" style={styles.loginLink}>
@@ -238,15 +240,14 @@ const styles = StyleSheet.create({
 
   content: {
     flexGrow: 1,
-    justifyContent: "center",
-    paddingTop: 60,
-    paddingBottom: 60,
+    paddingTop: 80,
+    paddingBottom: 40,
   },
+  
 
   title: {
     fontSize: 32,
     fontFamily: "Lexend_700Bold",
-    lineHeight: 42,
   },
 
   registerText: {
@@ -261,8 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Lexend_500Medium",
     color: "#64748B",
-    marginTop: 12,
-    lineHeight: 24,
+    marginTop: 8,
   },
 
   form: {
@@ -272,16 +272,15 @@ const styles = StyleSheet.create({
 
   formCard: {
     width: "100%",
-    marginBottom: 36,
   },
 
   buttonWrapper: {
-    marginTop: 20,
+    marginTop: 8,
   },
 
   loginContainer: {
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
 
   loginText: {
@@ -320,4 +319,11 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: 18,
   },
+  
+    divider: {
+    height: 1,
+    backgroundColor: "#CFCFCF",
+    marginVertical: 16,
+    width: "100%",
+   },
 });

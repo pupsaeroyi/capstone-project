@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
 
   header: {
     width: "100%",
-    marginBottom: 32,
+    marginBottom: 24,
     marginLeft: -8,
   },
 
@@ -148,24 +148,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: "Lexend_700Bold",
-    lineHeight: 36,
-    marginBottom: 10,
+    lineHeight: 34,
+    marginBottom: 8,
   },
 
   field: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   subtitle: {
     fontSize: 16,
     fontFamily: "Lexend_500Medium",
     color: "#64748B",
-    marginTop: 8,
-    lineHeight: 24,
+    marginTop: 4,
   },
 
   buttonWrapper: {
-    marginTop: 16,
+    marginTop: 8,
   },
 });
 

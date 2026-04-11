@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: "6%",
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
   headerTitle: {
     fontSize: 18,
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: "center",
+    top: 9,
   },
   doLater: {
     fontSize: 14,
