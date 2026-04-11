@@ -61,7 +61,7 @@ function Avatar({ name, avatarUrl, isGroup }: { name: string; avatarUrl?: string
   if (isGroup) {
     return (
       <View style={[styles.avatar, { backgroundColor: getAvatarColor(name), width: size, height: size, borderRadius: size / 2 }]}>
-        <Text style={styles.avatarInitials}>#</Text>
+        <Text style={styles.avatarInitials}>{(name[0] ?? "#").toUpperCase()}</Text>
       </View>
     );
   }
@@ -114,7 +114,10 @@ function ConvRow({
       <View style={styles.middleCol}>
         <Text style={styles.name} numberOfLines={1}>{name}</Text>
         <Text
-          style={[styles.preview, hasUnread && styles.previewBold]}
+          style={[
+            styles.preview, 
+            hasUnread && styles.previewBold,
+            typingUser && styles.previewTyping,]}
           numberOfLines={1}
         >
           {preview}
@@ -165,10 +168,14 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-  if (!socket) return;
+  if (!socket || conversations.length === 0) return;
+    
+  conversations.forEach(c => {
+    socket.emit("join_conversation", c.conversation_id);
+  });
 
   const handleTyping = ({ userId, username, conversationId }: TypingEvent) => {
-    
+    if (userId === user?.id) return;
     setTypingMap(prev => ({
       ...prev,
       [conversationId]: username
@@ -190,7 +197,7 @@ export default function ChatScreen() {
     socket.off("user_typing", handleTyping);
     socket.off("user_stop_typing", handleStopTyping);
   };
-}, [socket]);
+}, [socket, conversations]);
 
   const fetchConversations = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -236,7 +243,7 @@ export default function ChatScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={styles.headerTitle}>Chats</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerBtn} activeOpacity={0.6}>
             <Text style={styles.editText}>Edit</Text>
@@ -522,5 +529,10 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     textAlign: "center",
     lineHeight: r(22),
+  },
+
+  previewTyping: {
+    color: "#0B36F4",
+    fontFamily: "Lexend_500Medium",
   },
 });

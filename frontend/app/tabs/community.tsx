@@ -405,7 +405,7 @@ export default function Community() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Community</Text>
+            <Text style={styles.title}>Social</Text>
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
                 <MaterialIcons name="person-add-alt-1" size={22} color="#0B36F4" />

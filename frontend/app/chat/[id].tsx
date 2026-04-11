@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import {View, Text,StyleSheet, FlatList,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image} from "react-native";
+import { useState, useEffect, useRef, useCallback, useRef as useAnimRef } from "react";
+import {View, Text,StyleSheet, FlatList,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image, Animated} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -21,7 +21,6 @@ type Message = {
 
 type TypingUser = { userId: number; username: string };
 
-// ─── Avatar helpers ───────────────────────────────────────────────────────────
 const COLORS = ["#FBBF24","#F87171","#60A5FA","#34D399","#A78BFA","#FB923C"];
 function avatarColor(name: string) {
   let h = 0;
@@ -70,22 +69,61 @@ function Bubble({ msg, isMine, showName }: { msg: Message; isMine: boolean; show
   );
 }
 
-// ─── Typing Indicator ─────────────────────────────────────────────────────────
+const DOT_COLORS = ["#0B36F4", "#60A5FA", "#A78BFA"];
+
+function AnimatedDot({ color, delay }: { color: string; delay: number }) {
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(bounceAnim, {
+          toValue: -6,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(600 - delay),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        width: r(7),
+        height: r(7),
+        borderRadius: r(4),
+        backgroundColor: color,
+        transform: [{ translateY: bounceAnim }],
+        marginHorizontal: r(2),
+      }}
+    />
+  );
+}
+
 function TypingIndicator({ typingUsers }: { typingUsers: TypingUser[] }) {
   if (typingUsers.length === 0) return null;
   const names = typingUsers.map(u => u.username).join(", ");
   const label = typingUsers.length === 1 ? `${names} is typing...` : `${names} are typing...`;
+  
   return (
     <View style={styles.typingRow}>
       <View style={styles.typingDots}>
-        {[0, 1, 2].map(i => <View key={i} style={[styles.dot, { opacity: 0.4 + i * 0.2 }]} />)}
+        {DOT_COLORS.map((color, i) => (
+          <AnimatedDot key={i} color={color} delay={i * 150} />
+        ))}
       </View>
       <Text style={styles.typingText}>{label}</Text>
     </View>
   );
 }
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// Main Screen
 export default function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const convId = parseInt(id ?? "0", 10);
@@ -104,7 +142,7 @@ export default function ChatRoomScreen() {
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
 
-  // ── Load conversation info + messages ──────────────────────────────────────
+  // Load conversation info and messages
   useEffect(() => {
     if (!convId) return;
 
@@ -126,7 +164,7 @@ export default function ChatRoomScreen() {
     load();
   }, [convId]);
 
-  // ── Socket.io setup ────────────────────────────────────────────────────────
+  // Socket setup
   useEffect(() => {
     if (!convId || !user) return;
 
@@ -182,25 +220,33 @@ export default function ChatRoomScreen() {
     };
   }, [convId, user]);
 
-  // ── Typing events ──────────────────────────────────────────────────────────
+  // Typing events
   const handleTextChange = useCallback((val: string) => {
     setText(val);
     const socket = socketRef.current;
     if (!socket) return;
 
-    if (val.length > 0 && !isTyping.current) {
-      isTyping.current = true;
+    if (val.length > 0) {
       socket.emit("typing", { conversationId: convId });
+      isTyping.current = true;
     }
 
     if (typingTimer.current) clearTimeout(typingTimer.current);
+
+    // immediate stop when input is cleared 
+    if (val.length === 0) {
+        isTyping.current = false;
+        socket.emit("stop_typing", { conversationId: convId });
+        return;
+    }
+
     typingTimer.current = setTimeout(() => {
       isTyping.current = false;
       socket.emit("stop_typing", { conversationId: convId });
     }, 2000);
   }, [convId]);
 
-  // ── Send message ───────────────────────────────────────────────────────────
+  // Send message
   const handleSend = useCallback(() => {
     const content = text.trim();
     if (!content || !socketRef.current) return;
@@ -438,7 +484,6 @@ const styles = StyleSheet.create({
 
   typingDots: {
     flexDirection: "row",
-    gap: r(3),
   },
 
   dot: {
