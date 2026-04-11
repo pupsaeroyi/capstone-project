@@ -13,7 +13,7 @@ import { postRoutes } from "./posts.js";
 import { createServer } from "http";    
 import { Server } from "socket.io";
 import friendsRoutes from "./friends.js";
-import { initChatLogic } from "./chat.js";
+import { initChatLogic, chatRoutes } from "./chat.js";
 import { ratingRoutes } from "./ratings.js";
 
 dotenv.config();
@@ -49,6 +49,7 @@ app.use("/api/friends", friendsRoutes);
 postRoutes(app);
 ratingRoutes(app);
 sessionRoutes(app);
+chatRoutes(app, requireAuth); 
 initChatLogic(io);
 
 // Health check
@@ -401,7 +402,7 @@ app.post("/auth/login", async (req, res) => {
     const accessToken = jwt.sign(
       { sub: user.id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "15m" }
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
 
     // Return token and user info

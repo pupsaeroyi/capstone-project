@@ -1,4 +1,5 @@
 import { pool } from "./db.js";
+import { createSessionChatroom, addUserToSessionChat, removeUserFromSessionChat } from "./chat.js";
 import { requireAuth } from "./auth.js";
 import { withTransaction } from "../assets/routes/transaction.js";
 
@@ -287,6 +288,8 @@ export function sessionRoutes(app) {
           [newSession.id, req.userId]
         );
 
+        await createSessionChatroom(client, newSession.id, session_name, req.userId);
+
         return newSession;
       });
 
@@ -360,6 +363,8 @@ export function sessionRoutes(app) {
           [sessionId, req.userId]
         );
 
+        await addUserToSessionChat(sessionId, req.userId);
+
         return { player_count: countResult.rows[0].player_count + 1 };
       });
 
@@ -410,6 +415,8 @@ export function sessionRoutes(app) {
       if (result.rows.length === 0) {
         return res.status(400).json({ ok: false, message: "You are not in this session" });
       }
+
+      await removeUserFromSessionChat(sessionId, req.userId);
 
       return res.json({ ok: true, message: "Left session" });
     } catch (err) {
