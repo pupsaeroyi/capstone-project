@@ -1,10 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator, Modal, Animated, Keyboard, Platform, KeyboardAvoidingView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator, Modal, Animated, Keyboard, Platform, KeyboardAvoidingView, Pressable, Alert } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "@/lib/api";
-import { useRouter } from "expo-router";
 
 const FILTERS = ["All Posts", "#Friends", "#Drills", "#Highlights", "#Tips"];
 
@@ -27,6 +27,7 @@ type Post = {
   username: string;
   avatar_url: string | null;
   liked: boolean;
+  can_delete: boolean;
 };
 
 function timeAgo(dateStr: string) {
@@ -105,7 +106,7 @@ function SearchSheet({
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -250,7 +251,7 @@ function SearchSheet({
             {!loading && query.length > 0 && results.length === 0 && (
               <View style={sheet.emptyWrap}>
                 <Ionicons name="person-outline" size={40} color="#CBD5E1" />
-                <Text style={sheet.emptyText}>No players found for "{query}"</Text>
+                <Text style={sheet.emptyText}>{`No players found for "${query}"`}</Text>
               </View>
             )}
 
@@ -329,6 +330,7 @@ export default function Community() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -350,9 +352,56 @@ export default function Community() {
     fetchPosts();
   }, [fetchPosts]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [fetchPosts])
+  );
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchPosts();
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (deletingPostId === postId) return;
+
+    try {
+      setDeletingPostId(postId);
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/posts/${postId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        setPosts((prev) => prev.filter((post) => post.id !== postId));
+        return;
+      }
+
+      Alert.alert("Delete Post", data.message || "Failed to delete post");
+    } catch (err) {
+      console.error("Delete post error:", err);
+      Alert.alert("Delete Post", "Failed to delete post");
+    } finally {
+      setDeletingPostId((current) => (current === postId ? null : current));
+    }
+  };
+
+  const confirmDeletePost = (postId: number) => {
+    Alert.alert(
+      "Delete Post",
+      "This will permanently remove your post and its comments.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeletePost(postId),
+        },
+      ]
+    );
   };
 
   const handleLike = async (postId: number) => {
@@ -393,16 +442,9 @@ export default function Community() {
   }
 
   return (
-    
-    <SafeAreaView style={{ flex: 1,backgroundColor: "#FFFFFF" }}>
-      <View style={styles.bottomBackground} />
-      <View style={{ flex: 1, backgroundColor: "#F1F5F9" }}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.screenContent}>
+        <View style={styles.topSection}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Social</Text>
@@ -416,7 +458,6 @@ export default function Community() {
               </TouchableOpacity>
             </View>
           </View>
-
 
           {/* Filters */}
           <ScrollView
@@ -444,9 +485,19 @@ export default function Community() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+        </View>
 
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           {/* Posts */}
-          <View style={styles.posts}>
+          <View style={styles.postsSection}>
+            <View style={styles.posts}>
             {filteredPosts.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No posts yet. Be the first!</Text>
@@ -486,9 +537,19 @@ export default function Community() {
                         )}
                       </View>
                     </View>
-                    <TouchableOpacity>
-                      <Feather name="more-horizontal" size={20} color="#94A3B8" />
-                    </TouchableOpacity>
+                    {post.can_delete ? (
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => confirmDeletePost(post.id)}
+                        disabled={deletingPostId === post.id}
+                      >
+                        {deletingPostId === post.id ? (
+                          <ActivityIndicator size="small" color="#EF4444" />
+                        ) : (
+                          <Feather name="trash-2" size={18} color="#EF4444" />
+                        )}
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
 
                   <Text style={styles.content}>{post.content}</Text>
@@ -514,7 +575,10 @@ export default function Community() {
                       <Text style={styles.actionText}>{post.likes_count}</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.actionBtn}>
+                    <TouchableOpacity
+                      style={styles.actionBtn}
+                      onPress={() => router.push(`/post/${post.id}`)}
+                    >
                       <Ionicons
                         name="chatbubble-outline"
                         size={20}
@@ -530,11 +594,15 @@ export default function Community() {
                 </View>
               ))
             )}
+            </View>
           </View>
         </ScrollView>
 
         {/* FAB */}
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => router.push("/create-post")}
+        >
           <Ionicons name="add" size={26} color="#fff" />
         </TouchableOpacity>
 
@@ -546,10 +614,29 @@ export default function Community() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  screenContent: {
+    flex: 1,
+    backgroundColor: "#F1F5F9",
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#F1F5F9",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    backgroundColor: "#F1F5F9",
+  },
   container: { 
     flex: 1, 
     backgroundColor: "#F1F5F9"
    },
+  topSection: {
+    backgroundColor: "#FFFFFF",
+  },
 
   header: {
     flexDirection: "row",
@@ -561,14 +648,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  bottomBackground: {
-    position: "absolute",
-    top: 120, // adjust based on your header height
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#F1F5F9",
-  },
 
   title: {
     fontSize: 26,
@@ -581,6 +660,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "#E7EBFE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteBtn: {
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -605,11 +690,17 @@ const styles = StyleSheet.create({
     color: "#64748B",
   },
   filterTextActive: { color: "#fff" },
+  postsSection: {
+    flexGrow: 1,
+    backgroundColor: "#F1F5F9",
+  },
   posts: {
     paddingHorizontal: "4%",
-    paddingTop: 4,
+    paddingTop: 12,
     gap: 12,
     paddingBottom: 120,
+    backgroundColor: "#F1F5F9",
+    flexGrow: 1,
   },
 
   card: {
