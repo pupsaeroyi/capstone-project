@@ -223,7 +223,7 @@ export default function Home() {
           </View>
 
           {/* Session Name */}
-          <Text style={styles.featuredTitle}>
+          <Text style={styles.featuredTitle} numberOfLines={1}>
             {featuredSession.session_name || featuredSession.venue_name}
           </Text>
 
@@ -231,7 +231,10 @@ export default function Home() {
           <View style={styles.featuredBottomRow}>
             <View style={styles.featuredLocationRow}>
               <MaterialIcons name="location-on" size={r(14)} color="#E2E8F0" />
-              <Text style={styles.featuredLocation}>{featuredSession.venue_name}</Text>
+              <Text style={styles.featuredLocation}>
+                {featuredSession.venue_name.length > 24
+                  ? `${featuredSession.venue_name.substring(0, 24)}...`
+                  : featuredSession.venue_name}</Text>
             </View>
             <View style={styles.featuredJoinBtn}>
               <Text style={styles.featuredJoinText}>Join Session</Text>
@@ -694,6 +697,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: r(16),
     marginBottom: r(8),
+    marginTop: r(16),
     borderWidth: 1,
     borderColor: "#FDE68A",
   },
