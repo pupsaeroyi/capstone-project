@@ -603,7 +603,9 @@ export default function Community() {
           style={styles.fab}
           onPress={() => router.push("/create-post")}
         >
-          <Ionicons name="add" size={26} color="#fff" />
+          <Ionicons name="newspaper-outline" size={18} color="#fff" />
+          
+          <Text style={styles.fabText}>New Post</Text>
         </TouchableOpacity>
 
         {/* search sheet */}
@@ -809,15 +811,22 @@ const styles = StyleSheet.create({
 
   fab: {
     position: "absolute",
-    bottom: 90,
+    bottom: 70,
     right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#0B36F4",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#0B36F4",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 25,
     elevation: 6,
+  },
+
+  fabText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Lexend_500Medium",
   },
 
   headerActions: {
