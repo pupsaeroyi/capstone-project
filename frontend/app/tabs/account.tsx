@@ -10,6 +10,7 @@ import { r } from "@/utils/responsive";
 import  MenuButton  from "@/components/MenuButton";
 import SideMenu from "@/components/SideMenu";
 import { API_BASE, authFetch } from "@/lib/api";
+import * as ImagePicker from "expo-image-picker";
 
 export default function Account() {
     const router = useRouter();
@@ -74,6 +75,55 @@ export default function Account() {
 			}
 		};
 
+		const handlePickImage = async () => {
+			const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+			if (!permission.granted) {
+				Alert.alert("Permission needed", "Allow access to photos");
+				return;
+			}
+
+			const result = await ImagePicker.launchImageLibraryAsync({
+				mediaTypes: ImagePicker.MediaTypeOptions.Images,
+				quality: 0.7,
+			});
+
+			if (!result.canceled) {
+				const image = result.assets[0];
+				await uploadImage(image);
+			}
+		};
+
+		const uploadImage = async (image: any) => {
+			const formData = new FormData();
+
+			formData.append("file", {
+				uri: image.uri,
+				name: "avatar.jpg",
+				type: "image/jpeg",
+			} as any);
+
+			try {
+				const res = await fetch(API_BASE + "/upload/avatar", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${await getSavedToken()}`,
+				},
+				body: formData,
+				});
+
+				const data = await res.json();
+
+				if (data.ok) {
+				await refreshProfile(); 
+				} else {
+				Alert.alert("Upload failed", data.message);
+				}
+			} catch (err) {
+				Alert.alert("Error", "Upload failed");
+			}
+		};
+
 		useEffect(() => {
 			const t = setTimeout(() => setRefreshOffset(40), 100);
 			return () => clearTimeout(t);
@@ -102,24 +152,27 @@ export default function Account() {
 					/>
 
 					<View style={styles.title}>
+						
 						<Text style={styles.titleText}>
 							  	{profile?.username ?? user?.username ?? "Player"}
 						</Text>
 
-						<View style={styles.avatarCircle}>
-							{profile?.avatar_url ? (
-								<Image 
-									source={{ uri: profile.avatar_url }}
-									style={styles.avatarImage}
-								/>
-							) : (
-								<View style={styles.avatarPlaceholder}>
-									<Text style={styles.avatarInitial}>
-										{(profile?.username || user?.username || "P")[0].toUpperCase()}
-									</Text>
-								</View>
-							)}
-						</View>
+						<TouchableOpacity onPress={handlePickImage}>
+							<View style={styles.avatarCircle}>
+								{profile?.avatar_url ? (
+									<Image 
+										source={{ uri: profile.avatar_url }}
+										style={styles.avatarImage}
+									/>
+								) : (
+									<View style={styles.avatarPlaceholder}>
+										<Text style={styles.avatarInitial}>
+											{(profile?.username || user?.username || "P")[0].toUpperCase()}
+										</Text>
+									</View>
+								)}
+							</View>
+						</TouchableOpacity>
 
 						<Text style={styles.RankLabel}>Athlete Rank</Text>
 

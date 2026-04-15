@@ -15,13 +15,34 @@ import { Server } from "socket.io";
 import friendsRoutes from "./friends.js";
 import { initChatLogic, chatRoutes } from "./chat.js";
 import { ratingRoutes } from "./ratings.js";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import multer from "multer";
 
 dotenv.config();
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is missing in environment variables");
+const requiredEnv = [
+  "JWT_SECRET",
+  "AWS_REGION",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "S3_BUCKET_NAME",
+];
+
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    throw new Error(`${key} is missing in environment variables`);
+  }
 }
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 
@@ -649,7 +670,48 @@ app.get("/venues", async (req, res) => {
   }
 });
 
+// upload avatar
+app.post("/upload/avatar", requireAuth, upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ ok: false, message: "No file uploaded" });
+    }
 
+    const file = req.file;
+
+    const key = `avatars/${req.userId}-${Date.now()}-${file.originalname}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      })
+    );
+
+    const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    await pool.query(
+      `UPDATE player_profile 
+       SET avatar_url = $1, updated_at = NOW() 
+       WHERE user_id = $2`,
+      [imageUrl, req.userId]
+    );
+
+    return res.json({
+      ok: true,
+      url: imageUrl,
+    });
+
+  } catch (err) {
+    console.error("S3 upload error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Upload failed",
+    });
+  }
+});
 
 // Get user profile
 app.get("/profile/me", requireAuth, async (req, res) => {
