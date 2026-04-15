@@ -14,7 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 
 export default function Account() {
     const router = useRouter();
-		const { user, profile, refreshProfile } = useAuth();
+		const { user, profile, setProfile, refreshProfile } = useAuth();
 		const [menuOpen, setMenuOpen] = useState(false);
 		const [loading, setLoading] = useState(true);
 		const [refreshing, setRefreshing] = useState(false);
@@ -100,7 +100,7 @@ export default function Account() {
 			formData.append("file", {
 				uri: image.uri,
 				name: "avatar.jpg",
-				type: "image/jpeg",
+				type: image.mimeType || "image/jpeg"
 			} as any);
 
 			try {
@@ -115,7 +115,13 @@ export default function Account() {
 				const data = await res.json();
 
 				if (data.ok) {
-				await refreshProfile(); 
+					setProfile((prev: any) => ({
+						...prev,
+						avatar_url: data.url,
+					}));
+					await refreshProfile(); 
+					console.log("UPLOAD RESPONSE:", data);
+					console.log("UPDATED PROFILE:", profile);
 				} else {
 				Alert.alert("Upload failed", data.message);
 				}

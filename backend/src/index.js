@@ -687,6 +687,7 @@ app.post("/upload/avatar", requireAuth, upload.single("file"), async (req, res) 
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
+        ACL: "public-read",
       })
     );
 
