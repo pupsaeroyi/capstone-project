@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Platform, Modal, Pressable, Image, Switch } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { r } from "@/utils/responsive";
 import { authFetch, API_BASE } from "@/lib/api";
@@ -197,11 +197,22 @@ export default function CreateSessionScreen() {
             <Text style={styles.dateTimeValue}>{formatDate(date)}</Text>
           </TouchableOpacity>
 
+          <View style={styles.Divider} />
+
           <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("start")}>
-            <MaterialIcons name="schedule" size={r(22)} color="#0B36F4" />
-            <Text style={styles.dateTimeLabel}>Time</Text>
-            <Text style={styles.dateTimeValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
+            <MaterialCommunityIcons name="clock-time-five-outline" size={r(22)} color="#0B36F4" />
+            <Text style={styles.dateTimeLabel}>Start Time</Text>
+            <Text style={styles.dateTimeValue}>{formatTime(startTime)}</Text>
           </TouchableOpacity>
+
+          <View style={styles.Divider} />
+
+          <TouchableOpacity style={styles.dateTimeRow} onPress={() => openPicker("end")}>
+            <MaterialCommunityIcons name="clock-time-eight-outline" size={r(22)} color="#0B36F4" />
+            <Text style={styles.dateTimeLabel}>End Time</Text>
+            <Text style={styles.dateTimeValue}>{formatTime(endTime)}</Text>
+          </TouchableOpacity>
+
         </View>
 
         {/* Skill Level */}
@@ -440,12 +451,20 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginBottom: r(12),
   },
+
   dateTimeRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: r(10),
     gap: r(10),
   },
+
+  Divider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginHorizontal: r(4),
+  },
+
   dateTimeLabel: {
     fontSize: r(15),
     fontFamily: "Lexend_500Medium",
