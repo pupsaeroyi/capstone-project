@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
 
   field: {
     marginBottom: 16,
+    paddingVertical: 12,
   },
   
   buttonWrapper: {
