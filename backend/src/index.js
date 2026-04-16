@@ -624,10 +624,10 @@ app.delete("/auth/delete-account", requireAuth, async (req, res) => {
       [userId]
     );
 
-    const profileId = profileRes.rows[0]?.id;
+    if (profileRes.rows.length > 0) {
+      const profileId = profileRes.rows[0]?.id;
 
     // 2. Delete post-related data using profile_id
-    if (profileId) {
       await client.query("DELETE FROM post_likes WHERE profile_id = $1", [profileId]);
       await client.query("DELETE FROM post_comments WHERE profile_id = $1", [profileId]);
       await client.query("DELETE FROM posts WHERE profile_id = $1", [profileId]);
@@ -641,10 +641,14 @@ app.delete("/auth/delete-account", requireAuth, async (req, res) => {
     await client.query("DELETE FROM password_resets WHERE user_id = $1", [userId]);
     await client.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
 
-    await client.query("DELETE FROM direct_messages WHERE sender_id = $1 OR receiver_id = $1", [userId]);
-
     await client.query("DELETE FROM conversation_participants WHERE user_id = $1", [userId]);
 
+    await client.query(`
+      DELETE FROM conversations
+      WHERE id NOT IN (
+        SELECT conversation_id FROM conversation_participants
+      )
+    `);
     // 4. Delete profile
     await client.query("DELETE FROM player_profile WHERE user_id = $1", [userId]);
 
