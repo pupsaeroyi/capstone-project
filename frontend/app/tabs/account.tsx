@@ -424,7 +424,7 @@ export default function Account() {
     paddingVertical: r(18),
     borderRadius: r(16),
     alignItems: "center",
-		marginHorizontal: r(12),
+	marginHorizontal: r(12),
     borderWidth: 1,
     borderColor: "#E7EBFE",
   },

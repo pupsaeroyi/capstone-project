@@ -1,33 +1,29 @@
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions, ActivityIndicator } from "react-native";
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions, Alert } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { clearSavedToken } from "@/lib/auth";
-import { API_BASE } from "@/lib/api";
-import { useRouter, usePathname, Href} from "expo-router";
-import { r } from "@/utils/responsive";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
+import { clearSavedToken } from "@/lib/auth";
+import { authFetch } from "@/lib/api";
+import { r } from "@/utils/responsive";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
 };
 
-// Placeholder skill level (to be replaced with real data later)
-const SKILL_LEVEL = "Intermediate";
-const SKILL_COLOR = "#F59E0B";
+const APP_VERSION = "1.0.0";
 
-export default function SideMenu({ visible, onClose }: Props) {
+export default function AccountSettings({ visible, onClose }: Props) {
   const { width } = useWindowDimensions();
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [loadingUser, setLoadingUser] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const pathname = usePathname();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const { user, setUser } = useAuth();
 
-
-  // Slide-in animation
   useEffect(() => {
     if (visible) {
       slideAnim.setValue(width);
@@ -46,7 +42,6 @@ export default function SideMenu({ visible, onClose }: Props) {
     }
   }, [visible]);
 
-
   const handleClose = () => {
     Animated.parallel([
       Animated.timing(slideAnim, {
@@ -61,129 +56,194 @@ export default function SideMenu({ visible, onClose }: Props) {
       }),
     ]).start(() => onClose());
   };
-  
-  const handleNavigate = (route: Href) => {
+
+  const handleNavigate = (route: any) => {
     handleClose();
-    setTimeout(() => {
-      router.push(route);
-    }, 200);
+    setTimeout(() => router.push(route), 200);
   };
 
   const handleLogout = async () => {
+    await clearSavedToken();
+    setUser(null);
+    setLogoutModalVisible(false);
+    router.replace("/login");
+  };
+
+  const handleDeleteAccount = async () => {
     try {
-      await clearSavedToken();
-      setUser(null);
-      router.replace("/login")
-    } catch (err) {
-      console.log("Logout failed", err);
+      setDeleting(true);
+      const data = await authFetch("/auth/delete-account", { method: "DELETE" });
+      if (data.ok) {
+        await clearSavedToken();
+        setUser(null);
+        setDeleteModalVisible(false);
+        router.replace("/login");
+      } else {
+        Alert.alert("Error", data.message || "Failed to delete account.");
+      }
+    } catch {
+      Alert.alert("Error", "Cannot connect to server.");
+    } finally {
+      setDeleting(false);
     }
-  }
+  };
 
   return (
-    
     <Modal transparent visible={visible} animationType="none">
-      {/* Dimmed backdrop */}
+      {/* Backdrop */}
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <TouchableOpacity style={{ flex: 1 }} onPress={handleClose} />
       </Animated.View>
 
-      {/* Side panel */}
-      <Animated.View
-        style={[styles.menu, { transform: [{ translateX: slideAnim }] }]}
-      >
-
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarCircle}>
-              <Ionicons name="person-sharp" size={r(36)} color="#0B36F4" />
-            </View>
-            <View style={styles.onlineDot} />
-          </View>
-
-          {loadingUser ? (
-            <ActivityIndicator size="small" color="#0B36F4" style={{ marginTop: r(12) }} />
-          ) : (
-            <>
-              <Text style={styles.username}>{user?.username ?? "Player"}</Text>
-              <Text style={styles.email} numberOfLines={1}>{user?.email ?? ""}</Text>
-
-              <View style={[styles.skillBadge, { borderColor: SKILL_COLOR }]}>
-                <MaterialCommunityIcons name="volleyball" size={13} color={SKILL_COLOR} />
-                <Text style={[styles.skillText, { color: SKILL_COLOR }]}>{SKILL_LEVEL}</Text>
-              </View>
-            </>
-          )}
+      {/* Panel */}
+      <Animated.View style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+            <Ionicons name="close" size={r(22)} color="#0F172A" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
         </View>
 
-        <View style={styles.divider} />
-
-        <View style={styles.menuItems}>
-          <MenuItem icon="home" label="Home" active={pathname === "tabs/home"} onPress={() => handleNavigate("/tabs/home")}/>
-          <MenuItem icon="map" label="Map" active={pathname === "/map"} onPress={() => handleNavigate("/map")}/>
-          <MenuItem icon="person" label="Account" active={pathname === "tabs/account"} onPress={() => handleNavigate("/tabs/account")}/>
-          <MenuItem icon="forum" label="Chat" active={pathname === "tabs/chat"} onPress={() => handleNavigate("/tabs/chat")}/>
-          <MenuItem icon="sports-volleyball" label="Activity Feed" active={pathname === "/activityFeed"}/>
-          <MenuItem icon="info" label="About Us" active={pathname === "/aboutUs"}/>
+        {/* Account section */}
+        <Text style={styles.sectionLabel}> Account</Text>
+        <View style={styles.section}>
+          <SettingRow
+            icon="lock"
+            label="Change password"
+            onPress={() => handleNavigate("/change-password")}
+          />
+          <SettingRow
+            icon="mail"
+            label="Change email"
+            onPress={() => handleNavigate("/change-email")}
+          />
         </View>
 
-        <View style={styles.divider} />
+        {/* App section */}
+        <Text style={styles.sectionLabel}> App</Text>
+        <View style={styles.section}>
+          <SettingRow
+            icon="info"
+            label="About"
+            subtitle={`Version ${APP_VERSION}`}
+          />
+        </View>
 
-        <TouchableOpacity style={styles.logoutRow} onPress={() => setLogoutModalVisible(true)}>
-          <View style={styles.logoutCircle}>
-            <MaterialIcons name="logout" size={20} color="#EF4444" />
-          </View>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+        {/* Danger zone */}
+        <Text style={styles.sectionLabel}> Danger zone</Text>
+        <View style={styles.section}>
+          <SettingRow
+            icon="delete"
+            label="Delete account"
+            danger
+            onPress={() => setDeleteModalVisible(true)}
+          />
+        </View>
+        
+
+        {/* Logout */}
+        <Text style={styles.sectionLabel}> Log out</Text>
+        <View style={[styles.section, { marginTop: 4 }]}>
+          <SettingRow
+            icon="logout"
+            label="Log out"
+            danger
+            onPress={() => setLogoutModalVisible(true)}
+          />
+        </View>
       </Animated.View>
 
+      {/* Logout confirm modal */}
+      <ConfirmModal
+        visible={logoutModalVisible}
+        title="Log out"
+        message="Are you sure you want to log out?"
+        confirmLabel="Log out"
+        onConfirm={handleLogout}
+        onCancel={() => setLogoutModalVisible(false)}
+      />
 
-
-      <Modal transparent visible={logoutModalVisible} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Log Out</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to log out?
-            </Text>
-
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={styles.logoutButton}
-            >
-              <Text style={styles.logoutButtonText}>Log Out</Text>
-            </TouchableOpacity>
-
-           
-            <TouchableOpacity
-              onPress={() => setLogoutModalVisible(false)}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* Delete confirm modal */}
+      <ConfirmModal
+        visible={deleteModalVisible}
+        title="Delete account"
+        message="This will permanently delete your account and all your data. This cannot be undone."
+        confirmLabel={deleting ? "Deleting..." : "Delete account"}
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setDeleteModalVisible(false)}
+        disabled={deleting}
+      />
     </Modal>
   );
 }
 
-function MenuItem({icon, label, active, onPress}: {
+function SettingRow({
+  icon,
+  label,
+  subtitle,
+  danger = false,
+  onPress,
+}: {
   icon: React.ComponentProps<typeof MaterialIcons>["name"];
   label: string;
-  active?: boolean;
+  subtitle?: string;
+  danger?: boolean;
   onPress?: () => void;
 }) {
+  const color = danger ? "#EF4444" : "#0B36F4";
+  const bgColor = danger ? "#FEF2F2" : "#F3F5FE";
 
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.menuItem, active && styles.menuItemActive]}>
-      <View style={styles.menuContent}>
-        <View style={[styles.menuIconCircle, active && styles.menuIconCircleActive]}>
-          <MaterialIcons name={icon} size={20} color={active ? "#FFFFFF" : "#0B36F4"} />
-        </View>
-
-        <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>{label}</Text>
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
+      <View style={[styles.iconCircle, { backgroundColor: bgColor }]}>
+        <MaterialIcons name={icon} size={r(20)} color={color} />
       </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.rowLabel, danger && { color: "#EF4444" }]}>{label}</Text>
+        {subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
+      </View>
+      <Ionicons name="chevron-forward" size={r(16)} color="#64748B" />
     </TouchableOpacity>
+  );
+}
+
+function ConfirmModal({
+  visible,
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+  disabled = false,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Modal transparent visible={visible} animationType="fade">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <Text style={styles.modalMessage}>{message}</Text>
+          <TouchableOpacity
+            style={[styles.confirmBtn, disabled && { opacity: 0.5 }]}
+            onPress={onConfirm}
+            disabled={disabled}
+          >
+            <Text style={styles.confirmBtnText}>{confirmLabel}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -194,17 +254,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
   },
 
-  menu: {
+  panel: {
     position: "absolute",
-    right: 0, 
-    top: 0, 
-    bottom: 0,
+    right: 0, top: 0, bottom: 0,
     width: "78%",
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: r(32),
     borderBottomLeftRadius: r(32),
     paddingTop: r(56),
-    paddingHorizontal: r(24),
+    paddingHorizontal: r(20),
     paddingBottom: r(36),
     shadowColor: "#000",
     shadowOffset: { width: -4, height: 0 },
@@ -213,145 +271,73 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
 
-  profileSection: {
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingBottom: r(24),
+    marginBottom: r(32),
+    gap: r(12),
   },
 
-  avatarContainer: {
-    position: "relative",
-    marginBottom: r(14),
+  closeBtn: {
+    padding: r(4),
   },
 
-  avatarCircle: {
-    width: r(80),
-    height: r(80),
-    borderRadius: r(40),
-    backgroundColor: "#EEF2FF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  onlineDot: {
-    position: "absolute",
-    bottom: r(4),
-    right: r(4),
-    width: r(16),
-    height: r(16),
-    borderRadius: r(8),
-    backgroundColor: "#22C55E",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-
-  username: {
-    fontSize: r(24),
+  headerTitle: {
+    fontSize: r(20),
     fontFamily: "Lexend_700Bold",
     color: "#0F172A",
-    marginBottom: 4,
   },
 
-  email: {
-    fontSize: r(16),
-    fontFamily: "Lexend_400Regular",
-    color: "#94A3B8",
-    marginBottom: 12,
-    maxWidth: "90%",
+  sectionLabel: {
+    fontSize: r(11),
+    fontFamily: "Lexend_700Bold",
+    color: "#64748B",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: r(8),
+    marginLeft: r(4),
   },
 
-  skillBadge: {
+  section: {
+    backgroundColor: "#fff",
+    borderRadius: r(16),
+    marginBottom: r(20),
+    overflow: "hidden",
+  },
+
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    backgroundColor: "#FFFBEB",
+    gap: r(14),
+    paddingVertical: r(14),
+    paddingHorizontal: r(14),
   },
 
-  skillText: {
-    fontSize: 12,
-    fontFamily: "Lexend_600SemiBold",
-  },
-
-  divider: {
+  rowDivider: {
     height: 1,
     backgroundColor: "#F1F5F9",
-    marginVertical: 8,
+    marginLeft: r(62),
   },
 
-  menuContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(14),
-    marginLeft: r(10),  
-  },
-
-  menuIconCircle: {
+  iconCircle: {
     width: r(40),
     height: r(40),
     borderRadius: r(20),
-    backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
   },
 
-  menuIconCircleActive: {
-    backgroundColor: "#0B36F4"
-  },
-
-  menuItems: {
-    gap: r(6),
-  },
-
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(14),
-    paddingVertical: r(10),
-    paddingHorizontal: r(6),
-  },
-
-  menuItemActive: {
-    backgroundColor: "#E7EBFE",
-    borderRadius: r(16),
-  },
-
-  menuLabel: {
-    fontSize: r(16),
+  rowLabel: {
+    fontSize: r(15),
     fontFamily: "Lexend_500Medium",
-    color: "#4B5563",
+    color: "#0F172A",
   },
 
-  menuLabelActive: {
-    fontSize: r(16),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#0B36F4"
-  },
-
-  logoutRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: r(12),
-    paddingTop: r(16),
-    paddingHorizontal: 4,
-    marginLeft: r(10),
-  },
-
-  logoutCircle: {
-    width: r(40),
-    height: r(40),
-    borderRadius: r(20),
-    backgroundColor: "#FEF2F2",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  logoutText: {
-    fontSize: r(16),
-    fontFamily: "Lexend_600SemiBold",
-    color: "#EF4444",
+  rowSubtitle: {
+    fontSize: r(12),
+    fontFamily: "Lexend_400Regular",
+    color: "#94A3B8",
+    marginTop: 1,
   },
 
   modalOverlay: {
@@ -364,55 +350,53 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "80%",
     backgroundColor: "#fff",
-    borderRadius: r(16),
+    borderRadius: r(20),
     padding: r(24),
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
   },
 
   modalTitle: {
     fontSize: r(18),
     fontFamily: "Lexend_700Bold",
-    marginBottom: r(10),
+    color: "#0F172A",
+    marginBottom: r(8),
   },
 
-  modalText: {
+  modalMessage: {
     fontSize: r(14),
+    fontFamily: "Lexend_400Regular",
     color: "#64748B",
     textAlign: "center",
     marginBottom: r(22),
+    lineHeight: r(20),
   },
 
-  logoutButton: {
+  confirmBtn: {
     backgroundColor: "#EF4444",
     width: "100%",
     alignItems: "center",
-    paddingVertical: r(12),
-    paddingHorizontal: r(16),
+    paddingVertical: r(13),
     borderRadius: r(18),
-    marginBottom: 12,
+    marginBottom: r(10),
   },
 
-  logoutButtonText: {
+  confirmBtnText: {
     color: "#fff",
     fontFamily: "Lexend_600SemiBold",
+    fontSize: r(15),
   },
 
-  cancelButton: {
+  cancelBtn: {
     backgroundColor: "#F1F5F9",
     width: "100%",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 18,
+    paddingVertical: r(13),
+    borderRadius: r(18),
   },
 
-  cancelText: {
+  cancelBtnText: {
     color: "#64748B",
-    fontFamily: "Lexend_500Regular",
+    fontFamily: "Lexend_500Medium",
+    fontSize: r(15),
   },
 });
