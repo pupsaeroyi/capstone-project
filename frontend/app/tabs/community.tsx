@@ -86,6 +86,24 @@ function SearchSheet({
     }
   };
 
+  const deleteRecent = async (userId: number) => {
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+
+      await fetch(`${API_BASE}/api/search/recent/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setRecentSearches((prev) =>
+        prev.filter((u) => u.id !== userId)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     if (visible) {
       setQuery("");
@@ -220,7 +238,13 @@ function SearchSheet({
                   <Text style={sheet.hint}>No recent searches</Text>
                 ) : (
                   recentSearches.map((user) => (
-                    <TouchableOpacity key={user.id} style={sheet.recentRow} onPress={() => setQuery(user.username)}>
+                    <TouchableOpacity key={user.id} style={sheet.recentRow} onPress={() => {
+                          handleClose();
+                          router.push({
+                            pathname: "/viewprofile",
+                            params: { userId: user.id },
+                          });
+                        }}>
                       {user.avatar_url ? (
                         <Image source={{ uri: user.avatar_url }} style={sheet.recentAvatar} />
                       ) : (
@@ -231,7 +255,15 @@ function SearchSheet({
                         </View>
                       )}
                       <Text style={sheet.recentText}>{user.username}</Text>
-                      <Ionicons name="arrow-up-outline" size={16} color="#CBD5E1" />
+                      <TouchableOpacity
+                        onPress={(e) => {
+                          e.stopPropagation(); 
+                          deleteRecent(user.id);
+                        }}
+                        style={{ padding: 4 }}
+                      >
+                        <Ionicons name="close" size={18} color="#94A3B8" />
+                      </TouchableOpacity>
                     </TouchableOpacity>
                   ))
                 )}
@@ -257,7 +289,14 @@ function SearchSheet({
 
             {!loading &&
               results.map((user, idx) => (
-                <TouchableOpacity key={user.id} onPress={() => saveRecent(user.id)}>
+                <TouchableOpacity key={user.id} onPress={() => {
+                    saveRecent(user.id);
+                    handleClose();
+                    router.push({
+                      pathname: "/viewprofile",
+                      params: { userId: user.id },
+                    });
+                  }}>
                   <View style={sheet.userRow}>
                     {/* Avatar */}
                     {user.avatar_url ? (
