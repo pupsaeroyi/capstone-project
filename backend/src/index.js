@@ -611,6 +611,56 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
+app.delete("/auth/delete-account", requireAuth, async (req, res) => {
+  const userId = req.userId;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Delete dependent data in the correct order to avoid foreign key issues
+    await client.query("DELETE FROM friends WHERE requester_id = $1 OR requested_id = $1", [userId]);
+
+    await client.query("DELETE FROM recent_searches WHERE searcher_id = $1", [userId]);
+
+    await client.query("DELETE FROM password_resets WHERE user_id = $1", [userId]);
+    await client.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
+
+    await client.query("DELETE FROM post_likes WHERE user_id = $1", [userId]);
+    await client.query("DELETE FROM post_comments WHERE user_id = $1", [userId]);
+    await client.query("DELETE FROM posts WHERE user_id = $1", [userId]);
+
+    await client.query("DELETE FROM direct_messages WHERE sender_id = $1 OR receiver_id = $1", [userId]);
+
+    await client.query("DELETE FROM conversation_participants WHERE user_id = $1", [userId]);
+
+    await client.query("DELETE FROM player_profile WHERE user_id = $1", [userId]);
+
+    // Delete user account
+    await client.query("DELETE FROM users WHERE id = $1", [userId]);
+
+    await client.query("COMMIT");
+
+    return res.json({
+      ok: true,
+      message: "Account deleted successfully",
+    });
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Delete account error:", err);
+
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to delete account",
+    });
+  } finally {
+    client.release();
+  }
+});
+
+
 // Get all venues with active sessions (public)
 app.get("/venues", async (req, res) => {
   try {
