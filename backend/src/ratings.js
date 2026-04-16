@@ -36,9 +36,9 @@ function updatePlayerRating(currentScore, peerScores, selfScore = null) {
   const newRank = getRankFromScore(newScore);
 
   return {
-    oldScore: Math.round(currentScore * 100) / 100,
-    delta: Math.round(delta * 100) / 100,
-    newScore: Math.round(newScore * 100) / 100,
+    oldScore: Math.round(currentScore),
+    delta: Math.round(delta),
+    newScore: Math.round(newScore),
     oldRank,
     newRank,
     rankChanged: oldRank !== newRank,
