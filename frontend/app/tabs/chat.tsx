@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Image } from "react-native";
-import { MaterialIcons, Feather } from "@expo/vector-icons";
+import { MaterialIcons, Feather, MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { r } from "@/utils/responsive";
 import { authFetch } from "@/lib/api";
@@ -55,26 +55,34 @@ function getAvatarColor(name: string): string {
 }
 
 // ─── Avatar Component ─────────────────────────────────────────────────────────
-function Avatar({ name, avatarUrl, isGroup }: { name: string; avatarUrl?: string; isGroup?: boolean }) {
+function Avatar({ name, avatarUrl, isGroup, isPinned }: { name: string; avatarUrl?: string; isGroup?: boolean; isPinned?: boolean }) {
   const size = r(52);
 
-  if (isGroup) {
-    return (
-      <View style={[styles.avatar, { backgroundColor: getAvatarColor(name), width: size, height: size, borderRadius: size / 2 }]}>
-        <Text style={styles.avatarInitials}>{(name[0] ?? "#").toUpperCase()}</Text>
-      </View>
-    );
-  }
-
-  return (
+  // 1. First, determine what the inside looks like
+  const content = isGroup ? (
+    <View style={[styles.avatar, { backgroundColor: getAvatarColor(name), width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={styles.avatarInitials}>{(name[0] ?? "#").toUpperCase()}</Text>
+    </View>
+  ) : (
     <View style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden" }}>
       {avatarUrl ? (
         <Image source={{ uri: avatarUrl }} style={{ width: size, height: size, borderRadius: size / 2 }} />
       ) : (
         <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
-          <Text style={styles.avatarInitials}>
-            {isGroup ? "#" : (name[0] ?? "?").toUpperCase()}
-          </Text>
+          <Text style={styles.avatarInitials}>{(name[0] ?? "?").toUpperCase()}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  // 2. Return the content wrapped in the relative container that holds the Pin
+  return (
+    <View style={{ position: "relative", width: size, height: size }}>
+      {content}
+      
+      {isPinned && (
+        <View style={styles.pinBadge}>
+          <AntDesign name="pushpin" size={r(10)} color="#fff" />
         </View>
       )}
     </View>
@@ -83,11 +91,19 @@ function Avatar({ name, avatarUrl, isGroup }: { name: string; avatarUrl?: string
 
 // ─── Conversation Row ─────────────────────────────────────────────────────────
 function ConvRow({
+  isEditing,
+  isPinned,
+  onPin,
+  onDelete,
   conv,
   currentUserId,
   typingUser,
   onPress,
 }: {
+  isEditing: boolean;
+  isPinned: boolean;
+  onPin: () => void;
+  onDelete: () => void;
   conv: Conversation;
   currentUserId: number;
   typingUser?: string;
@@ -105,19 +121,42 @@ function ConvRow({
 
   const timeStr = conv.last_message_at ? formatTime(conv.last_message_at) : "";
   
-  return (
-    <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={onPress}>
-      <Avatar name={name} 
-      avatarUrl={conv.is_group ? undefined : conv.other_avatar}
-      isGroup={conv.is_group} />
+return (
+  <View style={styles.rowContainer}>
+    
+    {/* LEFT: PIN ICON (edit mode only) */}
+    {isEditing && (
+      <TouchableOpacity onPress={onPin} style={styles.iconLeft}>
+        <MaterialCommunityIcons
+          name={isPinned ? "pin-off" : "pin"}
+          size={r(20)}
+          color={isPinned ? "#0B36F4" : "#94A3B8"}
+        />
+      </TouchableOpacity>
+    )}
+
+    {/* MAIN ROW */}
+    <TouchableOpacity
+      style={styles.row}
+      activeOpacity={0.7}
+      onPress={onPress}
+    >
+      <Avatar
+        name={name}
+        avatarUrl={conv.is_group ? undefined : conv.other_avatar}
+        isGroup={conv.is_group}
+        isPinned={isPinned}
+      />
 
       <View style={styles.middleCol}>
         <Text style={styles.name} numberOfLines={1}>{name}</Text>
+
         <Text
           style={[
-            styles.preview, 
+            styles.preview,
             hasUnread && styles.previewBold,
-            typingUser && styles.previewTyping,]}
+            typingUser && styles.previewTyping,
+          ]}
           numberOfLines={1}
         >
           {preview}
@@ -128,6 +167,7 @@ function ConvRow({
         <Text style={[styles.time, hasUnread && styles.timeActive]}>
           {timeStr}
         </Text>
+
         {hasUnread ? (
           <View style={styles.unreadBadge}>
             <Text style={styles.unreadText}>
@@ -139,7 +179,15 @@ function ConvRow({
         )}
       </View>
     </TouchableOpacity>
-  );
+
+    {/*   ICON (edit mode only) */}
+    {isEditing && (
+      <TouchableOpacity onPress={onDelete} style={styles.iconRight}>
+        <MaterialIcons name="delete-outline" size={r(22)} color="#EF4444" />
+      </TouchableOpacity>
+    )}
+  </View>
+);
 }
 
 
@@ -153,6 +201,8 @@ export default function ChatScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<number[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -229,7 +279,20 @@ export default function ChatScreen() {
     if (search && !name.toLowerCase().includes(search.toLowerCase())) return false;
     if (activeTab === "private") return !c.is_group;
     return c.is_group;
+  })
+  .sort((a, b) => {
+    const aPinned = pinnedIds.includes(a.conversation_id);
+    const bPinned = pinnedIds.includes(b.conversation_id);
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    return 0; // Maintain original order (usually by date) if both/neither are pinned
   });
+
+const togglePin = (id: number) => {
+  setPinnedIds(prev => 
+    prev.includes(id) ? prev.filter(p => p !== id) : [id, ...prev]
+  );
+};
 
   if (loading) {
     return (
@@ -245,9 +308,15 @@ export default function ChatScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.6}>
-            <Text style={styles.editText}>Edit</Text>
+          <TouchableOpacity 
+            style={styles.headerBtn} 
+            onPress={() => setIsEditing(!isEditing)}
+          >
+            <Text style={[styles.editText, isEditing && { color: "#0B36F4", fontFamily: "Lexend_500Medium" }]}>
+              {isEditing ? "Done" : "Edit"}
+            </Text>
           </TouchableOpacity>
+          
           <TouchableOpacity style={styles.headerBtn} activeOpacity={0.6}>
             <Feather name="user-plus" size={r(20)} color="#0F172A" />
           </TouchableOpacity>
@@ -258,12 +327,12 @@ export default function ChatScreen() {
       <View style={styles.searchContainer}>
         <MaterialIcons
           name="search"
-          size={r(18)}
+          size={r(20)}
           color="#94A3B8"
           style={styles.searchIcon}
         />
         <TextInput
-          placeholder="Search chats or groups..."
+          placeholder="Search chats or groups"
           placeholderTextColor="#94A3B8"
           style={styles.searchInput}
           value={search}
@@ -312,6 +381,10 @@ export default function ChatScreen() {
             conv={item}
             currentUserId={user?.id ?? 0}
             typingUser={typingMap[item.conversation_id]}
+            isEditing={isEditing} 
+            isPinned={pinnedIds.includes(item.conversation_id)}
+            onPin={() => togglePin(item.conversation_id)}
+            onDelete={() => togglePin(item.conversation_id)} //To be implemented: actual delete logic
             onPress={() =>
               router.push({
                 pathname: "/chat/[id]",
@@ -446,13 +519,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
   },
 
-  // Row
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: r(14),
-    gap: r(12),
-  },
   middleCol: {
     flex: 1,
     gap: r(3),
@@ -534,5 +600,38 @@ const styles = StyleSheet.create({
   previewTyping: {
     color: "#0B36F4",
     fontFamily: "Lexend_500Medium",
+  },
+  rowContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  iconLeft: {
+    paddingRight: r(8),
+  },
+
+  iconRight: {
+    paddingLeft: r(8),
+  },
+
+  row: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: r(14),
+    gap: r(12),
+  },
+  pinBadge: {
+    position: "absolute",
+    right: -4,
+    top: 29,
+    width: r(22),
+    height: r(22),
+    borderRadius: r(11),
+    backgroundColor: "#0B36F4",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

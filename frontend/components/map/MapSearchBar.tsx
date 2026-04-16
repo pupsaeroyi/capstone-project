@@ -6,11 +6,10 @@ import { useRouter } from "expo-router";
 import MenuButton from "@/components/MenuButton";
 
 type Props = {
-  onMenuPress: () => void;
   onFilterPress?: () => void;
 };
 
-export default function MapSearchBar({ onMenuPress, onFilterPress }: Props) {
+export default function MapSearchBar({onFilterPress }: Props) {
   const router = useRouter();
 
   return (
@@ -26,8 +25,6 @@ export default function MapSearchBar({ onMenuPress, onFilterPress }: Props) {
             placeholderTextColor="#94A3B8"
           />
         </View>
-
-        <MenuButton onPress={onMenuPress} />
       </View>
     </View>
   );

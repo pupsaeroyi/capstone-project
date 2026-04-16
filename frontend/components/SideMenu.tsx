@@ -134,7 +134,7 @@ export default function AccountSettings({ visible, onClose }: Props) {
         <Text style={styles.sectionLabel}> Danger zone</Text>
         <View style={styles.section}>
           <SettingRow
-            icon="delete"
+            icon="delete-outline"
             label="Delete account"
             danger
             onPress={() => setDeleteModalVisible(true)}

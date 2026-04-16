@@ -28,7 +28,7 @@ export function Input({ placeholder, style, inputStyle, showSearchIcon, ...props
         <Ionicons
           name="search"
           size={20}
-          color="#878B94"
+          color="#94A3B8"
           style={styles.searchIcon}
         />
       )}
@@ -37,7 +37,7 @@ export function Input({ placeholder, style, inputStyle, showSearchIcon, ...props
         style={[styles.input, inputStyle]}
         autoComplete="off"
         placeholder={placeholder}
-        placeholderTextColor="#878B94"
+        placeholderTextColor="#94A3B8"
         autoCorrect={false}
         autoCapitalize="none"
         {...props}
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#F1F5F9",
     borderWidth: 1,
     borderColor: "transparent",
     paddingHorizontal: 15,

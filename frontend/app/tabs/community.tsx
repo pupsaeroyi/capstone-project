@@ -585,7 +585,7 @@ export default function Community() {
                         {deletingPostId === post.id ? (
                           <ActivityIndicator size="small" color="#EF4444" />
                         ) : (
-                          <Feather name="trash-2" size={18} color="#EF4444" />
+                          <MaterialIcons name="delete-outline" size={22} color="#EF4444" />
                         )}
                       </TouchableOpacity>
                     ) : null}
@@ -624,10 +624,6 @@ export default function Community() {
                         color="#64748B"
                       />
                       <Text style={styles.actionText}>{post.comments_count}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.actionBtn}>
-                      <Ionicons name="share-outline" size={20} color="#64748B" />
                     </TouchableOpacity>
                   </View>
                 </View>
