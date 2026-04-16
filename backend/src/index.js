@@ -613,13 +613,27 @@ app.post("/auth/reset-password", async (req, res) => {
 
 app.delete("/auth/delete-account", requireAuth, async (req, res) => {
   const userId = req.userId;
-
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // Delete dependent data in the correct order to avoid foreign key issues
+    // 1. Get profile_id from user_id
+    const profileRes = await client.query(
+      "SELECT id FROM player_profile WHERE user_id = $1",
+      [userId]
+    );
+
+    const profileId = profileRes.rows[0]?.id;
+
+    // 2. Delete post-related data using profile_id
+    if (profileId) {
+      await client.query("DELETE FROM post_likes WHERE profile_id = $1", [profileId]);
+      await client.query("DELETE FROM post_comments WHERE profile_id = $1", [profileId]);
+      await client.query("DELETE FROM posts WHERE profile_id = $1", [profileId]);
+    }
+
+    // 3. Delete other user-related data
     await client.query("DELETE FROM friends WHERE requester_id = $1 OR requested_id = $1", [userId]);
 
     await client.query("DELETE FROM recent_searches WHERE searcher_id = $1", [userId]);
@@ -627,17 +641,14 @@ app.delete("/auth/delete-account", requireAuth, async (req, res) => {
     await client.query("DELETE FROM password_resets WHERE user_id = $1", [userId]);
     await client.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
 
-    await client.query("DELETE FROM post_likes WHERE user_id = $1", [userId]);
-    await client.query("DELETE FROM post_comments WHERE user_id = $1", [userId]);
-    await client.query("DELETE FROM posts WHERE user_id = $1", [userId]);
-
     await client.query("DELETE FROM direct_messages WHERE sender_id = $1 OR receiver_id = $1", [userId]);
 
     await client.query("DELETE FROM conversation_participants WHERE user_id = $1", [userId]);
 
+    // 4. Delete profile
     await client.query("DELETE FROM player_profile WHERE user_id = $1", [userId]);
 
-    // Delete user account
+    // 5. Delete user
     await client.query("DELETE FROM users WHERE id = $1", [userId]);
 
     await client.query("COMMIT");
