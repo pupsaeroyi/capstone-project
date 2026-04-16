@@ -439,6 +439,7 @@ export default function Account() {
     fontSize: r(20),
     color: "#0B36F4",
   },
+  
 	infoSection: {
     width: "100%",
     gap: r(12),

@@ -611,39 +611,6 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
-// Get another user's profile
-app.get("/profile/:id", requireAuth, async (req, res) => {
-  const userId = req.params.id;
-
-  try {
-    const result = await pool.query(
-      `SELECT pp.*, u.username
-       FROM player_profile pp
-       JOIN users u ON u.id = pp.user_id
-       WHERE u.id = $1`,
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        ok: false,
-        message: "Profile not found",
-      });
-    }
-
-    return res.json({
-      ok: true,
-      profile: result.rows[0],
-    });
-  } catch (err) {
-    console.error("Get profile by id error:", err);
-    return res.status(500).json({
-      ok: false,
-      message: "Server error",
-    });
-  }
-});
-
 app.delete("/auth/delete-account", requireAuth, async (req, res) => {
   const userId = req.userId;
   const client = await pool.connect();
@@ -967,6 +934,39 @@ app.delete("/api/search/recent/:searched_id", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Get another user's profile
+app.get("/profile/user/:id", requireAuth, async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT pp.*, u.username
+       FROM player_profile pp
+       JOIN users u ON u.id = pp.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        message: "Profile not found",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      profile: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Get profile by id error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: "Server error",
+    });
   }
 });
 

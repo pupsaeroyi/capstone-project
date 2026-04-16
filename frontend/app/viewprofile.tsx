@@ -29,7 +29,7 @@ export default function ViewProfile() {
     try {
       const token = await SecureStore.getItemAsync("accessToken");
 
-      const res = await fetch(`${API_BASE}/profile/${userId}`, {
+      const res = await fetch(`${API_BASE}/profile/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,7 +54,6 @@ export default function ViewProfile() {
     }
   };
 
-  // 🔄 Loading
   if (loading) {
     return (
       <View style={styles.centerFull}>
@@ -63,7 +62,6 @@ export default function ViewProfile() {
     );
   }
 
-  // ❌ Not found
   if (!profile) {
     return (
       <View style={styles.centerFull}>
