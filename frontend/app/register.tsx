@@ -24,7 +24,7 @@ export default function Register() {
 
   const [usernameStatus, setUsernameStatus] = useState("idle");
   const usernameReqId = useRef(0);
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, setUser } = useAuth();
   
   const handleUsernameChange = async (text: string) => {
     const trimmed = text.trim();
@@ -123,7 +123,7 @@ export default function Register() {
       }
 
       await SecureStore.setItemAsync("accessToken", data.accessToken);
-      
+      setUser(data.user);
       await refreshProfile();
       
       router.replace({
