@@ -24,6 +24,7 @@ type SessionWithVenue = {
   venue_id: number;
   venue_name: string;
   thumbnail_url: string;
+  created_by: number;
 };
 
 type VenueBasic = {
@@ -259,13 +260,14 @@ export default function Home() {
           <View style={styles.featuredBottomRow}>
             <View style={styles.featuredLocationRow}>
               <MaterialIcons name="location-on" size={r(14)} color="#E2E8F0" />
-              <Text style={styles.featuredLocation}>
-                {featuredSession.venue_name.length > 24
-                  ? `${featuredSession.venue_name.substring(0, 24)}...`
-                  : featuredSession.venue_name}</Text>
+              <Text style={styles.featuredLocation} numberOfLines={1} ellipsizeMode="tail">
+                {featuredSession.venue_name}
+              </Text>
             </View>
             <View style={styles.featuredJoinBtn}>
-              <Text style={styles.featuredJoinText}>Join Session</Text>
+              <Text style={styles.featuredJoinText}>
+                {featuredSession.created_by === user?.id ? "Host" : "Join Session"}
+              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -389,7 +391,12 @@ export default function Home() {
           onPress={() => router.push({ pathname: "/venue/[id]", params: { id: venue.venue_id.toString(), venue_name: venue.venue_name } })}
           activeOpacity={0.7}
         >
-          <Text style={styles.courtName}>{venue.venue_name}</Text>
+          <View style={styles.VenueNameRow}>
+            <MaterialIcons name="location-on" size={r(14)} color="#0B36F4" style={{ flexShrink: 0 }} top={2} />
+            <Text style={styles.courtName} numberOfLines={1} ellipsizeMode="tail">
+              {venue.venue_name}
+            </Text>
+          </View>
           <Text style={styles.courtSub}>{venue.court_count} court{venue.court_count !== 1 ? "s" : ""}</Text>
         </TouchableOpacity>
       ))}
@@ -524,13 +531,15 @@ const styles = StyleSheet.create({
   featuredLocationRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: r(4),
+    gap: 4,
+    flex: 1,      
   },
 
   featuredLocation: {
     color: "#E2E8F0",
     fontSize: r(13),
     fontFamily: "Lexend_400Regular",
+    flex: 1,   
   },
 
   featuredJoinBtn: {
@@ -538,6 +547,7 @@ const styles = StyleSheet.create({
     borderRadius: r(16),
     paddingVertical: r(8),
     paddingHorizontal: r(16),
+    marginLeft: r(8),
   },
 
   featuredJoinText: {
@@ -624,6 +634,13 @@ const styles = StyleSheet.create({
     marginBottom: r(4),
   },
 
+ VenueNameRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 2,
+    flex: 1,
+  },
+
   sessionCardName: {
     fontSize: r(15),
     fontFamily: "Lexend_700Bold",
@@ -698,6 +715,8 @@ const styles = StyleSheet.create({
     fontSize: r(15),
     fontFamily: "Lexend_600SemiBold",
     color: "#0F172A",
+    flex: 1,         
+    flexShrink: 1, 
   },
 
   courtSub: {

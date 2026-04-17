@@ -704,6 +704,7 @@ app.get("/venues", async (req, res) => {
          s.start_time,
          s.end_time,
          s.booking_fee,
+         s.created_by,
          COUNT(sp.id)::int AS player_count
        FROM sessions s
        LEFT JOIN session_players sp ON sp.session_id = s.id
@@ -725,6 +726,7 @@ app.get("/venues", async (req, res) => {
         start_time: s.start_time,
         end_time: s.end_time,
         booking_fee: s.booking_fee,
+        created_by: s.created_by,
       });
     }
 

@@ -7,7 +7,7 @@ function CreateSessionButton({onPress}: {onPress: () => void}) {
 	return (
 		<TouchableOpacity onPress={onPress} style={styles.createButton}>
 			<View style={styles.createButtonInner}>
-				<Feather name="plus" size={26} color="#fff" />
+				<Feather name="plus" size={r(26)} color="#fff" />
 			</View>
 		</TouchableOpacity>
 	);
@@ -53,7 +53,7 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="home" size={24} color={color} />
+            <MaterialIcons name="home" size={r(26)} color={color} />
           ),
         }}
       />
@@ -63,7 +63,7 @@ export default function TabsLayout() {
         options={{
           title: "Social",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="people" size={26} color={color} />
+            <MaterialIcons name="people" size={r(26)} color={color} />
           ),
         }}
       />
@@ -86,7 +86,7 @@ export default function TabsLayout() {
         options={{
           title: "Chats",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="chat" size={24} color={color} />
+            <MaterialCommunityIcons name="chat" size={r(26)} color={color} />
           ),
         }}
       />
@@ -96,7 +96,7 @@ export default function TabsLayout() {
         options={{
           title: "Account",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="person" size={24} color={color} />
+            <MaterialIcons name="person" size={r(26)} color={color} />
           ),
         }}
       />
@@ -114,9 +114,9 @@ const styles = StyleSheet.create({
   },
 
   createButtonInner: {
-    width: r(56),
-    height: r(56),
-    borderRadius: r(28),
+    width: r(58),
+    height: r(58),
+    borderRadius: r(32),
     backgroundColor: "#0B36F4",
     justifyContent: "center",
     alignItems: "center",

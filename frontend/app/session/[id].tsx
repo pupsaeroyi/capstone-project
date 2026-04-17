@@ -259,7 +259,6 @@ export default function SessionDetailScreen() {
                 }}
                 activeOpacity={0.85}
               >
-                <Ionicons name="chatbubble-ellipses" size={r(14)} color="#fff" style={{ marginRight: r(6) }} />
                 <Text style={styles.messageBtnText}>Message</Text>
               </TouchableOpacity>
             )}
@@ -463,9 +462,9 @@ const styles = StyleSheet.create({
   hostName: { fontSize: r(15), fontFamily: "Lexend_700Bold", color: "#0F172A" },
   messageBtn: {
     flexDirection: "row", alignItems: "center",
-    backgroundColor: "#0B36F4", paddingHorizontal: r(14), paddingVertical: r(8), borderRadius: r(12),
+    backgroundColor: "#E7EBFE", paddingHorizontal: r(14), paddingVertical: r(8), borderRadius: r(28),
   },
-  messageBtnText: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#fff" },
+  messageBtnText: { fontSize: r(13), fontFamily: "Lexend_700Bold", color: "#0B36F4" },
 
   // Requirements
   reqRow: { flexDirection: "row", alignItems: "center", gap: r(10) },
