@@ -64,7 +64,7 @@ export default function SessionDetailScreen() {
     }, [fetchSession])
   );
 
-  const isCreator = user?.id === session?.created_by;
+  const isCreator = Number(user?.id) === Number(session?.created_by);
   const hasJoined = session ? session.players.some(p => p.user_id === user?.id) : false;
   const isFull = session ? session.player_count >= session.max_players : false;
   const slotsLeft = session ? session.max_players - session.player_count : 0;
@@ -395,9 +395,19 @@ export default function SessionDetailScreen() {
             onPress={handleJoin}
             disabled={isFull}
           >
-            <Text style={[styles.joinButtonText, isFull && styles.joinButtonTextDisabled]}>
-              {isFull ? "Session Full" : "Join Session →"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: r(6) }}>
+              <Text style={[styles.joinButtonText, isFull && styles.joinButtonTextDisabled]}>
+                {isFull ? "Session Full" : "Join Session"}
+              </Text>
+
+              {!isFull && (
+                <MaterialIcons
+                  name="send"
+                  size={r(20)}
+                  color="#FFFFFF"
+                />
+              )}
+            </View>
           </TouchableOpacity>
         )}
       </View>
