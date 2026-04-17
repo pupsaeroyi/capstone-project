@@ -44,6 +44,7 @@ export default function Home() {
   const [refreshOffset, setRefreshOffset] = useState(0);
   const [rateIndex, setRateIndex] = useState(0);
   const [showAllCourts, setShowAllCourts] = useState(false);
+  const [search, setSearch] = useState("");
 
 
 
@@ -174,6 +175,28 @@ export default function Home() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
+  const searchLower = search.trim().toLowerCase();
+  const isSearching = searchLower.length > 0;
+
+  const filteredSessions = isSearching
+    ? sessions.filter((s) => {
+        const name = (s.session_name || "").toLowerCase();
+        const venue = (s.venue_name || "").toLowerCase();
+        const sport = (s.sport || "").toLowerCase();
+        return (
+          name.includes(searchLower) ||
+          venue.includes(searchLower) ||
+          sport.includes(searchLower)
+        );
+      })
+    : sessions;
+
+  const filteredVenues = isSearching
+    ? venues.filter((v) =>
+        (v.venue_name || "").toLowerCase().includes(searchLower)
+      )
+    : venues;
+
   return (
     <View style={{ flex: 1,backgroundColor: "#FFFFFF" }}>
        <View style={styles.bottomBackground} />
@@ -200,13 +223,18 @@ export default function Home() {
             placeholder="Find courts or sessions..."
             showSearchIcon
             style={styles.searchBar}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
           />
         </View>
       </View>
 
       <View style={{ height: r(16) }} />
 
-      {featuredSession && (
+      {!isSearching && featuredSession && (
         <TouchableOpacity
           style={styles.featuredCard}
           onPress={() => router.push(`/session/${featuredSession.session_id}`)}
@@ -243,7 +271,7 @@ export default function Home() {
         </TouchableOpacity>
       )}
 
-      {toRate.length > 0 && (
+      {!isSearching && toRate.length > 0 && (
         <View style={styles.toRateBanner}>
           <View style={styles.toRateHeader}>
             <MaterialIcons name="star-rate" size={r(20)} color="#F59E0B" />
@@ -297,13 +325,15 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      {sessions.length === 0 ? (
+      {filteredSessions.length === 0 ? (
         <View style={styles.emptyCard}>
           <MaterialIcons name="event-busy" size={32} color="#CBD5E1" />
-          <Text style={styles.emptyText}>No active sessions right now</Text>
+          <Text style={styles.emptyText}>
+            {isSearching ? "No sessions match your search" : "No active sessions right now"}
+          </Text>
         </View>
       ) : (
-        sessions.map((session) => {
+        filteredSessions.map((session) => {
           const slotsLeft = session.max_players - session.player_count;
           const sc = skillColor(session.skill_level);
           return (
@@ -352,7 +382,7 @@ export default function Home() {
         <Text style={styles.title}>Courts</Text>
       </View>
 
-      {(showAllCourts ? venues : venues.slice(0, 5)).map((venue) => (
+      {(showAllCourts || isSearching ? filteredVenues : filteredVenues.slice(0, 5)).map((venue) => (
         <TouchableOpacity
           key={venue.venue_id}
           style={styles.courtCard}
@@ -363,7 +393,7 @@ export default function Home() {
           <Text style={styles.courtSub}>{venue.court_count} court{venue.court_count !== 1 ? "s" : ""}</Text>
         </TouchableOpacity>
       ))}
-      {venues.length > 5 && (
+      {!isSearching && venues.length > 5 && (
         <TouchableOpacity style={styles.showMoreButton} onPress={() => setShowAllCourts(!showAllCourts)}>
           <Text style={styles.showMoreText}>{showAllCourts ? "Show Less" : `Show All (${venues.length})`}</Text>
           <MaterialIcons name={showAllCourts ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={r(18)} color="#0B36F4" />

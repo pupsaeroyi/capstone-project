@@ -370,6 +370,20 @@ export default function Community() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/api/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.ok) setUnreadCount(data.count);
+    } catch (err) {
+      console.error("Unread count error:", err);
+    }
+  }, []);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -394,7 +408,8 @@ export default function Community() {
   useFocusEffect(
     useCallback(() => {
       fetchPosts();
-    }, [fetchPosts])
+      fetchUnreadCount();
+    }, [fetchPosts, fetchUnreadCount])
   );
 
   const onRefresh = () => {
@@ -489,11 +504,26 @@ export default function Community() {
             <Text style={styles.title}>Social</Text>
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
-                <MaterialIcons name="person-add-alt-1" size={22} color="#0B36F4" />
+                <Ionicons name="search" size={22} color="#0B36F4" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.iconBtn}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => {
+                  setUnreadCount(0);
+                  router.push("/notifications" as any);
+                }}
+              >
                 <MaterialIcons name="notifications" size={22} color="#0B36F4" />
+                {unreadCount > 0 && (
+                  <View style={styles.notifDot}>
+                    {unreadCount > 9 ? (
+                      <Text style={styles.notifDotText}>9+</Text>
+                    ) : (
+                      <Text style={styles.notifDotText}>{unreadCount}</Text>
+                    )}
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -699,6 +729,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#E7EBFE",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  notifDot: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#EF4444",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  notifDotText: {
+    color: "#FFFFFF",
+    fontFamily: "Lexend_700Bold",
+    fontSize: 9,
+    lineHeight: 11,
   },
   deleteBtn: {
     width: 28,

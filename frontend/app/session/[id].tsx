@@ -5,6 +5,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
 import { API_BASE, authFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { openDirectChat } from "@/lib/chat";
 
 type Player = {
   user_id: number;
@@ -26,6 +27,9 @@ type SessionDetail = {
   venue_name: string;
   condition_label: string | null;
   host_username: string;
+  venue_thumbnail: string | null;
+  venue_is_free: boolean;
+  booking_fee: number;
   player_count: number;
   players: Player[];
   is_ended: boolean;
@@ -66,17 +70,22 @@ export default function SessionDetailScreen() {
   const slotsLeft = session ? session.max_players - session.player_count : 0;
 
   const handleJoin = async () => {
-    try {
-      const data = await authFetch(`/sessions/${id}/join`, { method: "POST" });
-      if (data.ok) {
-        Alert.alert("Joined!", `You're in. ${data.player_count} players now.`);
-        fetchSession();
-      } else {
-        Alert.alert("Cannot Join", data.message || "Something went wrong");
+    // Free sessions skip the payment flow entirely
+    if (!session?.booking_fee) {
+      try {
+        const data = await authFetch(`/sessions/${id}/join`, { method: "POST" });
+        if (data.ok) {
+          Alert.alert("Joined!", `You're in. ${data.player_count} players now.`);
+          fetchSession();
+        } else {
+          Alert.alert("Cannot Join", data.message || "Something went wrong");
+        }
+      } catch {
+        Alert.alert("Error", "Failed to join session");
       }
-    } catch {
-      Alert.alert("Error", "Failed to join session");
+      return;
     }
+    router.push(`/payment/${id}` as any);
   };
 
   const handleLeave = () => {
@@ -171,7 +180,14 @@ export default function SessionDetailScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: r(120) }} showsVerticalScrollIndicator={false}>
         {/* Hero Image */}
         <View style={styles.hero}>
-          <Image source={require("@/assets/images/default-court.jpg")} style={styles.heroImage} />
+          <Image
+            source={
+              session.venue_thumbnail
+                ? { uri: session.venue_thumbnail }
+                : require("@/assets/images/default-court.jpg")
+            }
+            style={styles.heroImage}
+          />
           <View style={styles.heroOverlay} />
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#FFF" />
@@ -230,9 +246,23 @@ export default function SessionDetailScreen() {
               <Text style={styles.hostLabel}>Host</Text>
               <Text style={styles.hostName}>{session.host_username}</Text>
             </View>
-            <TouchableOpacity style={styles.messageBtn}>
-              <Text style={styles.messageBtnText}>Message</Text>
-            </TouchableOpacity>
+            {!isCreator && (
+              <TouchableOpacity
+                style={styles.messageBtn}
+                onPress={async () => {
+                  try {
+                    await openDirectChat(session.created_by, router);
+                  } catch (err) {
+                    console.error("Open chat error:", err);
+                    Alert.alert("Error", "Could not open chat");
+                  }
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="chatbubble-ellipses" size={r(14)} color="#fff" style={{ marginRight: r(6) }} />
+                <Text style={styles.messageBtnText}>Message</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -316,10 +346,14 @@ export default function SessionDetailScreen() {
         <View style={styles.feeRow}>
           <View>
             <Text style={styles.feeLabel}>Booking Fee</Text>
-            <View style={styles.feeValue}>
-              <Text style={styles.feeAmount}>300</Text>
-              <Text style={styles.feePer}>/ person</Text>
-            </View>
+            {session.booking_fee > 0 ? (
+              <View style={styles.feeValue}>
+                <Text style={styles.feeAmount}>฿{session.booking_fee}</Text>
+                <Text style={styles.feePer}>/ person</Text>
+              </View>
+            ) : (
+              <Text style={[styles.feeAmount, { color: "#10B981" }]}>Free</Text>
+            )}
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={styles.feeLabel}>Remaining</Text>
@@ -428,9 +462,10 @@ const styles = StyleSheet.create({
   hostLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8" },
   hostName: { fontSize: r(15), fontFamily: "Lexend_700Bold", color: "#0F172A" },
   messageBtn: {
-    backgroundColor: "#EEF2FF", paddingHorizontal: r(16), paddingVertical: r(8), borderRadius: r(12),
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#0B36F4", paddingHorizontal: r(14), paddingVertical: r(8), borderRadius: r(12),
   },
-  messageBtnText: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#0B36F4" },
+  messageBtnText: { fontSize: r(13), fontFamily: "Lexend_600SemiBold", color: "#fff" },
 
   // Requirements
   reqRow: { flexDirection: "row", alignItems: "center", gap: r(10) },

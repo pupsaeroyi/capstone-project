@@ -50,16 +50,46 @@ export default function CreatePost() {
     }
   };
 
+  const uploadPostImage = async (uri: string, token: string): Promise<string | null> => {
+    const formData = new FormData();
+    const name = uri.split("/").pop() || "post.jpg";
+    const ext = (name.split(".").pop() || "jpg").toLowerCase();
+    const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+
+    formData.append("file", {
+      uri,
+      name,
+      type,
+    } as any);
+
+    const res = await fetch(`${API_BASE}/upload/post-image`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.error("Post image upload failed:", data.message);
+      return null;
+    }
+    return data.url;
+  };
+
   const handleSubmit = async () => {
     if (!content.trim() || submitting) return;
 
     setSubmitting(true);
     try {
       const token = await SecureStore.getItemAsync("accessToken");
+      if (!token) {
+        setSubmitting(false);
+        return;
+      }
 
-      // TODO: upload localImageUri to cloud storage (Cloudinary/Supabase),
-      // then pass the returned URL as image_url below.
-      const image_url: string | null = null;
+      let image_url: string | null = null;
+      if (localImageUri) {
+        image_url = await uploadPostImage(localImageUri, token);
+      }
 
       const res = await fetch(`${API_BASE}/posts`, {
         method: "POST",

@@ -13,6 +13,7 @@ import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
+import { openDirectChat } from "@/lib/chat";
 
 export default function ViewProfile() {
   const params = useLocalSearchParams();
@@ -22,9 +23,15 @@ export default function ViewProfile() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [friendStatus, setFriendStatus] = useState<"none" | "pending" | "accepted">("none");
+  const [friendDirection, setFriendDirection] = useState<"incoming" | "outgoing" | null>(null);
+  const [friendBusy, setFriendBusy] = useState(false);
 
   useEffect(() => {
-    if (userId) fetchProfile();
+    if (userId) {
+      fetchProfile();
+      fetchFriendStatus();
+    }
   }, [userId]);
 
   const fetchProfile = async () => {
@@ -45,6 +52,92 @@ export default function ViewProfile() {
       console.error("Fetch profile error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFriendStatus = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/api/friends/status/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFriendStatus(data.status);
+        setFriendDirection(data.direction);
+      }
+    } catch (err) {
+      console.error("Fetch friend status error:", err);
+    }
+  };
+
+  const sendFriendRequest = async () => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/api/friends/request`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestedId: Number(userId) }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFriendStatus("pending");
+        setFriendDirection("outgoing");
+      }
+    } catch (err) {
+      console.error("Send friend request error:", err);
+    } finally {
+      setFriendBusy(false);
+    }
+  };
+
+  const acceptFriendRequest = async () => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/api/friends/accept`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requesterId: Number(userId) }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFriendStatus("accepted");
+      }
+    } catch (err) {
+      console.error("Accept friend request error:", err);
+    } finally {
+      setFriendBusy(false);
+    }
+  };
+
+  const removeFriend = async () => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      const res = await fetch(`${API_BASE}/api/friends/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFriendStatus("none");
+        setFriendDirection(null);
+      }
+    } catch (err) {
+      console.error("Remove friend error:", err);
+    } finally {
+      setFriendBusy(false);
     }
   };
 
@@ -101,6 +194,83 @@ export default function ViewProfile() {
           {/* Rank */}
           <Text style={styles.rankLabel}>Athlete Rank</Text>
           <Text style={styles.rankValue}>{profile.rank || "Unranked"}</Text>
+
+          {/* Friend action */}
+          <View style={styles.friendActionWrap}>
+            {friendStatus === "none" && (
+              <TouchableOpacity
+                style={[styles.friendBtnPrimary, friendBusy && styles.friendBtnDisabled]}
+                onPress={sendFriendRequest}
+                disabled={friendBusy}
+              >
+                <Ionicons name="person-add" size={r(16)} color="#fff" />
+                <Text style={styles.friendBtnPrimaryText}>Add Friend</Text>
+              </TouchableOpacity>
+            )}
+
+            {friendStatus === "pending" && friendDirection === "outgoing" && (
+              <TouchableOpacity
+                style={[styles.friendBtnSecondary, friendBusy && styles.friendBtnDisabled]}
+                onPress={removeFriend}
+                disabled={friendBusy}
+              >
+                <Ionicons name="time-outline" size={r(16)} color="#64748B" />
+                <Text style={styles.friendBtnSecondaryText}>Request Sent · Cancel</Text>
+              </TouchableOpacity>
+            )}
+
+            {friendStatus === "pending" && friendDirection === "incoming" && (
+              <View style={styles.friendBtnRow}>
+                <TouchableOpacity
+                  style={[styles.friendBtnInline, styles.friendBtnAccept, friendBusy && styles.friendBtnDisabled]}
+                  onPress={acceptFriendRequest}
+                  disabled={friendBusy}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="checkmark" size={r(16)} color="#fff" />
+                  <Text style={styles.friendBtnAcceptText}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.friendBtnInline, styles.friendBtnDecline, friendBusy && styles.friendBtnDisabled]}
+                  onPress={removeFriend}
+                  disabled={friendBusy}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="close" size={r(16)} color="#EF4444" />
+                  <Text style={styles.friendBtnDeclineText}>Decline</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {friendStatus === "accepted" && (
+              <View style={styles.friendBtnRow}>
+                <TouchableOpacity
+                  style={[styles.friendBtnInline, styles.friendBtnAccept, friendBusy && styles.friendBtnDisabled]}
+                  onPress={async () => {
+                    try {
+                      await openDirectChat(Number(userId), router);
+                    } catch (err) {
+                      console.error("Open chat error:", err);
+                    }
+                  }}
+                  disabled={friendBusy}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="chatbubble-ellipses" size={r(16)} color="#fff" />
+                  <Text style={styles.friendBtnAcceptText}>Message</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.friendBtnInline, styles.friendBtnFriends, friendBusy && styles.friendBtnDisabled]}
+                  onPress={removeFriend}
+                  disabled={friendBusy}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="people" size={r(16)} color="#0B36F4" />
+                  <Text style={styles.friendBtnFriendsText}>Friends</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
           {/* Stats */}
           <View style={styles.statsRow}>
@@ -241,6 +411,104 @@ const styles = StyleSheet.create({
     fontSize: r(20),
     color: "#0F172A",
     marginTop: r(8),
+  },
+
+  friendActionWrap: {
+    width: "100%",
+    marginTop: r(18),
+    alignItems: "center",
+  },
+
+  friendBtnRow: {
+    flexDirection: "row",
+    gap: r(10),
+    width: "100%",
+  },
+
+  friendBtnInline: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: r(6),
+    paddingVertical: r(12),
+    paddingHorizontal: r(10),
+    borderRadius: r(12),
+    minWidth: 0,
+  },
+
+  friendBtnAccept: {
+    backgroundColor: "#0B36F4",
+  },
+
+  friendBtnAcceptText: {
+    color: "#fff",
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+  },
+
+  friendBtnDecline: {
+    backgroundColor: "#FEE2E2",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+
+  friendBtnDeclineText: {
+    color: "#EF4444",
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+  },
+
+  friendBtnFriends: {
+    backgroundColor: "#E0E7FF",
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+  },
+
+  friendBtnFriendsText: {
+    color: "#0B36F4",
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+  },
+
+  friendBtnPrimary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: r(8),
+    backgroundColor: "#0B36F4",
+    paddingVertical: r(12),
+    paddingHorizontal: r(22),
+    borderRadius: r(12),
+    minWidth: r(180),
+  },
+
+  friendBtnPrimaryText: {
+    color: "#fff",
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+  },
+
+  friendBtnSecondary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: r(8),
+    backgroundColor: "#F1F5F9",
+    paddingVertical: r(12),
+    paddingHorizontal: r(22),
+    borderRadius: r(12),
+    minWidth: r(180),
+  },
+
+  friendBtnSecondaryText: {
+    color: "#64748B",
+    fontFamily: "Lexend_600SemiBold",
+    fontSize: r(14),
+  },
+
+  friendBtnDisabled: {
+    opacity: 0.6,
   },
 
   statsRow: {

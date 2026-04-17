@@ -1,10 +1,7 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
-export const LOCAL_API =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:3000/"
-    : "http://localhost:3000/";
+export const LOCAL_API = "http://192.168.1.8:3000";
 
 const PROD_API = "https://capstone-project-t6ye.onrender.com";
 
