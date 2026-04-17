@@ -65,6 +65,94 @@ router.put("/accept", requireAuth, async (req, res) => {
   }
 });
 
+// Get pending friend requests sent to the current user
+router.get("/pending", requireAuth, async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         f.id AS friendship_id,
+         u.id AS requester_id,
+         u.username,
+         pp.avatar_url,
+         f.created_at
+       FROM friends f
+       JOIN users u ON u.id = f.requester_id
+       LEFT JOIN player_profile pp ON pp.user_id = u.id
+       WHERE f.requested_id = $1 AND f.status = 'pending'
+       ORDER BY f.created_at DESC`,
+      [userId]
+    );
+
+    res.json({ ok: true, requests: result.rows });
+  } catch (err) {
+    console.error("Get pending requests error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Reject or cancel a friend request / unfriend
+router.delete("/:otherUserId", requireAuth, async (req, res) => {
+  const userId = req.userId;
+  const otherUserId = parseInt(req.params.otherUserId, 10);
+
+  if (!Number.isFinite(otherUserId)) {
+    return res.status(400).json({ ok: false, message: "Invalid user id" });
+  }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM friends
+       WHERE (requester_id = $1 AND requested_id = $2)
+          OR (requester_id = $2 AND requested_id = $1)
+       RETURNING id`,
+      [userId, otherUserId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: "Friendship not found" });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete friendship error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// Get friend relationship status with another user
+router.get("/status/:otherUserId", requireAuth, async (req, res) => {
+  const userId = req.userId;
+  const otherUserId = parseInt(req.params.otherUserId, 10);
+
+  if (!Number.isFinite(otherUserId)) {
+    return res.status(400).json({ ok: false, message: "Invalid user id" });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT status, requester_id, requested_id
+       FROM friends
+       WHERE (requester_id = $1 AND requested_id = $2)
+          OR (requester_id = $2 AND requested_id = $1)
+       LIMIT 1`,
+      [userId, otherUserId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ ok: true, status: "none", direction: null });
+    }
+
+    const row = result.rows[0];
+    const direction = row.requester_id === userId ? "outgoing" : "incoming";
+    res.json({ ok: true, status: row.status, direction });
+  } catch (err) {
+    console.error("Get friend status error:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 // Get User's Accepted Friends List
 router.get("/", requireAuth, async (req, res) => {
   const userId = req.userId;

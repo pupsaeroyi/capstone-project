@@ -6,7 +6,7 @@ import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/dat
 import { r } from "@/utils/responsive";
 import { authFetch, API_BASE } from "@/lib/api";
 
-type VenueOption = { venue_id: number; venue_name: string; thumbnail_url: string };
+type VenueOption = { venue_id: number; venue_name: string; thumbnail_url: string; is_free: boolean };
 type PickerTarget = "date" | "start" | "end" | null;
 
 export default function CreateSessionScreen() {
@@ -24,7 +24,7 @@ export default function CreateSessionScreen() {
       .then(res => res.json())
       .then(data => {
         if (data.ok) {
-          const list = data.venues.map((v: any) => ({ venue_id: v.venue_id, venue_name: v.venue_name, thumbnail_url: v.thumbnail_url || "" }));
+          const list = data.venues.map((v: any) => ({ venue_id: v.venue_id, venue_name: v.venue_name, thumbnail_url: v.thumbnail_url || "", is_free: !!v.is_free }));
           setVenues(list);
           if (paramVenueId) {
             const match = list.find((v: VenueOption) => v.venue_id.toString() === paramVenueId);
@@ -43,7 +43,11 @@ export default function CreateSessionScreen() {
   const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000));
   const [sessionType, setSessionType] = useState<"casual" | "ranked">("casual");
   const [mbtiMatching, setMbtiMatching] = useState(true);
+  const [bookingFee, setBookingFee] = useState("150");
   const [submitting, setSubmitting] = useState(false);
+
+  const selectedVenue = venues.find((v) => v.venue_id.toString() === selectedVenueId);
+  const venueIsFree = !!selectedVenue?.is_free;
 
   const [activePicker, setActivePicker] = useState<PickerTarget>(null);
   const [tempDate, setTempDate] = useState(new Date());
@@ -118,6 +122,7 @@ export default function CreateSessionScreen() {
           skill_level: skillLevel,
           session_type: sessionType,
           mbti_matching: mbtiMatching,
+          booking_fee: venueIsFree ? 0 : Math.max(0, parseInt(bookingFee || "0", 10) || 0),
         }),
       });
 
@@ -276,6 +281,40 @@ export default function CreateSessionScreen() {
           placeholder="12"
           placeholderTextColor="#94A3B8"
         />
+
+        {/* Booking Fee */}
+        <Text style={styles.label}>Booking Fee (THB / person)</Text>
+        {venueIsFree ? (
+          <View style={styles.freeCard}>
+            <MaterialIcons name="school" size={r(18)} color="#10B981" />
+            <Text style={styles.freeCardText}>This is a free university venue — no fee.</Text>
+          </View>
+        ) : (
+          <>
+            <TextInput
+              style={styles.input}
+              value={bookingFee}
+              onChangeText={(t) => setBookingFee(t.replace(/[^0-9]/g, ""))}
+              keyboardType="number-pad"
+              placeholder="0 for free"
+              placeholderTextColor="#94A3B8"
+              maxLength={5}
+            />
+            <View style={styles.feePresetRow}>
+              {["0", "100", "150", "200", "300"].map((p) => (
+                <TouchableOpacity
+                  key={p}
+                  style={[styles.feePreset, bookingFee === p && styles.feePresetActive]}
+                  onPress={() => setBookingFee(p)}
+                >
+                  <Text style={[styles.feePresetText, bookingFee === p && styles.feePresetTextActive]}>
+                    {p === "0" ? "Free" : `฿${p}`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* Submit */}
         <TouchableOpacity
@@ -566,6 +605,47 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_400Regular",
     color: "#64748B",
     lineHeight: r(18),
+  },
+
+  freeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: r(8),
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+    paddingHorizontal: r(14),
+    paddingVertical: r(12),
+    borderRadius: r(12),
+  },
+  freeCardText: {
+    fontSize: r(13),
+    fontFamily: "Lexend_500Medium",
+    color: "#065F46",
+    flex: 1,
+  },
+  feePresetRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: r(8),
+    marginTop: r(8),
+  },
+  feePreset: {
+    paddingHorizontal: r(14),
+    paddingVertical: r(8),
+    borderRadius: r(18),
+    backgroundColor: "#F1F5F9",
+  },
+  feePresetActive: {
+    backgroundColor: "#0B36F4",
+  },
+  feePresetText: {
+    fontSize: r(13),
+    fontFamily: "Lexend_600SemiBold",
+    color: "#64748B",
+  },
+  feePresetTextActive: {
+    color: "#FFFFFF",
   },
 
   submitButton: {

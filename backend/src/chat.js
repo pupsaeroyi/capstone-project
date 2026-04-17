@@ -15,8 +15,47 @@ function getUserIdFromSocket(socket) {
   }
 }
 
+// ─── Ensure chat-related schema additions exist ─────────────────────────────
+export async function ensureChatSchema() {
+  try {
+    await pool.query(
+      `ALTER TABLE conversation_participants
+       ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE`
+    );
+  } catch (err) {
+    console.error("ensureChatSchema error:", err);
+  }
+}
+
 // ─── REST helpers (called from index.js) ────────────────────────────────────
 export function chatRoutes(app, requireAuth) {
+
+  // ── Toggle pin on a conversation for the current user ────────────────────
+  app.post("/conversations/:id/pin", requireAuth, async (req, res) => {
+    const convId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(convId)) {
+      return res.status(400).json({ ok: false, message: "Invalid conversation id" });
+    }
+
+    try {
+      const result = await pool.query(
+        `UPDATE conversation_participants
+         SET is_pinned = NOT is_pinned
+         WHERE conversation_id = $1 AND user_id = $2
+         RETURNING is_pinned`,
+        [convId, req.userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(403).json({ ok: false, message: "Not a participant" });
+      }
+
+      return res.json({ ok: true, is_pinned: result.rows[0].is_pinned });
+    } catch (err) {
+      console.error("Toggle pin error:", err);
+      return res.status(500).json({ ok: false, message: "Server error" });
+    }
+  });
 
   // ── Get or create a private conversation between two users ──────────────
   app.post("/conversations/direct", requireAuth, async (req, res) => {
@@ -68,6 +107,7 @@ export function chatRoutes(app, requireAuth) {
         `SELECT
            c.id AS conversation_id,
            c.is_group,
+           COALESCE(cp.is_pinned, false) AS is_pinned,
            -- For group chats: chatroom name/session info
            cr.name AS group_name,
            cr.session_id,
@@ -105,7 +145,7 @@ export function chatRoutes(app, requireAuth) {
            ORDER BY sent_at DESC
            LIMIT 1
          ) dm ON true
-         ORDER BY COALESCE(dm.sent_at, c.created_at) DESC`,
+         ORDER BY cp.is_pinned DESC, COALESCE(dm.sent_at, c.created_at) DESC`,
         [req.userId]
       );
 

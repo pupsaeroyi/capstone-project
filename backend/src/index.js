@@ -7,40 +7,46 @@ import { pool } from "./db.js";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "./auth.js";
 import { sendEmail } from "./mailer.js";
-import { sessionRoutes } from "./sessions.js";
+import { sessionRoutes, ensureSessionsSchema } from "./sessions.js";
 import questionnaireRouter from "./questionnaire.js";
 import { postRoutes } from "./posts.js";
 import { createServer } from "http";    
 import { Server } from "socket.io";
 import friendsRoutes from "./friends.js";
-import { initChatLogic, chatRoutes } from "./chat.js";
+import notificationsRoutes, { ensureNotificationsSchema } from "./notifications.js";
+import { initChatLogic, chatRoutes, ensureChatSchema } from "./chat.js";
 import { ratingRoutes } from "./ratings.js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import multer from "multer";
 
 dotenv.config();
 
-const requiredEnv = [
-  "JWT_SECRET",
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is missing in environment variables");
+}
+
+const awsEnv = [
   "AWS_REGION",
   "AWS_ACCESS_KEY_ID",
   "AWS_SECRET_ACCESS_KEY",
   "S3_BUCKET_NAME",
 ];
-
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    throw new Error(`${key} is missing in environment variables`);
-  }
+const s3Enabled = awsEnv.every((k) => !!process.env[k]);
+if (!s3Enabled) {
+  console.warn(
+    `[startup] S3 disabled — missing env: ${awsEnv.filter((k) => !process.env[k]).join(", ")}`
+  );
 }
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+const s3 = s3Enabled
+  ? new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    })
+  : null;
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -66,12 +72,16 @@ const io = new Server(httpServer, {
 
 app.use("/api", questionnaireRouter);
 app.use("/api/friends", friendsRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 postRoutes(app);
 ratingRoutes(app);
 sessionRoutes(app);
-chatRoutes(app, requireAuth); 
+chatRoutes(app, requireAuth);
 initChatLogic(io);
+ensureChatSchema();
+ensureNotificationsSchema();
+ensureSessionsSchema();
 
 // Health check
 app.get("/health", async (req, res) => {
@@ -680,7 +690,7 @@ app.delete("/auth/delete-account", requireAuth, async (req, res) => {
 app.get("/venues", async (req, res) => {
   try {
     const venueResult = await pool.query(
-      "SELECT id AS venue_id, venue_name, latitude, longitude, court_count, rating, review_count, thumbnail_url, tags, condition_label FROM venues ORDER BY rating DESC"
+      "SELECT id AS venue_id, venue_name, latitude, longitude, court_count, rating, review_count, thumbnail_url, tags, condition_label, is_free FROM venues ORDER BY rating DESC"
     );
 
     const sessionResult = await pool.query(
@@ -693,6 +703,7 @@ app.get("/venues", async (req, res) => {
          s.max_players,
          s.start_time,
          s.end_time,
+         s.booking_fee,
          COUNT(sp.id)::int AS player_count
        FROM sessions s
        LEFT JOIN session_players sp ON sp.session_id = s.id
@@ -713,6 +724,7 @@ app.get("/venues", async (req, res) => {
         max_players: s.max_players,
         start_time: s.start_time,
         end_time: s.end_time,
+        booking_fee: s.booking_fee,
       });
     }
 
@@ -736,46 +748,65 @@ app.get("/venues", async (req, res) => {
 });
 
 // upload avatar
+// Upload an image to S3 and return its public URL.
+// `folder` controls the prefix ("avatars" | "posts"). The bucket must allow
+// public GetObject on the prefix via bucket policy (ACLs are disabled on
+// modern buckets, so we intentionally do not send ACL=public-read).
+async function uploadImageToS3(file, userId, folder) {
+  const safeName = (file.originalname || "image.jpg").replace(/[^\w.-]+/g, "_");
+  const key = `${folder}/${userId}-${Date.now()}-${safeName}`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    })
+  );
+
+  return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+}
+
 app.post("/upload/avatar", requireAuth, upload.single("file"), async (req, res) => {
   try {
+    if (!s3) {
+      return res.status(503).json({ ok: false, message: "Upload disabled: S3 not configured" });
+    }
     if (!req.file) {
       return res.status(400).json({ ok: false, message: "No file uploaded" });
     }
 
-    const file = req.file;
-
-    const key = `avatars/${req.userId}-${Date.now()}-${file.originalname}`;
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: "public-read",
-      })
-    );
-
-    const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const imageUrl = await uploadImageToS3(req.file, req.userId, "avatars");
 
     await pool.query(
-      `UPDATE player_profile 
-       SET avatar_url = $1, updated_at = NOW() 
+      `UPDATE player_profile
+       SET avatar_url = $1, updated_at = NOW()
        WHERE user_id = $2`,
       [imageUrl, req.userId]
     );
 
-    return res.json({
-      ok: true,
-      url: imageUrl,
-    });
-
+    return res.json({ ok: true, url: imageUrl });
   } catch (err) {
-    console.error("S3 upload error:", err);
-    return res.status(500).json({
-      ok: false,
-      message: "Upload failed",
-    });
+    console.error("S3 avatar upload error:", err);
+    return res.status(500).json({ ok: false, message: "Upload failed" });
+  }
+});
+
+app.post("/upload/post-image", requireAuth, upload.single("file"), async (req, res) => {
+  try {
+    if (!s3) {
+      return res.status(503).json({ ok: false, message: "Upload disabled: S3 not configured" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ ok: false, message: "No file uploaded" });
+    }
+
+    const imageUrl = await uploadImageToS3(req.file, req.userId, "posts");
+    return res.json({ ok: true, url: imageUrl });
+  } catch (err) {
+    console.error("S3 post image upload error:", err);
+    return res.status(500).json({ ok: false, message: "Upload failed" });
   }
 });
 

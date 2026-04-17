@@ -24,6 +24,7 @@ type Conversation = {
   last_message_at?: string;
   last_sender_id?: number;
   unread_count: number;
+  is_pinned?: boolean;
 };
 
 type TypingEvent = {
@@ -202,7 +203,6 @@ export default function ChatScreen() {
   const [search, setSearch] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [pinnedIds, setPinnedIds] = useState<number[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -281,17 +281,36 @@ export default function ChatScreen() {
     return c.is_group;
   })
   .sort((a, b) => {
-    const aPinned = pinnedIds.includes(a.conversation_id);
-    const bPinned = pinnedIds.includes(b.conversation_id);
-    if (aPinned && !bPinned) return -1;
-    if (!aPinned && bPinned) return 1;
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
     return 0; // Maintain original order (usually by date) if both/neither are pinned
   });
 
-const togglePin = (id: number) => {
-  setPinnedIds(prev => 
-    prev.includes(id) ? prev.filter(p => p !== id) : [id, ...prev]
+const togglePin = async (id: number) => {
+  // Optimistic update
+  setConversations((prev) =>
+    prev.map((c) =>
+      c.conversation_id === id ? { ...c, is_pinned: !c.is_pinned } : c
+    )
   );
+  try {
+    const data = await authFetch(`/conversations/${id}/pin`, { method: "POST" });
+    if (!data.ok) {
+      // Revert on failure
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.conversation_id === id ? { ...c, is_pinned: !c.is_pinned } : c
+        )
+      );
+    }
+  } catch (err) {
+    console.error("togglePin error:", err);
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.conversation_id === id ? { ...c, is_pinned: !c.is_pinned } : c
+      )
+    );
+  }
 };
 
   if (loading) {
@@ -308,17 +327,13 @@ const togglePin = (id: number) => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.headerBtn} 
+          <TouchableOpacity
+            style={styles.headerBtn}
             onPress={() => setIsEditing(!isEditing)}
           >
             <Text style={[styles.editText, isEditing && { color: "#0B36F4", fontFamily: "Lexend_500Medium" }]}>
               {isEditing ? "Done" : "Edit"}
             </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.6}>
-            <Feather name="user-plus" size={r(20)} color="#0F172A" />
           </TouchableOpacity>
         </View>
       </View>
@@ -382,7 +397,7 @@ const togglePin = (id: number) => {
             currentUserId={user?.id ?? 0}
             typingUser={typingMap[item.conversation_id]}
             isEditing={isEditing} 
-            isPinned={pinnedIds.includes(item.conversation_id)}
+            isPinned={!!item.is_pinned}
             onPin={() => togglePin(item.conversation_id)}
             onDelete={() => togglePin(item.conversation_id)} //To be implemented: actual delete logic
             onPress={() =>

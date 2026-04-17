@@ -3,6 +3,20 @@ import { createSessionChatroom, addUserToSessionChat, removeUserFromSessionChat 
 import { requireAuth } from "./auth.js";
 import { withTransaction } from "../assets/routes/transaction.js";
 
+// Ensure booking-fee schema exists (idempotent)
+export async function ensureSessionsSchema() {
+  try {
+    await pool.query(
+      `ALTER TABLE sessions ADD COLUMN IF NOT EXISTS booking_fee INT NOT NULL DEFAULT 0`
+    );
+    await pool.query(
+      `ALTER TABLE venues ADD COLUMN IF NOT EXISTS is_free BOOLEAN NOT NULL DEFAULT false`
+    );
+  } catch (err) {
+    console.error("ensureSessionsSchema error:", err);
+  }
+}
+
 export function sessionRoutes(app) {
   // Get all active sessions across all venues (public)
   app.get("/sessions", async (req, res) => {
@@ -105,8 +119,11 @@ export function sessionRoutes(app) {
            s.venue_id,
            s.session_type,
            s.mbti_matching,
+           s.booking_fee,
            v.venue_name,
            v.condition_label,
+           v.thumbnail_url AS venue_thumbnail,
+           v.is_free AS venue_is_free,
            u.username AS host_username
          FROM sessions s
          JOIN venues v ON v.id = s.venue_id
@@ -236,13 +253,18 @@ export function sessionRoutes(app) {
 
   // Create a session (auth required)
   app.post("/sessions", requireAuth, async (req, res) => {
-    let { venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching } = req.body;
+    let { venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching, booking_fee } = req.body;
 
     sport = typeof sport === "string" ? sport.trim() : "volleyball";
     session_name = typeof session_name === "string" ? session_name.trim() : "";
     skill_level = typeof skill_level === "string" ? skill_level.trim() : "all";
     session_type = session_type === "ranked" ? "ranked" : "casual";
     mbti_matching = mbti_matching === true;
+
+    booking_fee = Number.isFinite(Number(booking_fee)) ? Math.max(0, Math.floor(Number(booking_fee))) : 0;
+    if (booking_fee > 10000) {
+      return res.status(400).json({ ok: false, message: "booking_fee cannot exceed 10000" });
+    }
 
     if (!venue_id || !max_players || !start_time || !end_time) {
       return res.status(400).json({ ok: false, message: "venue_id, max_players, start_time, and end_time are required" });
@@ -269,17 +291,19 @@ export function sessionRoutes(app) {
     }
 
     try {
-      const venueCheck = await pool.query("SELECT 1 FROM venues WHERE id = $1", [venue_id]);
+      const venueCheck = await pool.query("SELECT id, is_free FROM venues WHERE id = $1", [venue_id]);
       if (venueCheck.rows.length === 0) {
         return res.status(404).json({ ok: false, message: "Venue not found" });
       }
+      // University / free venues force the booking fee to 0 regardless of host input
+      if (venueCheck.rows[0].is_free) booking_fee = 0;
 
       const session = await withTransaction(async (client) => {
         const result = await client.query(
-          `INSERT INTO sessions (venue_id, created_by, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-           RETURNING id, venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching`,
-          [venue_id, req.userId, sport, max_players, start_time, end_time, session_name || null, skill_level, session_type, mbti_matching]
+          `INSERT INTO sessions (venue_id, created_by, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching, booking_fee)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           RETURNING id, venue_id, sport, max_players, start_time, end_time, session_name, skill_level, session_type, mbti_matching, booking_fee`,
+          [venue_id, req.userId, sport, max_players, start_time, end_time, session_name || null, skill_level, session_type, mbti_matching, booking_fee]
         );
 
         const newSession = result.rows[0];
@@ -306,6 +330,7 @@ export function sessionRoutes(app) {
           player_count: 1,
           start_time: session.start_time,
           end_time: session.end_time,
+          booking_fee: session.booking_fee,
         },
       });
     } catch (err) {
