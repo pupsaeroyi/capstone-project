@@ -32,7 +32,7 @@ function initials(name: string) {
   return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
-// ─── Message Bubble ───────────────────────────────────────────────────────────
+// Message Bubble
 function Bubble({ msg, isMine, showName }: { msg: Message; isMine: boolean; showName: boolean }) {
   const time = new Date(msg.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
   const size = r(30);
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
-    paddingBottom: Platform.OS === "ios" ? r(20) : r(10),
+    paddingBottom: r(30),
   },
 
   input: {

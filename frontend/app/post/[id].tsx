@@ -1,22 +1,11 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList,TouchableOpacity, Image, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useCallback } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "@/lib/api";
+import {r} from "@/utils/responsive";
 
 const TAG_COLORS: Record<string, string> = {
   Friends: "#0B36F4",
@@ -301,7 +290,7 @@ export default function PostDetail() {
               {deletingPost ? (
                 <ActivityIndicator size="small" color="#EF4444" />
               ) : (
-                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                <MaterialIcons name="delete-outline" size={r(22)} color="#EF4444" />
               )}
             </TouchableOpacity>
           ) : null}
@@ -340,11 +329,11 @@ export default function PostDetail() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="chevron-back" size={28} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post</Text>
         <View style={{ width: 36 }} />
@@ -400,7 +389,7 @@ export default function PostDetail() {
                     {deletingCommentId === item.id ? (
                       <ActivityIndicator size="small" color="#EF4444" />
                     ) : (
-                      <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                      <MaterialIcons name="delete-outline" size={r(22)} color="#EF4444" />
                     )}
                   </TouchableOpacity>
                 ) : null}
@@ -443,9 +432,9 @@ export default function PostDetail() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  screen: {
     flex: 1,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#fff",
   },
 
   header: {
@@ -582,7 +571,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Lexend_600SemiBold",
     color: "#0F172A",
-    paddingTop: 4,
+    paddingTop: 2,
   },
 
   listContent: {
@@ -680,6 +669,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
     gap: 10,
+    paddingBottom: r(30),
   },
 
   commentInput: {

@@ -165,7 +165,7 @@ export default function ViewProfile() {
       {/* Header with back button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={r(26)} color="#0F172A" />
+          <Ionicons name="chevron-back" size={28} color="#0F172A" />
         </TouchableOpacity>
       </View>
 

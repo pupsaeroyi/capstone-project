@@ -246,6 +246,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "Lexend_600SemiBold",
     color: "#0F172A",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
 
   postBtn: {
