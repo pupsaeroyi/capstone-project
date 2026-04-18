@@ -300,12 +300,13 @@ export default function CreateSessionScreen() {
               placeholderTextColor="#94A3B8"
               maxLength={5}
             />
+
             <View style={styles.feePresetRow}>
               {["0", "100", "150", "200", "300"].map((p) => (
                 <TouchableOpacity
                   key={p}
                   style={[styles.feePreset, bookingFee === p && styles.feePresetActive]}
-                  onPress={() => setBookingFee(p)}
+                   onPress={() => setBookingFee(p)}
                 >
                   <Text style={[styles.feePresetText, bookingFee === p && styles.feePresetTextActive]}>
                     {p === "0" ? "Free" : `฿${p}`}
@@ -313,6 +314,7 @@ export default function CreateSessionScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
           </>
         )}
 
@@ -624,11 +626,12 @@ const styles = StyleSheet.create({
     color: "#065F46",
     flex: 1,
   },
+
   feePresetRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: r(8),
     marginTop: r(8),
+    justifyContent: "space-between", 
   },
   feePreset: {
     paddingHorizontal: r(14),
