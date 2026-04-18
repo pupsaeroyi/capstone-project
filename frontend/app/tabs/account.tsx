@@ -421,10 +421,10 @@ export default function Account() {
   statCard: {
     flex: 1,
     backgroundColor: "#F8FAFC", 
-    paddingVertical: r(18),
+    paddingVertical: 18,
     borderRadius: r(16),
     alignItems: "center",
-	marginHorizontal: r(12),
+	marginHorizontal: 18,
     borderWidth: 1,
     borderColor: "#E7EBFE",
   },
@@ -436,7 +436,7 @@ export default function Account() {
   },
   statValue: {
     fontFamily: "Lexend_700Bold",
-    fontSize: r(20),
+    fontSize: r(22),
     color: "#0B36F4",
   },
   

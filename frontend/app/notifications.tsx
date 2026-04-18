@@ -172,11 +172,11 @@ export default function NotificationsScreen() {
         </View>
       ) : item.type === "comment" ? (
         <View style={[styles.typeBadge, { backgroundColor: "#0B36F4" }]}>
-          <Ionicons name="chatbubble" size={r(10)} color="#fff" />
+          <Ionicons name="chatbubble" size={r(9)} color="#fff" />
         </View>
       ) : (
         <View style={[styles.typeBadge, { backgroundColor: "#10B981" }]}>
-          <Ionicons name="person-add" size={r(10)} color="#fff" />
+          <MaterialIcons name="person-add-alt-1" size={r(10)} color="#fff" />
         </View>
       );
 

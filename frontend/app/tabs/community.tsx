@@ -5,6 +5,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "@/lib/api";
+import { r } from "@/utils/responsive";
 
 const FILTERS = ["All Posts", "#Friends", "#Drills", "#Highlights", "#Tips"];
 
@@ -344,7 +345,7 @@ function SearchSheet({
                             sendFriendRequest(user.id);
                           }}
                       >
-                        <Ionicons name="person-add-outline" size={14} color="#fff" />
+                        <MaterialIcons name="person-add-alt-1" size={r(18)} color="#fff" />
                         <Text style={sheet.addBtnText}>Add</Text>
                       </TouchableOpacity>
                     )}
@@ -897,7 +898,7 @@ const styles = StyleSheet.create({
 
   fab: {
     position: "absolute",
-    bottom: 70,
+    bottom: 60,
     right: 20,
     flexDirection: "row",
     alignItems: "center",

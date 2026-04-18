@@ -11,7 +11,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { API_BASE } from "@/lib/api";
 import * as SecureStore from "expo-secure-store";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { r } from "@/utils/responsive";
 import { openDirectChat } from "@/lib/chat";
 
@@ -203,7 +203,7 @@ export default function ViewProfile() {
                 onPress={sendFriendRequest}
                 disabled={friendBusy}
               >
-                <Ionicons name="person-add" size={r(16)} color="#fff" />
+                <MaterialIcons name="person-add-alt-1" size={r(20)} color="#fff" />
                 <Text style={styles.friendBtnPrimaryText}>Add Friend</Text>
               </TouchableOpacity>
             )}
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     gap: r(6),
     paddingVertical: r(12),
     paddingHorizontal: r(10),
-    borderRadius: r(12),
+    borderRadius: 32,
     minWidth: 0,
   },
 
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0B36F4",
     paddingVertical: r(12),
     paddingHorizontal: r(22),
-    borderRadius: r(12),
+    borderRadius: 32,
     minWidth: r(180),
   },
 
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     paddingVertical: r(12),
     paddingHorizontal: r(22),
-    borderRadius: r(12),
+    borderRadius: 32,
     minWidth: r(180),
   },
 
@@ -521,10 +521,10 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: "#F8FAFC",
-    paddingVertical: r(18),
+    paddingVertical: 18,
     borderRadius: r(16),
     alignItems: "center",
-    marginHorizontal: r(12),
+    marginHorizontal: 18,
     borderWidth: 1,
     borderColor: "#E7EBFE",
   },
