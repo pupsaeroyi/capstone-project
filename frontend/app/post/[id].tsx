@@ -471,7 +471,6 @@ const styles = StyleSheet.create({
   postCard: {
     backgroundColor: "#fff",
     padding: 16,
-    marginBottom: 8,
   },
 
   cardHeader: {
