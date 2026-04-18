@@ -52,7 +52,7 @@ const s3 = s3Enabled
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
-
+app.set("trust proxy", 1);
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile app) or frontend Vercel URL only
