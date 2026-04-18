@@ -906,8 +906,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0B36F4",
     paddingVertical: 12,
     paddingHorizontal: 18,
-    borderRadius: 25,
-    elevation: 6,
+    borderRadius: 32,
   },
 
   fabText: {

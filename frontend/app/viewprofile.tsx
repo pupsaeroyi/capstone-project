@@ -478,9 +478,8 @@ const styles = StyleSheet.create({
     gap: r(8),
     backgroundColor: "#0B36F4",
     paddingVertical: r(12),
-    paddingHorizontal: r(22),
+    paddingHorizontal: r(24),
     borderRadius: 32,
-    minWidth: r(180),
   },
 
   friendBtnPrimaryText: {
@@ -511,24 +510,27 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  statsRow: {
-    flexDirection: "row",
-    width: "100%",
-    marginTop: r(18),
-    marginBottom: r(18),
-  },
+  	statsRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		width: "100%",
+		marginTop: r(18),
+		marginBottom: r(18),
+		gap: 20,
+		paddingHorizontal: r(32),
+	},
 
-  statCard: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    paddingVertical: 18,
-    borderRadius: r(16),
-    alignItems: "center",
-    marginHorizontal: 18,
-    borderWidth: 1,
-    borderColor: "#E7EBFE",
-  },
-
+	statCard: {
+		flex: 1,
+		backgroundColor: "#F8FAFC", 
+		paddingVertical: 18,
+    paddingHorizontal: 18,
+		borderRadius: 16,
+		alignItems: "center",
+		borderWidth: 1,
+		borderColor: "#E7EBFE",
+	},
+  
   statLabel: {
     fontFamily: "Lexend_600SemiBold",
     fontSize: r(14),
