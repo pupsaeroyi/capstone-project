@@ -18,6 +18,7 @@ import { initChatLogic, chatRoutes, ensureChatSchema } from "./chat.js";
 import { ratingRoutes } from "./ratings.js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import multer from "multer";
+import rateLimit from "express-rate-limit"
 
 dotenv.config();
 
@@ -64,6 +65,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { ok: false, message: "Too many login attempts. Please try again in 15 minutes." },
+});
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -391,7 +398,7 @@ app.post("/auth/resend-verification", async (req, res) => {
 
 
 // login endpoint
-app.post("/auth/login", async (req, res) => {
+app.post("/auth/login", loginLimiter, async (req, res) => {
   let { identifier, password } = req.body;
   identifier = typeof identifier === "string" ? identifier.trim() : "";
   if (identifier.includes("@")) identifier = identifier.toLowerCase();
