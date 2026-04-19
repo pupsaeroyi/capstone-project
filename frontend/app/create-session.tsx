@@ -167,6 +167,7 @@ export default function CreateSessionScreen() {
     setVenueImage(v.thumbnail_url);
     setVenuePickerOpen(false);
   };
+  
 
   return (
     <View style={styles.container}>
@@ -236,17 +237,33 @@ export default function CreateSessionScreen() {
         {/* Skill Level */}
         <Text style={styles.label}>Skill Level</Text>
         <View style={styles.skillRow}>
-          {skillLevels.map((level) => (
+        {skillLevels.map((level) => {
+          const hostRank = (profile as any)?.rank?.toLowerCase();
+          const isDisabled = sessionType === "ranked" &&
+            !!hostRank &&
+            level.value !== hostRank;
+
+          return (
             <TouchableOpacity
               key={level.value}
-              style={[styles.skillChip, skillLevel === level.value && styles.skillChipActive]}
-              onPress={() => setSkillLevel(level.value)}
+              style={[
+                styles.skillChip,
+                skillLevel === level.value && styles.skillChipActive,
+                isDisabled && styles.skillChipDisabled,
+              ]}
+              onPress={() => !isDisabled && setSkillLevel(level.value)}
+              disabled={isDisabled}
             >
-              <Text style={[styles.skillChipText, skillLevel === level.value && styles.skillChipTextActive]}>
+              <Text style={[
+                styles.skillChipText,
+                skillLevel === level.value && styles.skillChipTextActive,
+                isDisabled && styles.skillChipTextDisabled,
+              ]}>
                 {level.label}
               </Text>
             </TouchableOpacity>
-          ))}
+          );
+        })}
         </View>
 
         {/* Casual / Ranked Toggle */}
@@ -465,6 +482,7 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend_500Medium",
     color: "#0F172A",
   },
+  
 
   courtSelectRow: {
     flexDirection: "row",
@@ -548,6 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0B36F4",
     borderColor: "#0B36F4",
   },
+  
   skillChipText: {
     fontSize: r(13),
     fontFamily: "Lexend_600SemiBold",
@@ -555,6 +574,16 @@ const styles = StyleSheet.create({
   },
   skillChipTextActive: {
     color: "#FFFFFF",
+  },
+
+  skillChipDisabled: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    opacity: 0.4,
+  },
+
+  skillChipTextDisabled: {
+    color: "#CBD5E1",
   },
 
   typeToggle: {
