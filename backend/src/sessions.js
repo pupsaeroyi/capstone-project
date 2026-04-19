@@ -297,6 +297,17 @@ export function sessionRoutes(app) {
       }
       // University / free venues force the booking fee to 0 regardless of host input
       if (venueCheck.rows[0].is_free) booking_fee = 0;
+      
+      if (session_type === "ranked" && skill_level !== "all") {
+        const profileResult = await pool.query(
+          "SELECT rank FROM player_profile WHERE user_id = $1",
+          [req.userId]
+        );
+        const hostRank = profileResult.rows[0]?.rank?.toLowerCase();
+        if (hostRank && hostRank !== skill_level.toLowerCase()) {
+          return res.status(403).json({ ok: false, message: "You can only host ranked sessions matching your own rank." });
+        }
+      }
 
       const session = await withTransaction(async (client) => {
         const result = await client.query(

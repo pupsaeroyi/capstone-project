@@ -5,6 +5,7 @@ import { MaterialIcons, MaterialCommunityIcons, Ionicons } from "@expo/vector-ic
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { r } from "@/utils/responsive";
 import { authFetch, API_BASE } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 type VenueOption = { venue_id: number; venue_name: string; thumbnail_url: string; is_free: boolean };
 type PickerTarget = "date" | "start" | "end" | null;
@@ -12,7 +13,7 @@ type PickerTarget = "date" | "start" | "end" | null;
 export default function CreateSessionScreen() {
   const { venue_id: paramVenueId, venue_name: paramVenueName } = useLocalSearchParams<{ venue_id: string; venue_name: string }>();
   const router = useRouter();
-
+  const { profile } = useAuth();
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [selectedVenueId, setSelectedVenueId] = useState<string | undefined>(paramVenueId);
   const [selectedVenueName, setSelectedVenueName] = useState<string | undefined>(paramVenueName);
@@ -111,6 +112,13 @@ export default function CreateSessionScreen() {
     if (!selectedVenueId) {
       Alert.alert("Invalid", "Please select a court");
       return;
+    }
+    if (sessionType === "ranked" && skillLevel !== "all") {
+      const hostRank = (profile as any)?.rank?.toLowerCase();
+      if (hostRank && hostRank !== skillLevel) {
+        Alert.alert("Invalid", "For ranked sessions, you can only host sessions matching your own rank.");
+        return;
+      }
     }
 
     setSubmitting(true);
