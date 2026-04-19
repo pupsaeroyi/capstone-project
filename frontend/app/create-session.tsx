@@ -69,6 +69,11 @@ export default function CreateSessionScreen() {
   const handleAndroidChange = (target: PickerTarget, _: DateTimePickerEvent, selected?: Date) => {
     setActivePicker(null);
     if (!selected) return;
+    if (target === "start" && selected < new Date()) {
+      Alert.alert("Invalid", "Start time cannot be in the past.");
+      return;
+    }
+
     if (target === "date") setDate(selected);
     else if (target === "start") setStartTime(selected);
     else if (target === "end") setEndTime(selected);
@@ -381,7 +386,7 @@ export default function CreateSessionScreen() {
                 is24Hour
                 locale="en-GB"
                 themeVariant="light"
-                minimumDate={pickerMode === "date" ? new Date() : undefined}
+                minimumDate={new Date()}
                 onChange={(_, selected) => { if (selected) setTempDate(selected); }}
                 style={{ width: "100%" }}
               />
