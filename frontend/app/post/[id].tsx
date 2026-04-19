@@ -389,7 +389,7 @@ export default function PostDetail() {
                     {deletingCommentId === item.id ? (
                       <ActivityIndicator size="small" color="#EF4444" />
                     ) : (
-                      <MaterialIcons name="delete-outline" size={r(22)} color="#EF4444" />
+                      <MaterialIcons name="delete-outline" size={22} color="#EF4444" />
                     )}
                   </TouchableOpacity>
                 ) : null}

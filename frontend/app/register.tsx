@@ -25,6 +25,7 @@ export default function Register() {
   const [usernameStatus, setUsernameStatus] = useState("idle");
   const usernameReqId = useRef(0);
   const { refreshProfile, setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
   
   const handleUsernameChange = async (text: string) => {
     const trimmed = text.trim();
@@ -103,6 +104,7 @@ export default function Register() {
       return;
     }
 
+    setLoading(true);  
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -133,6 +135,8 @@ export default function Register() {
     } catch (err: any) {
       console.log(err);
       alert("Cannot connect to server. Is backend running?");
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -213,7 +217,12 @@ export default function Register() {
               />
 
               <View style={styles.buttonWrapper}>
-                <Button title="Register" onPress={handleRegister} />
+                <Button
+                  title={loading ? "Registering..." : "Register"}
+                  onPress={handleRegister}
+                  disabled={loading}
+                />
+
               </View>
             </View>
 
