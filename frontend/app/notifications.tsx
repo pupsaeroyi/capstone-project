@@ -1,13 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl, useWindowDimensions } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -46,6 +37,7 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
+  const { height } = useWindowDimensions();
 
   const load = useCallback(async () => {
     try {
@@ -281,7 +273,7 @@ export default function NotificationsScreen() {
           />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
+          <View style={[styles.empty, { height: height * 0.7 }]}>
             <MaterialIcons name="notifications-none" size={r(40)} color="#CBD5E1" />
             <Text style={styles.emptyText}>No notifications yet</Text>
           </View>
@@ -308,7 +300,7 @@ const styles = StyleSheet.create({
   backBtn: { padding: r(4) },
   headerTitle: { fontFamily: "Lexend_700Bold", fontSize: r(16), color: "#0F172A" },
   listContent: { paddingVertical: r(8), flexGrow: 1 },
-  empty: { flex: 1, justifyContent: "center", alignItems: "center", paddingTop: r(100), gap: r(10) },
+  empty: { justifyContent: "center", alignItems: "center", gap: r(10) },
   emptyText: { color: "#94A3B8", fontFamily: "Lexend_500Medium", fontSize: r(14) },
   row: {
     flexDirection: "row",
