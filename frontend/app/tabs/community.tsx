@@ -6,6 +6,7 @@ import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "@/lib/api";
 import { r } from "@/utils/responsive";
+import { openDirectChat } from "@/lib/chat";
 
 const FILTERS = ["All Posts", "#Friends", "#Drills", "#Highlights", "#Tips"];
 
@@ -325,10 +326,14 @@ function SearchSheet({
                     {user.friend_status === "accepted" ? (
                       <TouchableOpacity
                         style={sheet.msgBtn}
-                        onPress={(e) => {
+                        onPress={async (e) => {
                           e.stopPropagation();
                           handleClose();
-                          router.push("/tabs/chat");
+                          try {
+                            await openDirectChat(user.id, router);
+                          } catch (err) {
+                            console.error("Open chat error:", err);
+                          }
                         }}
                       >
                         <Text style={sheet.msgBtnText}>Message</Text>
