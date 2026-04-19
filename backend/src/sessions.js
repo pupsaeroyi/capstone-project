@@ -350,7 +350,7 @@ export function sessionRoutes(app) {
     try {
       const result = await withTransaction(async (client) => {
         const sessionResult = await client.query(
-          "SELECT id, max_players FROM sessions WHERE id = $1 AND end_time > NOW() FOR UPDATE",
+          "SELECT id, max_players, session_type, skill_level FROM sessions WHERE id = $1 AND end_time > NOW() FOR UPDATE",
           [sessionId]
         );
 
@@ -361,6 +361,19 @@ export function sessionRoutes(app) {
         }
 
         const session = sessionResult.rows[0];
+        
+        if (session.session_type === "ranked" && session.skill_level !== "all") {
+          const profileResult = await client.query(
+            "SELECT rank FROM player_profile WHERE user_id = $1",
+            [req.userId]
+          );
+          const userRank = profileResult.rows[0]?.rank?.toLowerCase();
+          if (userRank !== session.skill_level.toLowerCase()) {
+            const err = new Error("Rank mismatch");
+            err.code = "RANK_MISMATCH";
+            throw err;
+          }
+        }
 
         const alreadyJoined = await client.query(
           "SELECT 1 FROM session_players WHERE session_id = $1 AND user_id = $2",
@@ -404,6 +417,9 @@ export function sessionRoutes(app) {
       }
       if (err.code === "ALREADY_JOINED") {
         return res.status(409).json({ ok: false, message: "Already joined this session" });
+      }
+      if (err.code === "RANK_MISMATCH") {
+        return res.status(403).json({ ok: false, message: "Your rank does not meet the session requirements" });
       }
       console.error("Join session error:", err);
       return res.status(500).json({ ok: false, message: "Server error" });

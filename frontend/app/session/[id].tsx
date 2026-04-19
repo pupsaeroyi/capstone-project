@@ -42,7 +42,7 @@ type SessionDetail = {
 export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +68,15 @@ export default function SessionDetailScreen() {
   const hasJoined = session ? session.players.some(p => p.user_id === user?.id) : false;
   const isFull = session ? session.player_count >= session.max_players : false;
   const slotsLeft = session ? session.max_players - session.player_count : 0;
+
+  const isRankMismatch = (() => {
+    if (session?.session_type !== "ranked") return false;
+    if (session?.skill_level === "all") return false;
+    if (isCreator || hasJoined) return false;
+    const userRank = profile?.rank?.toLowerCase();
+    if (!userRank) return false;
+    return userRank !== session.skill_level.toLowerCase();
+  })();
 
   const handleJoin = async () => {
     // Free sessions skip the payment flow entirely
@@ -391,16 +400,21 @@ export default function SessionDetailScreen() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.joinButton, isFull && styles.joinButtonDisabled]}
+            style={[styles.joinButton, 
+              (isFull || isRankMismatch) && styles.joinButtonDisabled,
+            ]}
             onPress={handleJoin}
-            disabled={isFull}
+            disabled={isFull || isRankMismatch}
           >
             <View style={{ flexDirection: "row", alignItems: "center", gap: r(6) }}>
-              <Text style={[styles.joinButtonText, isFull && styles.joinButtonTextDisabled]}>
-                {isFull ? "Session Full" : "Join Session"}
+              <Text style={[
+                styles.joinButtonText, 
+                 (isFull || isRankMismatch) && styles.joinButtonTextDisabled,
+                ]}>
+                {isFull ? "Session Full" : isRankMismatch ? "Rank Mismatch" : "Join Session"}
               </Text>
 
-              {!isFull && (
+              {!isFull && !isRankMismatch && (
                 <MaterialIcons
                   name="send"
                   size={r(20)}

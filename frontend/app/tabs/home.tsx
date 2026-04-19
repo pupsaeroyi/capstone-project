@@ -370,8 +370,8 @@ export default function Home() {
                       {formatTime(session.start_time)} - {formatTime(session.end_time)} · {formatDateShort(session.start_time)}
                     </Text>
                   </View>
-                  <Text style={[styles.sessionSlots, slotsLeft <= 2 && slotsLeft > 0 && styles.sessionSlotsUrgent]}>
-                    {slotsLeft <= 0 ? "Full" : slotsLeft <= 2 ? `Only ${slotsLeft} spots left!` : `${session.player_count}/${session.max_players} spots`}
+                  <Text style={[styles.sessionSlots, slotsLeft <= 3 && slotsLeft > 0 && styles.sessionSlotsUrgent]}>
+                    {slotsLeft <= 0 ? "Full" : slotsLeft === 1 ? `Only 1 spot left!`: slotsLeft <= 3 ? `Only ${slotsLeft} spots left!` :`${session.player_count}/${session.max_players} spots`}
                   </Text>
                 </View>
               </View>
