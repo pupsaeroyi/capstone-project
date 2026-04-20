@@ -37,6 +37,7 @@ type SessionDetail = {
   is_finalized: boolean;
   session_type: string;
   mbti_matching: boolean;
+  host_avatar_url: string | null;
 };
 
 export default function SessionDetailScreen() {
@@ -248,9 +249,13 @@ export default function SessionDetailScreen() {
         {/* Host */}
         <View style={styles.section}>
           <View style={styles.hostRow}>
-            <View style={styles.hostAvatar}>
-              <Text style={styles.hostInitial}>{session.host_username.charAt(0).toUpperCase()}</Text>
-            </View>
+            {session.host_avatar_url ? (
+              <Image source={{ uri: session.host_avatar_url }} style={styles.hostAvatar} />
+            ) : (
+              <View style={styles.hostAvatar}>
+                <Text style={styles.hostInitial}>{session.host_username.charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={styles.hostLabel}>Host</Text>
               <Text style={styles.hostName}>{session.host_username}</Text>
@@ -480,6 +485,7 @@ const styles = StyleSheet.create({
   hostAvatar: {
     width: r(44), height: r(44), borderRadius: r(22),
     backgroundColor: "#0B36F4", justifyContent: "center", alignItems: "center",
+    overflow: "hidden",
   },
   hostInitial: { fontSize: r(18), fontFamily: "Lexend_700Bold", color: "#FFF" },
   hostLabel: { fontSize: r(11), fontFamily: "Lexend_400Regular", color: "#94A3B8" },

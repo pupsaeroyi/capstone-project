@@ -124,10 +124,12 @@ export function sessionRoutes(app) {
            v.condition_label,
            v.thumbnail_url AS venue_thumbnail,
            v.is_free AS venue_is_free,
-           u.username AS host_username
+           u.username AS host_username,
+           pp.avatar_url AS host_avatar_url
          FROM sessions s
          JOIN venues v ON v.id = s.venue_id
          JOIN users u ON u.id = s.created_by
+         LEFT JOIN player_profile pp ON pp.user_id = s.created_by
          WHERE s.id = $1`,
         [sessionId]
       );
