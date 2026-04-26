@@ -221,7 +221,7 @@ export default function Home() {
 
         <View style={styles.searchRow}>
           <Input
-            placeholder="Find courts or sessions..."
+            placeholder="Find courts or sessions"
             showSearchIcon
             style={styles.searchBar}
             value={search}
@@ -230,6 +230,11 @@ export default function Home() {
             autoCorrect={false}
             returnKeyType="search"
           />
+
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push("/map")}>
+            <MaterialIcons name="map" size={r(20)} color="#0B36F4" />
+          </TouchableOpacity>
+
         </View>
       </View>
 
@@ -466,11 +471,21 @@ const styles = StyleSheet.create({
   searchRow: {
     flexDirection: "row",
     flex: 1,
+    gap: 8,
   },
 
   searchBar: {
     marginBottom: 30,
     flex: 1,
+  },
+    iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E7EBFE",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   },
 
   featuredCard: {
